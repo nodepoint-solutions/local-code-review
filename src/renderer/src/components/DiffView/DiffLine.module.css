@@ -1,0 +1,24 @@
+.line { user-select: none; }
+.added { background: var(--added); }
+.removed { background: var(--removed); }
+.context { background: transparent; }
+.selecting { background: #1f3a5f; }
+.hunkHeader { background: var(--hunk); }
+.hunkHeaderContent { padding: 4px 8px; font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+.lineNumOld, .lineNumNew {
+  width: 48px; min-width: 48px; padding: 0 8px;
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--text-muted); text-align: right;
+  border-right: 1px solid var(--border); user-select: none;
+}
+.gutter { width: 28px; min-width: 28px; padding: 0 4px; }
+.gutterBtn {
+  border: none; background: var(--accent); color: #fff;
+  border-radius: 3px; width: 18px; height: 18px;
+  font-size: 14px; line-height: 1; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.code { font-family: var(--font-mono); font-size: 13px; padding: 1px 8px; white-space: pre; }
+.prefix { color: var(--text-muted); margin-right: 4px; user-select: none; }
+.added .prefix { color: var(--added-text); }
+.removed .prefix { color: var(--removed-text); }
