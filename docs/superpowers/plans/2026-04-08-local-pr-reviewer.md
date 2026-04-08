@@ -10,6 +10,52 @@
 
 ---
 
+## Local Development
+
+### Prerequisites
+- Node.js 20+ (`node --version`)
+- Git installed and on PATH (`git --version`)
+- macOS: Xcode Command Line Tools for native module compilation (`xcode-select --install`)
+
+### First-time setup
+```bash
+cd local-code-review
+npm install
+npx electron-rebuild -f -w better-sqlite3   # compile native module for Electron's Node
+```
+
+### Run in development
+```bash
+npm run dev
+```
+Opens the Electron window with Vite hot-reload on the renderer. Main process changes require a restart.
+
+### Run tests
+```bash
+npm test                  # all tests (main + renderer)
+npm run test:main         # main process tests only (Node env)
+npm run test:renderer     # renderer component tests only (jsdom)
+```
+
+### Build for production
+```bash
+npm run build             # compiles TS + bundles with Vite
+npm run dist              # packages into a platform-native app (electron-builder)
+```
+The built app writes its SQLite database to the platform userData directory:
+- macOS: `~/Library/Application Support/local-pr-reviewer/pr-reviewer.sqlite`
+- Linux: `~/.config/local-pr-reviewer/pr-reviewer.sqlite`
+- Windows: `%APPDATA%\local-pr-reviewer\pr-reviewer.sqlite`
+
+### Common issues
+| Problem | Fix |
+|---|---|
+| `better-sqlite3` fails to load | Run `npx electron-rebuild -f -w better-sqlite3` |
+| Blank window on `npm run dev` | Check terminal for Vite errors; renderer may have a TS compile error |
+| `git: command not found` in app | Ensure `git` is on the system PATH, not just in a shell profile |
+
+---
+
 ## File Map
 
 ```
