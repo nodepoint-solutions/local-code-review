@@ -6,5 +6,5 @@
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true
   },
-  "include": ["electron-vite.config.ts", "vitest.workspace.ts"]
+  "include": ["electron-vite.config.ts", "vitest.workspace.ts", "src/shared/**/*"]
 }
