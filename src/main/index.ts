@@ -4,6 +4,7 @@ import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { getDb } from './db'
 import { registerRepoHandlers } from './ipc/repos'
 import { registerPrHandlers } from './ipc/prs'
+import { registerReviewHandlers } from './ipc/reviews'
 
 function createWindow(): void {
   // Create the browser window.
@@ -54,6 +55,7 @@ app.whenReady().then(() => {
   const db = getDb()
   registerRepoHandlers(db)
   registerPrHandlers(db)
+  registerReviewHandlers(db)
 
   createWindow()
 
