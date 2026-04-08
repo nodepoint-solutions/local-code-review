@@ -5,6 +5,7 @@ import { getDb } from './db'
 import { registerRepoHandlers } from './ipc/repos'
 import { registerPrHandlers } from './ipc/prs'
 import { registerReviewHandlers } from './ipc/reviews'
+import { registerExportHandlers } from './ipc/export'
 
 function createWindow(): void {
   // Create the browser window.
@@ -56,6 +57,7 @@ app.whenReady().then(() => {
   registerRepoHandlers(db)
   registerPrHandlers(db)
   registerReviewHandlers(db)
+  registerExportHandlers(db)
 
   createWindow()
 
