@@ -43,9 +43,9 @@ npm run build             # compiles TS + bundles with Vite
 npm run dist              # packages into a platform-native app (electron-builder)
 ```
 The built app writes its SQLite database to the platform userData directory:
-- macOS: `~/Library/Application Support/local-pr-reviewer/pr-reviewer.sqlite`
-- Linux: `~/.config/local-pr-reviewer/pr-reviewer.sqlite`
-- Windows: `%APPDATA%\local-pr-reviewer\pr-reviewer.sqlite`
+- macOS: `~/Library/Application Support/local-code-review/pr-reviewer.sqlite`
+- Linux: `~/.config/local-code-review/pr-reviewer.sqlite`
+- Windows: `%APPDATA%\local-code-review\pr-reviewer.sqlite`
 
 ### Common issues
 | Problem | Fix |
@@ -3608,7 +3608,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.local-pr-reviewer')
+  electronApp.setAppUserModelId('com.local-code-review')
   app.on('browser-window-created', (_, window) => optimizer.watchShortcuts(window))
 
   const db = getDb()

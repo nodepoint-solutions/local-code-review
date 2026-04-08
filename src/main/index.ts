@@ -1,3 +1,7 @@
+// Make the real Node.js require available to bundled native addons (better-sqlite3/bindings)
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+;(globalThis as any).__non_webpack_require__ = require
+
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
