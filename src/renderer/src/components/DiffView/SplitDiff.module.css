@@ -1,0 +1,6 @@
+.table { width: 100%; border-collapse: collapse; }
+.hunkHeader td { background: var(--hunk); padding: 4px 8px; font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+.pairRow { vertical-align: top; }
+.side { width: 50%; border-right: 1px solid var(--border); }
+.innerTable { width: 100%; border-collapse: collapse; }
+.emptyCell { background: var(--bg-surface); min-height: 22px; display: block; }
