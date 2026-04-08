@@ -73,7 +73,8 @@ describe('parseDiff', () => {
     const files = parseDiff(NEW_FILE_DIFF)
     expect(files[0].isNew).toBe(true)
     expect(files[0].isDeleted).toBe(false)
-    const allAdded = files[0].lines.every((l) => l.type === 'added')
+    const codeLines = files[0].lines.filter((l) => l.type !== 'hunk-header')
+    const allAdded = codeLines.every((l) => l.type === 'added')
     expect(allAdded).toBe(true)
   })
 
@@ -81,7 +82,8 @@ describe('parseDiff', () => {
     const files = parseDiff(DELETED_FILE_DIFF)
     expect(files[0].isDeleted).toBe(true)
     expect(files[0].isNew).toBe(false)
-    const allRemoved = files[0].lines.every((l) => l.type === 'removed')
+    const codeLines = files[0].lines.filter((l) => l.type !== 'hunk-header')
+    const allRemoved = codeLines.every((l) => l.type === 'removed')
     expect(allRemoved).toBe(true)
   })
 

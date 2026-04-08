@@ -33,6 +33,14 @@ export function parseDiff(raw: string): ParsedFile[] {
           if (isNew) oldLine = 0
           if (isDeleted) newLine = 0
         }
+        diffLineNumber++
+        parsedLines.push({
+          diffLineNumber,
+          type: 'hunk-header',
+          content: rawLine,
+          oldLineNumber: null,
+          newLineNumber: null,
+        })
         continue
       }
 
