@@ -1,12 +1,19 @@
-import './App.css'
+import { HashRouter, Routes, Route } from 'react-router-dom'
+import Home from './screens/Home'
+import Repo from './screens/Repo'
+import OpenPR from './screens/OpenPR'
+import PR from './screens/PR'
+import './app.css'
 
-function App(): JSX.Element {
+export default function App(): JSX.Element {
   return (
-    <div id="app">
-      <h1>Local Code Review</h1>
-      <p>App is ready</p>
-    </div>
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/repo/:repoId" element={<Repo />} />
+        <Route path="/repo/:repoId/open-pr" element={<OpenPR />} />
+        <Route path="/repo/:repoId/pr/:prId" element={<PR />} />
+      </Routes>
+    </HashRouter>
   )
 }
-
-export default App
