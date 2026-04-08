@@ -21,7 +21,7 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@": ["src/renderer/src"]
+      "@/*": ["src/renderer/src/*"]
     }
   },
   "include": ["src"],

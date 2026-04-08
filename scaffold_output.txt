@@ -1,0 +1,10 @@
+npm error code EPERM
+npm error syscall open
+npm error path /Users/nodepoint/.npm/_cacache/tmp/***
+npm error errno EPERM
+npm error
+npm error Your cache folder contains root-owned files, due to a bug in previous versions of npm which has since been addressed.
+npm error
+npm error To permanently fix this problem, please run:
+npm error   sudo chown -R 502:20 "/Users/nodepoint/.npm"
+npm error A complete log of this run can be found in: /Users/nodepoint/.npm/_logs/2026-04-08T11_28_06_022Z-debug-0.log

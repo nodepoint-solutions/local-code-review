@@ -10,7 +10,6 @@ out/
 .env.local
 
 # Dependencies
-/node_modules
 /.pnp
 .pnp.js
 
@@ -28,4 +27,3 @@ yarn-error.log*
 *.swp
 *.swo
 *~
-.DS_Store
