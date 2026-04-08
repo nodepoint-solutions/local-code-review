@@ -1,0 +1,15 @@
+.thread {
+  margin: 4px 0 4px 80px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--comment-bg);
+  overflow: hidden;
+}
+.stale { opacity: 0.5; border-style: dashed; }
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 12px; border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--text-muted);
+}
+.staleTag { color: #d29922; font-size: 11px; }
+.body { padding: 10px 12px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
