@@ -1,0 +1,17 @@
+.container { display: flex; flex-direction: column; height: 100vh; padding: 24px 32px; }
+.header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.header h2 { flex: 1; font-size: 18px; font-weight: 600; }
+.empty { color: var(--text-muted); margin-top: 48px; text-align: center; }
+.prList { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.prItem {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border: 1px solid var(--border);
+  border-radius: 8px; cursor: pointer; background: var(--bg-surface);
+}
+.prItem:hover { border-color: var(--accent); }
+.prTitle { flex: 1; font-weight: 500; }
+.prBranches { font-size: 12px; color: var(--text-muted); }
+.prBranches code { background: var(--bg-surface-2); padding: 1px 5px; border-radius: 4px; }
+.prStatus { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 500; }
+.open { background: #1a4a1a; color: var(--added-text); }
+.closed { background: var(--bg-surface-2); color: var(--text-muted); }
