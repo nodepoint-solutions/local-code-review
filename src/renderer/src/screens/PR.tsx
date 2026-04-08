@@ -19,15 +19,23 @@ export default function PR(): JSX.Element {
 
   useEffect(() => {
     if (repo && prId) {
-      window.api.getPr(prId, repo.path).then(setPrDetail)
+      window.api.getPr(prId, repo.path).then((result) => {
+        if (result && 'error' in result) return
+        setPrDetail(result as any)
+      })
     }
+    return () => setPrDetail(null)
   }, [prId, repo?.path])
 
   async function handleRefresh(): Promise<void> {
     if (!repo || !prId) return
     setRefreshing(true)
     const updated = await window.api.refreshPr(prId, repo.path)
-    setPrDetail(updated)
+    if (updated && 'error' in updated) {
+      setRefreshing(false)
+      return
+    }
+    setPrDetail(updated as any)
     setRefreshing(false)
   }
 

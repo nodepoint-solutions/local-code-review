@@ -39,6 +39,10 @@ export default function OpenPR(): JSX.Element {
         baseBranch,
         compareBranch,
       })
+      if ('error' in pr) {
+        setError((pr as any).message ?? 'Failed to create PR.')
+        return
+      }
       navigate(`/repo/${repo.id}/pr/${pr.id}`)
     } catch (err: any) {
       setError(err.message ?? 'Failed to create PR.')

@@ -13,16 +13,12 @@ export function registerExportHandlers(db: Database.Database): void {
       const pr = getPr(db, prId)
       if (!pr) return { error: 'pr-not-found' }
 
-      const review = submitReview(db, reviewId)
+      // Gather data BEFORE showing dialog (non-destructive reads)
       const comments = listComments(db, reviewId)
-
       const contextMap: Record<string, any[]> = {}
       for (const comment of comments) {
         contextMap[comment.id] = getCommentContext(db, comment.id)
       }
-
-      const md = buildMarkdown(pr, review, comments, contextMap)
-      const json = buildJson(pr, review, comments, contextMap)
 
       const date = new Date().toISOString().slice(0, 10)
       const slug = prTitleSlug(pr.title)
@@ -35,6 +31,12 @@ export function registerExportHandlers(db: Database.Database): void {
       })
 
       if (canceled || !filePath) return { error: 'cancelled' }
+
+      // Submit AFTER user confirms save path
+      const review = submitReview(db, reviewId)
+
+      const md = buildMarkdown(pr, review, comments, contextMap)
+      const json = buildJson(pr, review, comments, contextMap)
 
       const basePath = filePath.replace(/\.md$/, '')
       const mdPath = basePath + '.md'
