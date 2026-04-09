@@ -1,5 +1,42 @@
 .banner {
-  display: flex; align-items: center; justify-content: space-between;
-  background: #3d2600; border-bottom: 1px solid #6e3c00;
-  padding: 8px 16px; font-size: 13px; color: #f0a830;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--warning-bg);
+  border-bottom: 1px solid var(--stale-border);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--warning-text);
+}
+
+.banner button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  background: transparent;
+  border-color: var(--stale-border);
+  color: var(--warning-text);
+  flex-shrink: 0;
+}
+.banner button:hover:not(:disabled) {
+  background: var(--stale-bg);
+  border-color: var(--stale-text);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
 }

@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
   Repository, PullRequest, Review, Comment,
-  ParsedFile, PrDetail, CreatePrPayload, AddCommentPayload, ExportResult
+  ParsedFile, PrDetail, CreatePrPayload, AddCommentPayload, ExportResult, Commit
 } from '../shared/types'
 
 const api = {
@@ -32,6 +32,12 @@ const api = {
     ipcRenderer.invoke('comments:add', payload),
   listComments: (reviewId: string): Promise<Comment[]> =>
     ipcRenderer.invoke('comments:list', reviewId),
+
+  // Commits
+  listCommits: (prId: string, repoPath: string): Promise<Commit[] | { error: string }> =>
+    ipcRenderer.invoke('commits:list', prId, repoPath),
+  showCommit: (repoPath: string, hash: string): Promise<{ diff: ParsedFile[] } | { error: string }> =>
+    ipcRenderer.invoke('commits:show', repoPath, hash),
 
   // Export
   submitAndExport: (reviewId: string, prId: string): Promise<ExportResult | { error: string }> =>

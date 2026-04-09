@@ -106,3 +106,12 @@ export interface ExportResult {
   mdPath: string
   jsonPath: string
 }
+
+export interface Commit {
+  hash: string
+  shortHash: string
+  subject: string
+  authorName: string
+  authorEmail: string
+  timestamp: number // unix seconds
+}

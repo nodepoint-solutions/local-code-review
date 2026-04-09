@@ -5,7 +5,7 @@ import { getOrCreateInProgressReview, listComments, markCommentsStale } from '..
 import { listBranches, resolveSha } from '../git/branches'
 import { execGit } from '../git/runner'
 import { parseDiff } from '../git/diff-parser'
-import type { CreatePrPayload, PrDetail, Review } from '../../shared/types'
+import type { Commit, CreatePrPayload, PrDetail, Review } from '../../shared/types'
 
 export function registerPrHandlers(db: Database.Database): void {
   ipcMain.handle('prs:list', (_e, repoId: string) => {
@@ -60,6 +60,44 @@ export function registerPrHandlers(db: Database.Database): void {
       return { pr, diff, review, comments, isStale }
     } catch (err) {
       return { error: 'git-failed', message: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('commits:list', async (_e, prId: string, repoPath: string): Promise<Commit[] | { error: string }> => {
+    try {
+      const pr = getPr(db, prId)
+      if (!pr) return []
+      const raw = await execGit(repoPath, [
+        'log',
+        '--format=%H%x00%h%x00%s%x00%an%x00%ae%x00%at',
+        `${pr.base_sha}..${pr.compare_sha}`,
+      ])
+      return raw
+        .trim()
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => {
+          const [hash, shortHash, subject, authorName, authorEmail, ts] = line.split('\x00')
+          return { hash, shortHash, subject, authorName, authorEmail, timestamp: parseInt(ts, 10) }
+        })
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('commits:show', async (_e, repoPath: string, hash: string) => {
+    try {
+      // git diff-tree gives only the patch, no commit header
+      const raw = await execGit(repoPath, ['diff-tree', '--no-commit-id', '-p', '-r', '--unified=3', hash])
+      return { diff: parseDiff(raw) }
+    } catch {
+      // Root commit (no parent): fall back to git show
+      try {
+        const raw = await execGit(repoPath, ['show', '--format=', '-p', '--unified=3', hash])
+        return { diff: parseDiff(raw.replace(/^[^\n]*\n/, '')) }
+      } catch (err) {
+        return { error: (err as Error).message }
+      }
     }
   })
 

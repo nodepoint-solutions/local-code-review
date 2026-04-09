@@ -1,11 +1,111 @@
-.container { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-.fileHeader {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 12px; background: var(--bg-surface);
-  border-bottom: 1px solid var(--border); cursor: pointer;
+.container {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 0 12px 12px;
+  font-family: var(--font-mono);
 }
-.fileHeader:hover { background: var(--bg-surface-2); }
-.toggle { font-size: 10px; color: var(--text-muted); }
-.filePath { font-family: var(--font-mono); font-size: 13px; font-weight: 500; flex: 1; }
-.badge { font-size: 11px; padding: 1px 6px; border-radius: 10px; background: var(--bg-surface-2); }
-.body { overflow-x: auto; }
+
+/* ─── File Header ─────────────────────────── */
+.fileHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-surface-2);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition);
+}
+.fileHeader:hover {
+  background: var(--bg-surface-3);
+}
+
+.chevron {
+  display: flex;
+  align-items: center;
+  color: var(--text-subtle);
+  flex-shrink: 0;
+}
+
+.filePath {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  min-width: 0;
+  flex: 1;
+  font-size: 13px;
+}
+
+.fileDir {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileName {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fileStats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ─── Diff stat ───────────────────────────── */
+.diffStat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.additions {
+  color: var(--added-text);
+}
+
+.deletions {
+  color: var(--removed-text);
+}
+
+/* ─── Badges ──────────────────────────────── */
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  padding: 1px 7px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+}
+
+.badgeAdded {
+  background: var(--badge-added-bg);
+  color: var(--badge-added-text);
+  border-color: var(--badge-added-border);
+}
+
+.badgeDeleted {
+  background: var(--badge-deleted-bg);
+  color: var(--badge-deleted-text);
+  border-color: var(--badge-deleted-border);
+}
+
+.badgeRenamed {
+  background: var(--badge-renamed-bg);
+  color: var(--badge-renamed-text);
+  border-color: var(--badge-renamed-border);
+}
+
+/* ─── Body ────────────────────────────────── */
+.body {
+  overflow: hidden;
+}

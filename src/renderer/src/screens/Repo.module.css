@@ -1,17 +1,210 @@
-.container { display: flex; flex-direction: column; height: 100vh; padding: 24px 32px; }
-.header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-.header h2 { flex: 1; font-size: 18px; font-weight: 600; }
-.empty { color: var(--text-muted); margin-top: 48px; text-align: center; }
-.prList { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-.prItem {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px; border: 1px solid var(--border);
-  border-radius: 8px; cursor: pointer; background: var(--bg-surface);
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg);
 }
-.prItem:hover { border-color: var(--accent); }
-.prTitle { flex: 1; font-weight: 500; }
-.prBranches { font-size: 12px; color: var(--text-muted); }
-.prBranches code { background: var(--bg-surface-2); padding: 1px 5px; border-radius: 4px; }
-.prStatus { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 500; }
-.open { background: #1a4a1a; color: var(--added-text); }
-.closed { background: var(--bg-surface-2); color: var(--text-muted); }
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ─── Empty State ─────────────────────────── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 32px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+}
+
+.emptyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--bg-surface-2);
+  color: var(--text-subtle);
+  margin-bottom: 16px;
+}
+
+.emptyTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.emptyText {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 360px;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.empty button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── PR List ─────────────────────────────── */
+.prList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.prItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-muted);
+  text-align: left;
+  width: 100%;
+  color: var(--text);
+  transition: background var(--transition);
+  cursor: pointer;
+}
+.prItem:last-child {
+  border-bottom: none;
+}
+.prItem:hover {
+  background: var(--bg-surface-2);
+  border-color: var(--border-muted);
+}
+.prItem:hover .prTitle {
+  color: var(--accent-hover);
+}
+
+.prLeft {
+  padding-top: 1px;
+}
+
+.prIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--status-open-bg);
+  color: var(--status-open-text);
+  flex-shrink: 0;
+}
+
+.prBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.prTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.prTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+}
+
+.prMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.branch {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-text);
+  background: var(--accent-subtle);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.arrow {
+  color: var(--text-subtle);
+  font-size: 12px;
+}
+
+/* ─── Status Badges ───────────────────────── */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.in_progress {
+  background: var(--status-progress-bg);
+  color: var(--status-progress-text);
+  border-color: var(--status-progress-border);
+}
+
+.submitted {
+  background: var(--status-submitted-bg);
+  color: var(--status-submitted-text);
+  border-color: var(--status-submitted-border);
+}

@@ -6,16 +6,21 @@ import styles from './UnifiedDiff.module.css'
 interface Props {
   file: ParsedFile
   comments: Comment[]
+  language: string | null
   onStartComment: (diffLineNumber: number, side: 'left' | 'right') => void
   onExtendComment: (diffLineNumber: number) => void
+  onHoverLine: (lineNumber: number) => void
   isSelecting: boolean
   selectionStart: number | null
+  selectionEnd: number | null
+  hoverLine: number | null
 }
 
 export default function UnifiedDiff({
-  file, comments, onStartComment, onExtendComment, isSelecting, selectionStart,
+  file, comments, language,
+  onStartComment, onExtendComment, onHoverLine,
+  isSelecting, selectionStart, selectionEnd, hoverLine,
 }: Props): JSX.Element {
-  // Build map: diffLineNumber → comments that END on that line
   const commentsByEndLine = new Map<number, Comment[]>()
   for (const comment of comments) {
     const existing = commentsByEndLine.get(comment.end_line) ?? []
@@ -30,11 +35,15 @@ export default function UnifiedDiff({
             <DiffLine
               key={`line-${line.diffLineNumber}`}
               line={line}
+              language={language}
               comments={comments.filter((c) => c.start_line <= line.diffLineNumber && c.end_line >= line.diffLineNumber)}
               onStartComment={onStartComment}
               onExtendComment={onExtendComment}
+              onHoverLine={onHoverLine}
               isSelecting={isSelecting}
               selectionStart={selectionStart}
+              selectionEnd={selectionEnd}
+              hoverLine={hoverLine}
               side="right"
             />
             {(commentsByEndLine.get(line.diffLineNumber) ?? []).map((comment) => (

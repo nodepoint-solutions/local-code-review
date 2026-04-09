@@ -1,7 +1,12 @@
 import { create } from 'zustand'
-import type { Repository, PullRequest, PrDetail } from '../../../shared/types'
+import type { Repository, PrDetail } from '../../../shared/types'
+
+type Theme = 'dark' | 'light'
 
 interface AppState {
+  theme: Theme
+  setTheme: (theme: Theme) => void
+
   repos: Repository[]
   setRepos: (repos: Repository[]) => void
 
@@ -18,7 +23,23 @@ interface AppState {
   setReviewPanelOpen: (open: boolean) => void
 }
 
+function getInitialTheme(): Theme {
+  try {
+    const saved = localStorage.getItem('theme')
+    if (saved === 'light' || saved === 'dark') return saved
+  } catch {
+    // ignore
+  }
+  return 'light'
+}
+
 export const useStore = create<AppState>((set) => ({
+  theme: getInitialTheme(),
+  setTheme: (theme) => {
+    try { localStorage.setItem('theme', theme) } catch { /* ignore */ }
+    set({ theme })
+  },
+
   repos: [],
   setRepos: (repos) => set({ repos }),
 

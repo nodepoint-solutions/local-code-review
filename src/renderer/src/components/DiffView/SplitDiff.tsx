@@ -6,17 +6,16 @@ import styles from './SplitDiff.module.css'
 interface Props {
   file: ParsedFile
   comments: Comment[]
+  language: string | null
   onStartComment: (diffLineNumber: number, side: 'left' | 'right') => void
   onExtendComment: (diffLineNumber: number) => void
+  onHoverLine: (lineNumber: number) => void
   isSelecting: boolean
   selectionStart: number | null
+  selectionEnd: number | null
+  hoverLine: number | null
 }
 
-/**
- * Pairs up left (old) and right (new) lines for side-by-side rendering.
- * Context lines appear on both sides. Removed lines appear only on left.
- * Added lines appear only on right. Hunk headers span both.
- */
 function pairLines(lines: ParsedLine[]): Array<{ left: ParsedLine | null; right: ParsedLine | null }> {
   const pairs: Array<{ left: ParsedLine | null; right: ParsedLine | null }> = []
   let i = 0
@@ -45,7 +44,9 @@ function pairLines(lines: ParsedLine[]): Array<{ left: ParsedLine | null; right:
 }
 
 export default function SplitDiff({
-  file, comments, onStartComment, onExtendComment, isSelecting, selectionStart,
+  file, comments, language,
+  onStartComment, onExtendComment, onHoverLine,
+  isSelecting, selectionStart, selectionEnd, hoverLine,
 }: Props): JSX.Element {
   const pairs = pairLines(file.lines)
 
@@ -69,40 +70,44 @@ export default function SplitDiff({
 
           const rightEndComments = pair.right ? (commentsByEndLine.get(pair.right.diffLineNumber) ?? []) : []
           const leftEndComments = pair.left ? (commentsByEndLine.get(pair.left.diffLineNumber) ?? []) : []
-
-          // De-dup: don't show same comment twice if it ends on both sides
           const allEndComments = [...new Map([...rightEndComments, ...leftEndComments].map((c) => [c.id, c])).values()]
 
           return (
             <>
-              <tr key={`pair-${idx}`} className={styles.pairRow}>
-                {/* Left side */}
+              <tr key={`pair-${idx}`}>
                 <td className={styles.side}>
                   {pair.left ? (
                     <table className={styles.innerTable}><tbody>
                       <DiffLine
                         line={pair.left}
+                        language={language}
                         comments={[]}
                         onStartComment={onStartComment}
                         onExtendComment={onExtendComment}
+                        onHoverLine={onHoverLine}
                         isSelecting={isSelecting}
                         selectionStart={selectionStart}
+                        selectionEnd={selectionEnd}
+                        hoverLine={hoverLine}
                         side="left"
                       />
                     </tbody></table>
                   ) : <div className={styles.emptyCell} />}
                 </td>
-                {/* Right side */}
                 <td className={styles.side}>
                   {pair.right ? (
                     <table className={styles.innerTable}><tbody>
                       <DiffLine
                         line={pair.right}
+                        language={language}
                         comments={[]}
                         onStartComment={onStartComment}
                         onExtendComment={onExtendComment}
+                        onHoverLine={onHoverLine}
                         isSelecting={isSelecting}
                         selectionStart={selectionStart}
+                        selectionEnd={selectionEnd}
+                        hoverLine={hoverLine}
                         side="right"
                       />
                     </tbody></table>

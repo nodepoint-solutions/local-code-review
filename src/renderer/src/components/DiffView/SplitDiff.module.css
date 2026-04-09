@@ -1,6 +1,37 @@
-.table { width: 100%; border-collapse: collapse; }
-.hunkHeader td { background: var(--hunk); padding: 4px 8px; font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
-.pairRow { vertical-align: top; }
-.side { width: 50%; border-right: 1px solid var(--border); }
-.innerTable { width: 100%; border-collapse: collapse; }
-.emptyCell { background: var(--bg-surface); min-height: 22px; display: block; }
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.hunkHeader {
+  background: var(--hunk-bg);
+}
+
+.hunkHeader td {
+  padding: 4px 16px;
+  font-size: 12px;
+  color: var(--hunk-text);
+  font-style: italic;
+}
+
+.pairRow td.side {
+  width: 50%;
+  vertical-align: top;
+  padding: 0;
+  border-right: 1px solid var(--border);
+}
+
+.pairRow td.side:last-child {
+  border-right: none;
+}
+
+.innerTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.emptyCell {
+  min-height: 20px;
+  background: var(--bg-surface);
+  height: 20px;
+}

@@ -1,22 +1,187 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --radius: 6px;
+  --radius-sm: 3px;
+  --nav-height: 48px;
+  --transition: 120ms ease;
+}
+
+/* ─── Dark Theme (default) ─────────────────────────────────── */
+:root,
+[data-theme="dark"] {
   --bg: #0d1117;
   --bg-surface: #161b22;
   --bg-surface-2: #21262d;
+  --bg-surface-3: #2d333b;
   --border: #30363d;
+  --border-muted: #21262d;
   --text: #e6edf3;
   --text-muted: #8b949e;
+  --text-subtle: #656d76;
   --accent: #1f6feb;
   --accent-hover: #388bfd;
-  --added: #2ea04326;
+  --accent-subtle: rgba(31, 111, 235, 0.15);
+  --accent-text: #79c0ff;
+
+  --added-bg: rgba(46, 160, 67, 0.12);
+  --added-bg-num: rgba(46, 160, 67, 0.22);
   --added-text: #3fb950;
-  --removed: #f8514926;
+  --added-char: rgba(46, 160, 67, 0.45);
+  --removed-bg: rgba(248, 81, 73, 0.12);
+  --removed-bg-num: rgba(248, 81, 73, 0.22);
   --removed-text: #f85149;
-  --hunk: #1f2d3d;
+  --removed-char: rgba(248, 81, 73, 0.45);
+  --hunk-bg: #1c2333;
+  --hunk-text: #79c0ff;
+  --selection-bg: rgba(31, 111, 235, 0.15);
+  --selection-border: #1f6feb;
+
   --comment-bg: #1c2128;
-  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --comment-border: #1f6feb;
+  --stale-bg: rgba(210, 153, 34, 0.12);
+  --stale-text: #d29922;
+  --stale-border: #9e6a03;
+  --warning-bg: rgba(210, 153, 34, 0.15);
+  --warning-text: #e3b341;
+
+  --nav-bg: #161b22;
+  --nav-border: #30363d;
+
+  --syntax-keyword: #ff7b72;
+  --syntax-string: #a5d6ff;
+  --syntax-number: #79c0ff;
+  --syntax-comment: #8b949e;
+  --syntax-function: #d2a8ff;
+  --syntax-type: #ffa657;
+  --syntax-variable: #e6edf3;
+  --syntax-operator: #ff7b72;
+  --syntax-punctuation: #c9d1d9;
+  --syntax-tag: #7ee787;
+  --syntax-attr: #79c0ff;
+  --syntax-meta: #8b949e;
+  --syntax-title: #d2a8ff;
+  --syntax-literal: #79c0ff;
+  --syntax-symbol: #79c0ff;
+  --syntax-deletion: #ffdcd7;
+  --syntax-addition: #ccffd8;
+
+  --badge-added-bg: rgba(46, 160, 67, 0.15);
+  --badge-added-text: #3fb950;
+  --badge-added-border: rgba(46, 160, 67, 0.3);
+  --badge-deleted-bg: rgba(248, 81, 73, 0.15);
+  --badge-deleted-text: #f85149;
+  --badge-deleted-border: rgba(248, 81, 73, 0.3);
+  --badge-renamed-bg: rgba(210, 153, 34, 0.15);
+  --badge-renamed-text: #d29922;
+  --badge-renamed-border: rgba(210, 153, 34, 0.3);
+  --badge-modified-bg: rgba(31, 111, 235, 0.12);
+  --badge-modified-text: #79c0ff;
+  --badge-modified-border: rgba(31, 111, 235, 0.3);
+
+  --status-open-bg: rgba(46, 160, 67, 0.15);
+  --status-open-text: #3fb950;
+  --status-open-border: rgba(46, 160, 67, 0.4);
+  --status-submitted-bg: rgba(163, 113, 247, 0.15);
+  --status-submitted-text: #a371f7;
+  --status-submitted-border: rgba(163, 113, 247, 0.4);
+  --status-progress-bg: rgba(31, 111, 235, 0.15);
+  --status-progress-text: #79c0ff;
+  --status-progress-border: rgba(31, 111, 235, 0.4);
+
+  color-scheme: dark;
+}
+
+/* ─── Light Theme ────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-surface: #f6f8fa;
+  --bg-surface-2: #eaeef2;
+  --bg-surface-3: #d0d7de;
+  --border: #d0d7de;
+  --border-muted: #eaeef2;
+  --text: #1f2328;
+  --text-muted: #57606a;
+  --text-subtle: #6e7781;
+  --accent: #0969da;
+  --accent-hover: #0550ae;
+  --accent-subtle: rgba(9, 105, 218, 0.08);
+  --accent-text: #0550ae;
+
+  --added-bg: #e6ffec;
+  --added-bg-num: #ccffd8;
+  --added-text: #1a7f37;
+  --added-char: rgba(22, 101, 52, 0.25);
+  --removed-bg: #ffebe9;
+  --removed-bg-num: #ffc1ba;
+  --removed-text: #cf222e;
+  --removed-char: rgba(163, 22, 33, 0.2);
+  --hunk-bg: #ddf4ff;
+  --hunk-text: #0550ae;
+  --selection-bg: rgba(9, 105, 218, 0.08);
+  --selection-border: #0969da;
+
+  --comment-bg: #f6f8fa;
+  --comment-border: #0969da;
+  --stale-bg: rgba(154, 103, 0, 0.08);
+  --stale-text: #9a6700;
+  --stale-border: #bf8700;
+  --warning-bg: rgba(154, 103, 0, 0.1);
+  --warning-text: #7d4e00;
+
+  --nav-bg: #f6f8fa;
+  --nav-border: #d0d7de;
+
+  --syntax-keyword: #cf222e;
+  --syntax-string: #0a3069;
+  --syntax-number: #0550ae;
+  --syntax-comment: #6e7781;
+  --syntax-function: #6639ba;
+  --syntax-type: #953800;
+  --syntax-variable: #1f2328;
+  --syntax-operator: #cf222e;
+  --syntax-punctuation: #1f2328;
+  --syntax-tag: #116329;
+  --syntax-attr: #0550ae;
+  --syntax-meta: #57606a;
+  --syntax-title: #6639ba;
+  --syntax-literal: #0550ae;
+  --syntax-symbol: #0550ae;
+  --syntax-deletion: #82071e;
+  --syntax-addition: #116329;
+
+  --badge-added-bg: #dafbe1;
+  --badge-added-text: #1a7f37;
+  --badge-added-border: #aadec2;
+  --badge-deleted-bg: #ffebe9;
+  --badge-deleted-text: #cf222e;
+  --badge-deleted-border: #ffb8b0;
+  --badge-renamed-bg: #fff8c5;
+  --badge-renamed-text: #4b2900;
+  --badge-renamed-border: #e3b341;
+  --badge-modified-bg: #ddf4ff;
+  --badge-modified-text: #0550ae;
+  --badge-modified-border: #54aeff;
+
+  --status-open-bg: #dafbe1;
+  --status-open-text: #1a7f37;
+  --status-open-border: #aadec2;
+  --status-submitted-bg: #fbefff;
+  --status-submitted-text: #6639ba;
+  --status-submitted-border: #d8b9ff;
+  --status-progress-bg: #ddf4ff;
+  --status-progress-text: #0550ae;
+  --status-progress-border: #54aeff;
+
+  color-scheme: light;
+}
+
+/* ─── Base Styles ─────────────────────────────────────────────── */
+html,
+body {
+  height: 100%;
 }
 
 body {
@@ -24,37 +189,175 @@ body {
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 14px;
-  height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
 
-a { color: var(--accent); text-decoration: none; }
-a:hover { color: var(--accent-hover); }
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* ─── Global Buttons ─────────────────────────────────────────── */
 button {
   cursor: pointer;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius);
   padding: 5px 12px;
   font-size: 13px;
+  font-family: var(--font-sans);
   background: var(--bg-surface-2);
   color: var(--text);
+  transition: background var(--transition), border-color var(--transition);
+  white-space: nowrap;
 }
-button:hover { background: var(--border); }
+button:hover:not(:disabled) {
+  background: var(--bg-surface-3);
+  border-color: var(--text-subtle);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+  font-weight: 500;
 }
-button.primary:hover { background: var(--accent-hover); }
+button.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
 
-select, input, textarea {
-  background: var(--bg-surface);
+/* ─── Global Form Elements ───────────────────────────────────── */
+select,
+input,
+textarea {
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--text);
   padding: 6px 10px;
   font-size: 13px;
   font-family: var(--font-sans);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  width: 100%;
 }
-textarea { font-family: var(--font-mono); resize: vertical; }
+select:focus,
+input:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+textarea {
+  font-family: var(--font-mono);
+  resize: vertical;
+}
+
+/* ─── Syntax Highlighting ────────────────────────────────────── */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-operator,
+.hljs-word {
+  color: var(--syntax-keyword);
+}
+.hljs-string,
+.hljs-attr,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: var(--syntax-string);
+}
+.hljs-number,
+.hljs-literal,
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--syntax-number);
+}
+.hljs-comment,
+.hljs-quote {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+.hljs-title,
+.hljs-section {
+  color: var(--syntax-title);
+}
+.hljs-function .hljs-title,
+.hljs-name {
+  color: var(--syntax-function);
+}
+.hljs-type,
+.hljs-built_in,
+.hljs-class .hljs-title {
+  color: var(--syntax-type);
+}
+.hljs-variable,
+.hljs-params,
+.hljs-template-variable {
+  color: var(--syntax-variable);
+}
+.hljs-tag {
+  color: var(--syntax-tag);
+}
+.hljs-meta,
+.hljs-meta .hljs-keyword {
+  color: var(--syntax-meta);
+}
+.hljs-punctuation,
+.hljs-subst {
+  color: var(--syntax-punctuation);
+}
+.hljs-regexp {
+  color: var(--syntax-string);
+}
+.hljs-addition {
+  color: var(--syntax-addition);
+}
+.hljs-deletion {
+  color: var(--syntax-deletion);
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 600;
+}
+.hljs-link {
+  text-decoration: underline;
+  color: var(--accent-text);
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-subtle);
+}
+
+/* ─── Focus visible ──────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

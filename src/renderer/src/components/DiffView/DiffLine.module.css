@@ -1,24 +1,127 @@
-.line { user-select: none; }
-.added { background: var(--added); }
-.removed { background: var(--removed); }
-.context { background: transparent; }
-.selecting { background: #1f3a5f; }
-.hunkHeader { background: var(--hunk); }
-.hunkHeaderContent { padding: 4px 8px; font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
-.lineNumOld, .lineNumNew {
-  width: 48px; min-width: 48px; padding: 0 8px;
-  font-family: var(--font-mono); font-size: 12px;
-  color: var(--text-muted); text-align: right;
-  border-right: 1px solid var(--border); user-select: none;
+/* ─── Base Line ───────────────────────────── */
+.line {
+  font-size: 12px;
+  line-height: 20px;
+  font-family: var(--font-mono);
 }
-.gutter { width: 28px; min-width: 28px; padding: 0 4px; }
+.line:hover .gutterBtn {
+  visibility: visible;
+}
+
+/* ─── Hunk Header ─────────────────────────── */
+.hunkHeader {
+  background: var(--hunk-bg);
+}
+.hunkHeaderContent {
+  padding: 4px 16px;
+  font-size: 12px;
+  color: var(--hunk-text);
+  font-style: italic;
+}
+
+/* ─── Line Types ──────────────────────────── */
+.added {
+  background: var(--added-bg);
+}
+.removed {
+  background: var(--removed-bg);
+}
+.context {
+  background: transparent;
+}
+
+/* Selection state */
+.inSelection {
+  background: var(--selection-bg) !important;
+  box-shadow: inset 3px 0 0 var(--selection-border);
+}
+
+/* ─── Line Number Cells ───────────────────── */
+.lineNumOld,
+.lineNumNew {
+  width: 48px;
+  min-width: 48px;
+  padding: 0 8px;
+  text-align: right;
+  color: var(--text-subtle);
+  font-size: 11px;
+  line-height: 20px;
+  vertical-align: top;
+  user-select: none;
+  border-right: 1px solid var(--border-muted);
+  white-space: nowrap;
+}
+
+.added .lineNumOld,
+.added .lineNumNew {
+  background: var(--added-bg-num);
+  color: var(--added-text);
+}
+
+.removed .lineNumOld,
+.removed .lineNumNew {
+  background: var(--removed-bg-num);
+  color: var(--removed-text);
+}
+
+/* ─── Gutter ──────────────────────────────── */
+.gutter {
+  width: 28px;
+  min-width: 28px;
+  padding: 0;
+  text-align: center;
+  vertical-align: top;
+  user-select: none;
+  border-right: 1px solid var(--border-muted);
+}
+
 .gutterBtn {
-  border: none; background: var(--accent); color: #fff;
-  border-radius: 3px; width: 18px; height: 18px;
-  font-size: 14px; line-height: 1; padding: 0;
-  display: flex; align-items: center; justify-content: center;
+  visibility: hidden;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform var(--transition), background var(--transition);
 }
-.code { font-family: var(--font-mono); font-size: 13px; padding: 1px 8px; white-space: pre; }
-.prefix { color: var(--text-muted); margin-right: 4px; user-select: none; }
-.added .prefix { color: var(--added-text); }
-.removed .prefix { color: var(--removed-text); }
+.gutterBtn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  transform: scale(1.1);
+}
+
+/* ─── Code Cell ───────────────────────────── */
+.code {
+  padding: 0 8px;
+  white-space: pre;
+  overflow: hidden;
+  vertical-align: top;
+  width: 100%;
+}
+
+.prefix {
+  display: inline-block;
+  width: 14px;
+  color: var(--text-subtle);
+  user-select: none;
+}
+.added .prefix {
+  color: var(--added-text);
+}
+.removed .prefix {
+  color: var(--removed-text);
+}
+
+/* ─── Comment indicator ───────────────────── */
+.hasComment {
+  box-shadow: inset 3px 0 0 var(--comment-border);
+}

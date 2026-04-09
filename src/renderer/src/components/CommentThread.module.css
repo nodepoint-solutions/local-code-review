@@ -1,15 +1,53 @@
 .thread {
-  margin: 4px 0 4px 80px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
   background: var(--comment-bg);
-  overflow: hidden;
+  border-left: 3px solid var(--comment-border);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  font-family: var(--font-sans);
 }
-.stale { opacity: 0.5; border-style: dashed; }
+
+.stale {
+  border-left-color: var(--stale-border);
+  background: var(--stale-bg);
+}
+
 .header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 12px; border-bottom: 1px solid var(--border);
-  font-size: 12px; color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
 }
-.staleTag { color: #d29922; font-size: 11px; }
-.body { padding: 10px 12px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+
+.meta svg {
+  flex-shrink: 0;
+}
+
+.lineRef {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.staleTag {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: var(--stale-bg);
+  color: var(--stale-text);
+  border: 1px solid var(--stale-border);
+}
+
+.body {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}

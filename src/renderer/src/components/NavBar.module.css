@@ -1,0 +1,101 @@
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--nav-height);
+  padding: 0 16px;
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--nav-border);
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+}
+
+.left,
+.right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.logoBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 13px;
+}
+.logoBtn:hover {
+  background: var(--bg-surface-2);
+  border-color: transparent;
+}
+
+.logoText {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sep {
+  color: var(--text-subtle);
+  font-size: 14px;
+  padding: 0 2px;
+  user-select: none;
+}
+
+.crumbGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.crumbLink {
+  background: transparent;
+  border: none;
+  color: var(--accent-text);
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.crumbLink:hover {
+  background: var(--accent-subtle);
+  border-color: transparent;
+  color: var(--accent-hover);
+}
+
+.crumbCurrent {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 6px;
+}
+
+.themeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+}
+.themeBtn:hover {
+  background: var(--bg-surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
