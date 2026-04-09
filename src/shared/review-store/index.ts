@@ -82,6 +82,18 @@ export class ReviewStore {
     return updated
   }
 
+  assignPR(repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null): PRFile {
+    const pr = readPR(repoPath, prId)
+    const updated: PRFile = {
+      ...pr,
+      assignee: assignee ?? null,
+      assigned_at: assignee ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    }
+    writePR(repoPath, updated)
+    return updated
+  }
+
   // ── Reviews ───────────────────────────────────────────────────────────────
 
   listReviews(repoPath: string, prId: string): ReviewFile[] {
