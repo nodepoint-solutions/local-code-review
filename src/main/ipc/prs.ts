@@ -2,6 +2,7 @@
 import { ipcMain } from 'electron'
 import type Database from 'better-sqlite3'
 import { ReviewStore } from '../../shared/review-store'
+import { deleteRepo } from '../db/repos'
 import { listBranches, resolveSha } from '../git/branches'
 import { execGit } from '../git/runner'
 import { parseDiff } from '../git/diff-parser'
@@ -9,7 +10,7 @@ import type { Commit, CreatePrPayload, PrDetail } from '../../shared/types'
 
 const store = new ReviewStore()
 
-export function registerPrHandlers(_db: Database.Database): void {
+export function registerPrHandlers(db: Database.Database): void {
   ipcMain.handle('prs:list', (_e, repoPath: string) => {
     try {
       return store.listPRs(repoPath)
@@ -121,6 +122,35 @@ export function registerPrHandlers(_db: Database.Database): void {
           const [hash, shortHash, subject, authorName, authorEmail, ts] = line.split('\x00')
           return { hash, shortHash, subject, authorName, authorEmail, timestamp: parseInt(ts, 10) }
         })
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('prs:close', (_e, repoPath: string, prId: string) => {
+    try {
+      return store.updatePRStatus(repoPath, prId, 'closed')
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('prs:reopen', (_e, repoPath: string, prId: string) => {
+    try {
+      return store.updatePRStatus(repoPath, prId, 'open')
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('prs:delete', (_e, repoPath: string, prId: string) => {
+    try {
+      store.deletePR(repoPath, prId)
+      const openRemaining = store.listPRs(repoPath).filter((pr) => pr.status === 'open')
+      if (openRemaining.length === 0) {
+        deleteRepo(db, repoPath)
+      }
+      return {}
     } catch (err) {
       return { error: (err as Error).message }
     }

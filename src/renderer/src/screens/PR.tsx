@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import NavBar from '../components/NavBar'
 import StaleBanner from '../components/StaleBanner'
@@ -66,6 +66,7 @@ function getInitials(name: string): string {
 
 export default function PR(): JSX.Element {
   const { repoId, prId } = useParams<{ repoId: string; prId: string }>()
+  const navigate = useNavigate()
   const { repos, prDetail, setPrDetail, diffView, setDiffView, reviewPanelOpen, setReviewPanelOpen } = useStore()
   const repo = repos.find((r) => r.id === repoId)
   const [tab, setTab] = useState<Tab>('overview')
@@ -191,6 +192,25 @@ export default function PR(): JSX.Element {
       setCommitDiff(result.diff)
       setCommitDiffLoading(false)
     })
+  }
+
+  async function handleClosePr(): Promise<void> {
+    if (!repo || !prDetail) return
+    const result = await window.api.closePr(repo.path, prDetail.pr.id)
+    if (!('error' in result)) setPrDetail({ ...prDetail, pr: result })
+  }
+
+  async function handleReopenPr(): Promise<void> {
+    if (!repo || !prDetail) return
+    const result = await window.api.reopenPr(repo.path, prDetail.pr.id)
+    if (!('error' in result)) setPrDetail({ ...prDetail, pr: result })
+  }
+
+  async function handleDeletePr(): Promise<void> {
+    if (!repo || !prDetail) return
+    if (!window.confirm(`Delete "${prDetail.pr.title}"?\n\nThis will permanently remove all review data for this PR and cannot be undone.`)) return
+    await window.api.deletePr(repo.path, prDetail.pr.id)
+    navigate(`/repo/${repoId}`)
   }
 
   async function handleRefresh(): Promise<void> {
@@ -391,6 +411,18 @@ export default function PR(): JSX.Element {
               <div className={styles.sidebarLabel}>Created</div>
               <div className={styles.sidebarValue}>
                 <time className={styles.metaText}>{new Date(pr.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</time>
+              </div>
+            </div>
+
+            <div className={styles.sidebarSection}>
+              <div className={styles.sidebarLabel}>Actions</div>
+              <div className={styles.sidebarActions}>
+                {pr.status === 'open' ? (
+                  <button className={styles.sidebarActionBtn} onClick={handleClosePr}>Close PR</button>
+                ) : (
+                  <button className={styles.sidebarActionBtn} onClick={handleReopenPr}>Reopen PR</button>
+                )}
+                <button className={`${styles.sidebarActionBtn} ${styles.sidebarActionDanger}`} onClick={handleDeletePr}>Delete PR</button>
               </div>
             </div>
           </div>

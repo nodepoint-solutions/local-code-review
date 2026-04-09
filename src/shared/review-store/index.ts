@@ -2,7 +2,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import {
   readPR, writePR, readReview, writeReview,
-  listPRIds, listReviewIds,
+  listPRIds, listReviewIds, deletePRDir,
 } from './serializer'
 import type { PRFile, ReviewFile, ReviewComment, Resolution, ContextLineEntry } from './schema'
 
@@ -65,6 +65,10 @@ export class ReviewStore {
 
   getPR(repoPath: string, prId: string): PRFile {
     return readPR(repoPath, prId)
+  }
+
+  deletePR(repoPath: string, prId: string): void {
+    deletePRDir(repoPath, prId)
   }
 
   updatePRStatus(repoPath: string, prId: string, status: 'open' | 'closed'): PRFile {

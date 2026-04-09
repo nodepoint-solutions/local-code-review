@@ -5,6 +5,17 @@ import NavBar from '../components/NavBar'
 import type { PRFile } from '../../../shared/types'
 import styles from './Repo.module.css'
 
+function TrashIcon(): JSX.Element {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4h6v2" />
+    </svg>
+  )
+}
+
 function PlusIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -42,10 +53,28 @@ export default function Repo(): JSX.Element {
   useEffect(() => {
     if (repo) {
       setSelectedRepo(repo)
-      window.api.touchRepo(repo.id)
       window.api.listPrs(repo.path).then(setPrs)
     }
   }, [repo?.id])
+
+  async function handleClose(pr: PRFile): Promise<void> {
+    if (!repo) return
+    await window.api.closePr(repo.path, pr.id)
+    setPrs(await window.api.listPrs(repo.path))
+  }
+
+  async function handleReopen(pr: PRFile): Promise<void> {
+    if (!repo) return
+    await window.api.reopenPr(repo.path, pr.id)
+    setPrs(await window.api.listPrs(repo.path))
+  }
+
+  async function handleDelete(pr: PRFile): Promise<void> {
+    if (!repo) return
+    if (!window.confirm(`Delete "${pr.title}"?\n\nThis will permanently remove all review data for this PR and cannot be undone.`)) return
+    await window.api.deletePr(repo.path, pr.id)
+    setPrs(await window.api.listPrs(repo.path))
+  }
 
   if (!repo) return <div style={{ padding: 32, color: 'var(--text-muted)' }}>Repository not found.</div>
 
@@ -82,30 +111,42 @@ export default function Repo(): JSX.Element {
         ) : (
           <div className={styles.prList}>
             {prs.map((pr) => (
-              <button
+              <div
                 key={pr.id}
-                className={styles.prItem}
-                onClick={() => navigate(`/repo/${repo.id}/pr/${pr.id}`)}
+                className={`${styles.prItem} ${pr.status === 'closed' ? styles.prItemClosed : ''}`}
               >
-                <div className={styles.prLeft}>
-                  <div className={styles.prIconWrap}>
-                    <PRIcon />
+                <button
+                  className={styles.prItemMain}
+                  onClick={() => navigate(`/repo/${repo.id}/pr/${pr.id}`)}
+                >
+                  <div className={styles.prLeft}>
+                    <div className={`${styles.prIconWrap} ${pr.status === 'closed' ? styles.prIconWrapClosed : ''}`}>
+                      <PRIcon />
+                    </div>
                   </div>
-                </div>
-                <div className={styles.prBody}>
-                  <div className={styles.prTop}>
+                  <div className={styles.prBody}>
                     <span className={styles.prTitle}>{pr.title}</span>
-                    <span className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}>
-                      {statusLabel(pr.status)}
-                    </span>
+                    <div className={styles.prMeta}>
+                      <code className={styles.branch}>{pr.compare_branch}</code>
+                      <span className={styles.arrow}>→</span>
+                      <code className={styles.branch}>{pr.base_branch}</code>
+                    </div>
                   </div>
-                  <div className={styles.prMeta}>
-                    <code className={styles.branch}>{pr.compare_branch}</code>
-                    <span className={styles.arrow}>→</span>
-                    <code className={styles.branch}>{pr.base_branch}</code>
-                  </div>
+                </button>
+                <div className={styles.prActions}>
+                  <span className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}>
+                    {statusLabel(pr.status)}
+                  </span>
+                  {pr.status === 'open' ? (
+                    <button className={styles.prActionBtn} onClick={() => handleClose(pr)}>Close</button>
+                  ) : (
+                    <button className={styles.prActionBtn} onClick={() => handleReopen(pr)}>Reopen</button>
+                  )}
+                  <button className={`${styles.prActionBtn} ${styles.prActionDanger}`} onClick={() => handleDelete(pr)}>
+                    <TrashIcon />
+                  </button>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}

@@ -41,6 +41,12 @@ const api = {
     ipcRenderer.invoke('prs:get', repoPath, prId),
   refreshPr: (repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> =>
     ipcRenderer.invoke('prs:refresh', repoPath, prId),
+  closePr: (repoPath: string, prId: string): Promise<PRFile | { error: string }> =>
+    ipcRenderer.invoke('prs:close', repoPath, prId),
+  reopenPr: (repoPath: string, prId: string): Promise<PRFile | { error: string }> =>
+    ipcRenderer.invoke('prs:reopen', repoPath, prId),
+  deletePr: (repoPath: string, prId: string): Promise<{ error?: string }> =>
+    ipcRenderer.invoke('prs:delete', repoPath, prId),
 
   // Reviews & Comments
   addComment: (payload: AddCommentPayload): Promise<ReviewFile | { error: string }> =>

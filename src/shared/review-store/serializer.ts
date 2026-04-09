@@ -73,6 +73,11 @@ export function listPRIds(repoPath: string): string[] {
   })
 }
 
+export function deletePRDir(repoPath: string, prId: string): void {
+  const dir = prDir(repoPath, prId)
+  fs.rmSync(dir, { recursive: true, force: true })
+}
+
 export function listReviewIds(repoPath: string, prId: string): string[] {
   const dir = reviewsDir(repoPath, prId)
   if (!fs.existsSync(dir)) return []

@@ -4,13 +4,20 @@ import type Database from 'better-sqlite3'
 import { insertRepo, listRepos, touchRepo } from '../db/repos'
 import { getSetting, setSetting } from '../db/settings'
 import { isGitRepo } from '../git/branches'
-import { scanForRepos } from '../git/scanner'
+import { scanForRepos, scanForReviewRepos } from '../git/scanner'
 import { ReviewStore } from '../../shared/review-store'
 const store = new ReviewStore()
 
 export function registerRepoHandlers(db: Database.Database): void {
-  ipcMain.handle('repos:list', () => {
+  ipcMain.handle('repos:list', async () => {
     try {
+      const baseDir = getSetting(db, 'scan_base_dir')
+      if (baseDir) {
+        const discovered = await scanForReviewRepos(baseDir)
+        for (const { path: repoPath, name } of discovered) {
+          insertRepo(db, repoPath, name)
+        }
+      }
       const repos = listRepos(db)
       return repos.map((repo) => ({
         ...repo,

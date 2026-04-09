@@ -32,3 +32,7 @@ export function touchRepo(db: Database.Database, repoId: string): void {
   db.prepare('UPDATE repositories SET last_visited_at = ? WHERE id = ?')
     .run(new Date().toISOString(), repoId)
 }
+
+export function deleteRepo(db: Database.Database, repoPath: string): void {
+  db.prepare('DELETE FROM repositories WHERE path = ?').run(repoPath)
+}

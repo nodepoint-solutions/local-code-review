@@ -296,6 +296,42 @@
   color: var(--text);
 }
 
+.sidebarActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebarActionBtn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-surface-2);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.sidebarActionBtn:hover {
+  background: var(--bg);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.sidebarActionDanger {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-subtle);
+}
+.sidebarActionDanger:hover {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.25);
+  color: #dc2626;
+}
+
 .branchStack {
   display: flex;
   flex-direction: column;

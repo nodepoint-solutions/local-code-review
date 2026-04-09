@@ -17,6 +17,41 @@ async function isInsideWorkTree(dirPath: string): Promise<boolean> {
   }
 }
 
+export async function scanForReviewRepos(
+  basePath: string,
+  maxDepth = 5
+): Promise<DiscoveredRepo[]> {
+  const results: DiscoveredRepo[] = []
+
+  async function walk(dirPath: string, depth: number): Promise<void> {
+    if (depth > maxDepth) return
+
+    try {
+      await fs.access(path.join(dirPath, '.reviews'))
+      results.push({ path: dirPath, name: path.basename(dirPath) })
+      return
+    } catch {
+      // no .reviews here, recurse
+    }
+
+    let entries: import('fs').Dirent[]
+    try {
+      entries = await fs.readdir(dirPath, { withFileTypes: true })
+    } catch {
+      return
+    }
+
+    const subdirs = entries
+      .filter((e) => e.isDirectory() && !e.name.startsWith('.'))
+      .map((e) => path.join(dirPath, e.name))
+
+    await Promise.all(subdirs.map((sub) => walk(sub, depth + 1)))
+  }
+
+  await walk(basePath, 1)
+  return results
+}
+
 export async function scanForRepos(
   basePath: string,
   maxDepth = 5
