@@ -76,7 +76,7 @@ export default function PR(): JSX.Element {
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null)
   const [commitDiff, setCommitDiff] = useState<ParsedFile[] | null>(null)
   const [commitDiffLoading, setCommitDiffLoading] = useState(false)
-  const [fixLoading, setFixLoading] = React.useState<string | null>(null)
+  const [assigneeDropdownOpen, setAssigneeDropdownOpen] = React.useState(false)
   const [integrations, setIntegrations] = React.useState<import('../../../shared/types').IntegrationStatus[]>([])
   const fileRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [treeWidth, setTreeWidth] = useState(() => {
@@ -149,12 +149,29 @@ export default function PR(): JSX.Element {
     return () => window.api.offReviewUpdated()
   }, [repo?.path, prDetail?.pr?.id])
 
-  async function handleFix(tool: 'claude' | 'vscode'): Promise<void> {
-    if (!prDetail?.review || !prDetail.pr || !repo) return
-    setFixLoading(tool)
-    const result = await window.api.launchFix(tool, repo.path, prDetail.pr.id, prDetail.review.id)
-    if ('error' in result && result.error) console.error('Fix launch failed:', result.error)
-    setFixLoading(null)
+  useEffect(() => {
+    window.api.onPrUpdated(async ({ prId: updatedPrId }) => {
+      if (updatedPrId !== prId || !repo) return
+      const updated = await window.api.getPr(repo.path, prId)
+      if (updated && !('error' in updated)) setPrDetail(updated as any)
+    })
+    return () => window.api.offPrUpdated()
+  }, [prId, repo?.path])
+
+  async function handleAssign(tool: 'claude' | 'vscode'): Promise<void> {
+    if (!repo || !prId) return
+    setAssigneeDropdownOpen(false)
+    await window.api.assignPr(repo.path, prId, tool)
+    const updated = await window.api.getPr(repo.path, prId)
+    if (updated && !('error' in updated)) setPrDetail(updated as any)
+    if (prDetail?.review) {
+      window.api.launchFix(tool, repo.path, prId, prDetail.review.id)
+    }
+  }
+
+  async function handleNudge(): Promise<void> {
+    if (!repo || !prId || !prDetail?.pr.assignee || !prDetail?.review) return
+    window.api.launchFix(prDetail.pr.assignee, repo.path, prId, prDetail.review.id)
   }
 
   useEffect(() => {
@@ -400,6 +417,52 @@ export default function PR(): JSX.Element {
               </div>
             )}
 
+            {review?.status === 'submitted' && (
+              <div className={styles.sidebarSection}>
+                <div className={styles.sidebarLabel}>Assignees</div>
+                {!pr.assignee ? (
+                  <div className={styles.assigneeDropdownWrap}>
+                    <button
+                      className={styles.assigneeUnset}
+                      onClick={() => setAssigneeDropdownOpen((o) => !o)}
+                    >
+                      No one — assign…
+                    </button>
+                    {assigneeDropdownOpen && (
+                      <div className={styles.assigneeDropdownMenu}>
+                        {integrations.find((i) => i.id === 'claudeCode' && i.detected) && (
+                          <button
+                            className={styles.assigneeDropdownItem}
+                            onClick={() => handleAssign('claude')}
+                          >
+                            Claude Code
+                          </button>
+                        )}
+                        {integrations.find((i) => (i.id === 'vscode' || i.id === 'cursor' || i.id === 'windsurf') && i.detected) && (
+                          <button
+                            className={styles.assigneeDropdownItem}
+                            onClick={() => handleAssign('vscode')}
+                          >
+                            Copilot (VS Code)
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <div className={styles.assigneeChip}>
+                      <span className={styles.assigneeDot} />
+                      <span>{pr.assignee === 'claude' ? 'Claude Code' : 'Copilot (VS Code)'}</span>
+                    </div>
+                    <button className={styles.nudgeBtn} onClick={handleNudge}>
+                      Nudge
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className={styles.sidebarSection}>
               <div className={styles.sidebarLabel}>Commits</div>
               <div className={styles.sidebarValue}>
@@ -533,28 +596,6 @@ export default function PR(): JSX.Element {
         />
       )}
 
-      {prDetail.review?.status === 'submitted' && (
-        <div style={{ display: 'flex', gap: 8, marginTop: 8, padding: '0 16px 16px' }}>
-          {integrations.find((i) => i.id === 'claudeCode' && i.detected) && (
-            <button
-              onClick={() => handleFix('claude')}
-              disabled={fixLoading !== null}
-              title="Open Claude Code to fix open issues"
-            >
-              {fixLoading === 'claude' ? 'Launching…' : 'Fix with Claude'}
-            </button>
-          )}
-          {integrations.find((i) => (i.id === 'vscode' || i.id === 'cursor' || i.id === 'windsurf') && i.detected) && (
-            <button
-              onClick={() => handleFix('vscode')}
-              disabled={fixLoading !== null}
-              title="Open VS Code / Copilot to fix open issues (prompt copied to clipboard)"
-            >
-              {fixLoading === 'vscode' ? 'Launching…' : 'Fix with Copilot'}
-            </button>
-          )}
-        </div>
-      )}
     </div>
   )
 }
