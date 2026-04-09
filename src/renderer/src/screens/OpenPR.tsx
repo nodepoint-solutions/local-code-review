@@ -33,7 +33,6 @@ export default function OpenPR(): JSX.Element {
     setError('')
     try {
       const pr = await window.api.createPr({
-        repoId: repo.id,
         repoPath: repo.path,
         title,
         description: description || null,

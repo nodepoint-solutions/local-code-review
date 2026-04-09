@@ -9,7 +9,7 @@ import type { Commit, CreatePrPayload, PrDetail } from '../../shared/types'
 
 const store = new ReviewStore()
 
-export function registerPrHandlers(db: Database.Database): void {
+export function registerPrHandlers(_db: Database.Database): void {
   ipcMain.handle('prs:list', (_e, repoPath: string) => {
     try {
       return store.listPRs(repoPath)
@@ -28,8 +28,8 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:create', async (_e, payload: CreatePrPayload) => {
     try {
-      const baseSha = await resolveSha(payload.repoPath, payload.baseBranch)
-      const compareSha = await resolveSha(payload.repoPath, payload.compareBranch)
+      await resolveSha(payload.repoPath, payload.baseBranch)
+      await resolveSha(payload.repoPath, payload.compareBranch)
       return store.createPR(payload.repoPath, {
         title: payload.title,
         description: payload.description,
@@ -38,7 +38,7 @@ export function registerPrHandlers(db: Database.Database): void {
       })
       // SHAs are resolved but stored on the first review, not on the PR itself
     } catch (err) {
-      return { error: 'git-failed', message: (err as Error).message }
+      return { error: (err as Error).message }
     }
   })
 
@@ -61,7 +61,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
       return { pr, diff, review, isStale }
     } catch (err) {
-      return { error: 'git-failed', message: (err as Error).message }
+      return { error: (err as Error).message }
     }
   })
 
@@ -98,7 +98,7 @@ export function registerPrHandlers(db: Database.Database): void {
       const diff = parseDiff(rawDiff)
       return { pr, diff, review: newReview, isStale: false }
     } catch (err) {
-      return { error: 'git-failed', message: (err as Error).message }
+      return { error: (err as Error).message }
     }
   })
 

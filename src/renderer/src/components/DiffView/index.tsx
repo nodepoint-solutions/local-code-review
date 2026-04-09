@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { AddCommentPayload, Comment, ParsedFile } from '../../../../shared/types'
+import type { AddCommentPayload, ReviewComment, ParsedFile } from '../../../../shared/types'
 import { extractContext } from '../../../../shared/diff-utils'
 import { getLanguageForFile } from '../../utils/syntax'
 import UnifiedDiff from './UnifiedDiff'
@@ -9,9 +9,9 @@ import styles from './DiffView.module.css'
 
 interface Props {
   file: ParsedFile
-  comments: Comment[]
+  comments: ReviewComment[]
   view: 'unified' | 'split'
-  onAddComment: (payload: Omit<AddCommentPayload, 'prId'>) => Promise<void>
+  onAddComment: (payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>) => Promise<void>
 }
 
 function ChevronDownIcon(): JSX.Element {
@@ -69,18 +69,18 @@ export default function DiffView({ file, comments, view, onAddComment }: Props):
     const start = Math.min(selectionStart, selectionEnd)
     const end = Math.max(selectionStart, selectionEnd)
     const contextRaw = extractContext(file.lines, start, end)
-    const contextLines = contextRaw.map((l) => ({
-      line_number: l.diffLineNumber,
+    const context = contextRaw.map((l) => ({
+      line: l.diffLineNumber,
       type: l.type as 'added' | 'removed' | 'context',
       content: l.content,
     }))
     await onAddComment({
-      filePath: file.newPath,
+      file: file.newPath,
       startLine: start,
       endLine: end,
       side: selectionSide,
       body,
-      contextLines,
+      context,
     })
     setShowCommentBox(false)
     setSelectionStart(null)

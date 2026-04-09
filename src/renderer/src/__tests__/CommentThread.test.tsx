@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import CommentThread from '../components/CommentThread'
-import type { ReviewComment } from '../../../../shared/types'
+import type { ReviewComment } from '../../../shared/types'
 
 const comment: ReviewComment = {
   id: 'RVW-001', file: 'src/foo.ts',

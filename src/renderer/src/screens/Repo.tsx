@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import NavBar from '../components/NavBar'
-import type { PullRequest } from '../../../../shared/types'
+import type { PRFile } from '../../../shared/types'
 import styles from './Repo.module.css'
 
 function PlusIcon(): JSX.Element {
@@ -25,9 +25,9 @@ function PRIcon(): JSX.Element {
   )
 }
 
-function statusLabel(status: PullRequest['status']): string {
-  if (status === 'in_progress') return 'In review'
-  if (status === 'submitted') return 'Submitted'
+function statusLabel(status: PRFile['status']): string {
+  if (status === 'open') return 'Open'
+  if (status === 'closed') return 'Closed'
   return status
 }
 
@@ -35,7 +35,7 @@ export default function Repo(): JSX.Element {
   const { repoId } = useParams<{ repoId: string }>()
   const navigate = useNavigate()
   const { repos, setSelectedRepo } = useStore()
-  const [prs, setPrs] = useState<PullRequest[]>([])
+  const [prs, setPrs] = useState<PRFile[]>([])
 
   const repo = repos.find((r) => r.id === repoId)
 
@@ -43,7 +43,7 @@ export default function Repo(): JSX.Element {
     if (repo) {
       setSelectedRepo(repo)
       window.api.touchRepo(repo.id)
-      window.api.listPrs(repo.id).then(setPrs)
+      window.api.listPrs(repo.path).then(setPrs)
     }
   }, [repo?.id])
 
@@ -95,7 +95,7 @@ export default function Repo(): JSX.Element {
                 <div className={styles.prBody}>
                   <div className={styles.prTop}>
                     <span className={styles.prTitle}>{pr.title}</span>
-                    <span className={`${styles.statusBadge} ${styles[pr.status]}`}>
+                    <span className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}>
                       {statusLabel(pr.status)}
                     </span>
                   </div>

@@ -1,5 +1,4 @@
-// Make the real Node.js require available to bundled native addons (better-sqlite3/bindings)
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// src/main/index.ts
 ;(globalThis as any).__non_webpack_require__ = require
 
 import { app, BrowserWindow, shell } from 'electron'
@@ -11,7 +10,7 @@ import { registerPrHandlers } from './ipc/prs'
 import { registerReviewHandlers } from './ipc/reviews'
 import { registerExportHandlers } from './ipc/export'
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -36,6 +35,8 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return mainWindow
 }
 
 app.whenReady().then(() => {

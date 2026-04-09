@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import DiffLine from '../components/DiffView/DiffLine'
-import type { ParsedLine } from '../../../../shared/types'
+import type { ParsedLine } from '../../../shared/types'
 
 const addedLine: ParsedLine = {
   diffLineNumber: 3,

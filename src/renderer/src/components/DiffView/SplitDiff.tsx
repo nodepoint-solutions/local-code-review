@@ -1,11 +1,11 @@
-import type { Comment, ParsedFile, ParsedLine } from '../../../../shared/types'
+import type { ReviewComment, ParsedFile, ParsedLine } from '../../../../shared/types'
 import DiffLine from './DiffLine'
 import CommentThread from '../CommentThread'
 import styles from './SplitDiff.module.css'
 
 interface Props {
   file: ParsedFile
-  comments: Comment[]
+  comments: ReviewComment[]
   language: string | null
   onStartComment: (diffLineNumber: number, side: 'left' | 'right') => void
   onExtendComment: (diffLineNumber: number) => void
@@ -50,7 +50,7 @@ export default function SplitDiff({
 }: Props): JSX.Element {
   const pairs = pairLines(file.lines)
 
-  const commentsByEndLine = new Map<number, Comment[]>()
+  const commentsByEndLine = new Map<number, ReviewComment[]>()
   for (const comment of comments) {
     const existing = commentsByEndLine.get(comment.end_line) ?? []
     commentsByEndLine.set(comment.end_line, [...existing, comment])
@@ -68,9 +68,9 @@ export default function SplitDiff({
             )
           }
 
-          const rightEndComments = pair.right ? (commentsByEndLine.get(pair.right.diffLineNumber) ?? []) : []
-          const leftEndComments = pair.left ? (commentsByEndLine.get(pair.left.diffLineNumber) ?? []) : []
-          const allEndComments = [...new Map([...rightEndComments, ...leftEndComments].map((c) => [c.id, c])).values()]
+          const rightEndReviewComments = pair.right ? (commentsByEndLine.get(pair.right.diffLineNumber) ?? []) : []
+          const leftEndReviewComments = pair.left ? (commentsByEndLine.get(pair.left.diffLineNumber) ?? []) : []
+          const allEndReviewComments = [...new Map([...rightEndReviewComments, ...leftEndReviewComments].map((c) => [c.id, c])).values()]
 
           return (
             <>
@@ -114,7 +114,7 @@ export default function SplitDiff({
                   ) : <div className={styles.emptyCell} />}
                 </td>
               </tr>
-              {allEndComments.map((comment) => (
+              {allEndReviewComments.map((comment) => (
                 <tr key={`comment-${comment.id}`}>
                   <td colSpan={2}>
                     <CommentThread comment={comment} />
