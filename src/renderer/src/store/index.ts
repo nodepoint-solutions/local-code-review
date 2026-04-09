@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Repository, PrDetail } from '../../../shared/types'
+import type { RepositoryWithMeta, DiscoveredRepo, PrDetail } from '../../../shared/types'
 
 type Theme = 'dark' | 'light'
 
@@ -7,11 +7,17 @@ interface AppState {
   theme: Theme
   setTheme: (theme: Theme) => void
 
-  repos: Repository[]
-  setRepos: (repos: Repository[]) => void
+  repos: RepositoryWithMeta[]
+  setRepos: (repos: RepositoryWithMeta[]) => void
 
-  selectedRepo: Repository | null
-  setSelectedRepo: (repo: Repository | null) => void
+  selectedRepo: RepositoryWithMeta | null
+  setSelectedRepo: (repo: RepositoryWithMeta | null) => void
+
+  scanResults: DiscoveredRepo[]
+  setScanResults: (results: DiscoveredRepo[]) => void
+
+  scanInProgress: boolean
+  setScanInProgress: (inProgress: boolean) => void
 
   prDetail: PrDetail | null
   setPrDetail: (detail: PrDetail | null) => void
@@ -45,6 +51,12 @@ export const useStore = create<AppState>((set) => ({
 
   selectedRepo: null,
   setSelectedRepo: (repo) => set({ selectedRepo: repo }),
+
+  scanResults: [],
+  setScanResults: (results) => set({ scanResults: results }),
+
+  scanInProgress: false,
+  setScanInProgress: (inProgress) => set({ scanInProgress: inProgress }),
 
   prDetail: null,
   setPrDetail: (detail) => set({ prDetail: detail }),
