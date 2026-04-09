@@ -341,12 +341,4 @@ Both buttons spawn the relevant CLI or app via `shell.openExternal` / `child_pro
 
 ## Migration
 
-One-time, runs on first app startup after this version ships.
-
-1. For each repo, read all `pull_requests` from SQLite
-2. Create `.reviews/{pr-id}/index.json` for each PR
-3. For each review under the PR, create `.reviews/{pr-id}/reviews/{review-id}.json` with comments and `comment_context` merged in
-4. On full success: drop `pull_requests`, `reviews`, `comments`, `comment_context` tables
-5. On failure: delete any `.reviews/` directories written during this run (clean partial state), leave SQLite untouched, surface an error with a retry button
-
-Migration is skipped if the tables are already absent (idempotent). No data is lost — all relational data maps directly to the new file format.
+Pre-production app — no data migration needed. Delete the existing SQLite database file on first run of the new version. The schema is then recreated fresh with only the `repositories` and `settings` tables.
