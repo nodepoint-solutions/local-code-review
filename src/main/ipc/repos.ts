@@ -1,7 +1,7 @@
 import { ipcMain, dialog } from 'electron'
 import path from 'path'
 import type Database from 'better-sqlite3'
-import { insertRepo, listReposWithMeta, touchRepo } from '../db/repos'
+import { insertRepo, listRepos, touchRepo } from '../db/repos'
 import { getSetting, setSetting } from '../db/settings'
 import { isGitRepo } from '../git/branches'
 import { scanForRepos } from '../git/scanner'
@@ -11,7 +11,7 @@ const store = new ReviewStore()
 export function registerRepoHandlers(db: Database.Database): void {
   ipcMain.handle('repos:list', () => {
     try {
-      const repos = listReposWithMeta(db)
+      const repos = listRepos(db)
       return repos.map((repo) => ({
         ...repo,
         pr_count: store.listPRs(repo.path).length,
