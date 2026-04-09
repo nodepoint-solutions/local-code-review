@@ -78,6 +78,16 @@ const api = {
   launchFix: (tool: 'claude' | 'vscode', repoPath: string, prId: string, reviewId: string): Promise<{ error?: string }> =>
     ipcRenderer.invoke('fix:launch', tool, repoPath, prId, reviewId),
 
+  assignPr: (repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null): Promise<import('../shared/types').PRFile | { error: string }> =>
+    ipcRenderer.invoke('prs:assign', repoPath, prId, assignee),
+
+  onPrUpdated: (callback: (data: { repoPath: string; prId: string }) => void) => {
+    ipcRenderer.on('pr:updated', (_e, data) => callback(data))
+  },
+  offPrUpdated: () => {
+    ipcRenderer.removeAllListeners('pr:updated')
+  },
+
   // Push events from main to renderer
   onReviewUpdated: (callback: (data: { repoPath: string; prId: string; reviewId: string }) => void) => {
     ipcRenderer.on('review:updated', (_e, data) => callback(data))
