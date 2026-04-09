@@ -243,6 +243,7 @@ export default function PR(): JSX.Element {
 
   async function handleAddComment(payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>): Promise<void> {
     if (!repo || !prId || !prDetail || !prDetail.review) return
+    if (prDetail.review.status !== 'in_progress') return
     await window.api.addComment({ ...payload, prId, repoPath: repo.path, reviewId: prDetail.review.id })
     const updated = await window.api.getPr(repo.path, prId)
     if (updated && !('error' in updated)) setPrDetail(updated)
@@ -585,6 +586,7 @@ export default function PR(): JSX.Element {
                   comments={comments.filter((c) => c.file === file.newPath)}
                   view={diffView}
                   onAddComment={handleAddComment}
+                  readOnly={review?.status !== 'in_progress'}
                 />
               </div>
             ))}

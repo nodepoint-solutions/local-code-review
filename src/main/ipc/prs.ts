@@ -45,7 +45,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:get', async (_e, repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> => {
     try {
-      const pr = store.getPR(repoPath, prId)
+      let pr = store.getPR(repoPath, prId)
 
       const currentBaseSha = await resolveSha(repoPath, pr.base_branch)
       const currentCompareSha = await resolveSha(repoPath, pr.compare_branch)
@@ -85,6 +85,10 @@ export function registerPrHandlers(db: Database.Database): void {
         const nonStale = activeReview.comments.filter((c) => !c.is_stale)
         if (nonStale.length > 0 && nonStale.every((c) => c.status === 'resolved' || c.status === 'wont_fix')) {
           activeReview = store.completeReview(repoPath, prId, activeReview.id)
+          // Auto-unassign the agent now that the review cycle is complete
+          if (pr.assignee !== null) {
+            pr = store.assignPR(repoPath, prId, null)
+          }
         }
       }
 
@@ -121,11 +125,12 @@ export function registerPrHandlers(db: Database.Database): void {
         return { pr, diff, review: freshReview, isStale: false }
       }
 
-      // No in-progress review: create one for the new SHAs
-      const newReview = store.createReview(repoPath, prId, { base_sha: baseSha, compare_sha: compareSha })
+      // No in-progress review — return the latest existing review without creating a new one.
+      // New reviews are only created explicitly via reviews:new.
       const rawDiff = await execGit(repoPath, ['diff', `${baseSha}..${compareSha}`, '--unified=3'])
       const diff = parseDiff(rawDiff)
-      return { pr, diff, review: newReview, isStale: false }
+      const latestReview = reviews[0] ?? null
+      return { pr, diff, review: latestReview, isStale: false }
     } catch (err) {
       return { error: (err as Error).message }
     }
@@ -199,6 +204,14 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:assign', (_e, repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null) => {
     try {
+      // Assignment requires a submitted review — unassigning is always allowed
+      if (assignee !== null) {
+        const reviews = store.listReviews(repoPath, prId)
+        const hasSubmitted = reviews.some((r) => r.status === 'submitted')
+        if (!hasSubmitted) {
+          return { error: 'Cannot assign until a review has been submitted.' }
+        }
+      }
       return store.assignPR(repoPath, prId, assignee)
     } catch (err) {
       return { error: (err as Error).message }
