@@ -49,10 +49,11 @@ export function registerPrHandlers(_db: Database.Database): void {
       const currentBaseSha = await resolveSha(repoPath, pr.base_branch)
       const currentCompareSha = await resolveSha(repoPath, pr.compare_branch)
 
-      const review = store.getOrCreateInProgressReview(repoPath, prId, {
-        base_sha: currentBaseSha,
-        compare_sha: currentCompareSha,
-      })
+      const reviews = store.listReviews(repoPath, prId)
+      const review =
+        reviews.find((r) => r.status === 'in_progress') ??
+        reviews[0] ??
+        store.createReview(repoPath, prId, { base_sha: currentBaseSha, compare_sha: currentCompareSha })
 
       const isStale = currentBaseSha !== review.base_sha || currentCompareSha !== review.compare_sha
 
