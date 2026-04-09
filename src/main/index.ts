@@ -111,11 +111,15 @@ app.whenReady().then(() => {
 
   reviewWatcher = new ReviewWatcher()
   mcpManager = new McpManager((event) => {
-    mainWindow?.webContents.send('review:updated', {
-      repoPath: event.repoPath,
-      prId: event.prId,
-      reviewId: event.reviewId,
-    })
+    if (event.event === 'pr:updated') {
+      mainWindow?.webContents.send('pr:updated', { repoPath: event.repoPath, prId: event.prId })
+    } else {
+      mainWindow?.webContents.send('review:updated', {
+        repoPath: event.repoPath,
+        prId: event.prId,
+        reviewId: event.reviewId,
+      })
+    }
   })
 
   if (getSetting(db, 'mcp_enabled') === 'true') {
@@ -151,31 +155,30 @@ app.whenReady().then(() => {
   ipcMain.handle('integrations:get', () => getIntegrations())
   ipcMain.handle('integrations:install', () => installIntegrations())
 
-  // "Fix with" launcher
-  ipcMain.handle('fix:launch', async (_e, tool: string, repoPath: string, prId: string, reviewId: string) => {
-    try {
-      if (tool === 'claude') {
-        const mcpFlag = mcpManager?.running ? ['--mcp-server', 'local-code-review'] : []
-        const prompt = `Fix the open issues in .reviews/${prId}/reviews/${reviewId}.json`
-        const { execFile } = await import('child_process')
-        await new Promise<void>((res, rej) =>
-          execFile('claude', [...mcpFlag, prompt], { cwd: repoPath }, (err) => (err ? rej(err) : res()))
-        )
-        return {}
-      }
-      if (tool === 'vscode') {
-        const prompt = `Fix the open issues in .reviews/${prId}/reviews/${reviewId}.json`
-        mainWindow?.webContents.executeJavaScript(`navigator.clipboard.writeText(${JSON.stringify(prompt)})`)
-        const { execFile } = await import('child_process')
-        await new Promise<void>((res, rej) =>
-          execFile('code', [repoPath], (err) => (err ? rej(err) : res()))
-        )
-        return {}
-      }
-      return { error: `Unknown tool: ${tool}` }
-    } catch (err) {
-      return { error: (err as Error).message }
+  // "Fix with" launcher — interactive, fire and forget
+  ipcMain.handle('fix:launch', (_e, tool: string, repoPath: string, prId: string, reviewId: string) => {
+    const prompt = `Fix the open review comments in .reviews/${prId}/reviews/${reviewId}.json. When you are done, call the complete_assignment MCP tool to unassign yourself from this PR.`
+
+    if (tool === 'claude') {
+      const mcpArgs = mcpManager?.running ? ' --mcp-server local-code-review' : ''
+      const safeRepo = repoPath.replace(/'/g, "'\\''")
+      const safePrompt = prompt.replace(/'/g, "'\\''")
+      const shellCmd = `cd '${safeRepo}' && claude${mcpArgs} '${safePrompt}'`
+      const appleScript = `tell application "Terminal" to do script "${shellCmd.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+      const { spawn } = require('child_process') as typeof import('child_process')
+      spawn('osascript', ['-e', appleScript], { detached: true, stdio: 'ignore' }).unref()
+      return {}
     }
+
+    if (tool === 'vscode') {
+      const { clipboard } = require('electron') as typeof import('electron')
+      clipboard.writeText(prompt)
+      const { spawn } = require('child_process') as typeof import('child_process')
+      spawn('open', ['-a', 'Visual Studio Code', repoPath], { detached: true, stdio: 'ignore' }).unref()
+      return {}
+    }
+
+    return { error: `Unknown tool: ${tool}` }
   })
 
   createTray(db)

@@ -11,6 +11,8 @@ const pr: PRFile = {
   base_branch: 'main',
   compare_branch: 'feature/auth',
   status: 'open',
+  assignee: null,
+  assigned_at: null,
   created_at: '2026-04-08T10:00:00Z',
   updated_at: '2026-04-08T10:00:00Z',
 }
