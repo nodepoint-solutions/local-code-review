@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { applySchema, runMigrations } from '../db/schema'
-import { insertRepo, listRepos, findRepoByPath } from '../db/repos'
+import { insertRepo, listRepos, findRepoByPath, listReposWithMeta, touchRepo } from '../db/repos'
+import { getSetting, setSetting } from '../db/settings'
 import { insertPr, listPrs, getPr, updatePrShas } from '../db/prs'
 import {
   getOrCreateInProgressReview,
@@ -49,6 +50,7 @@ describe('repos', () => {
   beforeEach(() => {
     db = new Database(':memory:')
     applySchema(db)
+    runMigrations(db)
   })
 
   it('inserts and retrieves a repo', () => {
@@ -79,6 +81,7 @@ describe('pull_requests', () => {
   beforeEach(() => {
     db = new Database(':memory:')
     applySchema(db)
+    runMigrations(db)
     const repo = insertRepo(db, '/projects/app', 'app')
     repoId = repo.id
   })
@@ -121,6 +124,7 @@ describe('reviews and comments', () => {
   beforeEach(() => {
     db = new Database(':memory:')
     applySchema(db)
+    runMigrations(db)
     const repo = insertRepo(db, '/projects/app', 'app')
     const pr = insertPr(db, { repoId: repo.id, title: 'PR', description: null, baseBranch: 'main', compareBranch: 'f', baseSha: 'x', compareSha: 'y' })
     prId = pr.id
@@ -195,5 +199,65 @@ describe('schema migration', () => {
   it('runMigrations is idempotent', () => {
     runMigrations(db)
     expect(() => runMigrations(db)).not.toThrow()
+  })
+})
+
+describe('settings', () => {
+  let db: Database.Database
+
+  beforeEach(() => {
+    db = new Database(':memory:')
+    applySchema(db)
+    runMigrations(db)
+  })
+
+  it('returns null for unknown key', () => {
+    expect(getSetting(db, 'nonexistent')).toBeNull()
+  })
+
+  it('sets and gets a value', () => {
+    setSetting(db, 'scan_base_dir', '/home/user/dev')
+    expect(getSetting(db, 'scan_base_dir')).toBe('/home/user/dev')
+  })
+
+  it('overwrites an existing value', () => {
+    setSetting(db, 'scan_base_dir', '/old')
+    setSetting(db, 'scan_base_dir', '/new')
+    expect(getSetting(db, 'scan_base_dir')).toBe('/new')
+  })
+})
+
+describe('repos with meta', () => {
+  let db: Database.Database
+
+  beforeEach(() => {
+    db = new Database(':memory:')
+    applySchema(db)
+    runMigrations(db)
+  })
+
+  it('listReposWithMeta returns pr_count 0 for repo with no PRs', () => {
+    insertRepo(db, '/a', 'a')
+    const results = listReposWithMeta(db)
+    expect(results).toHaveLength(1)
+    expect(results[0].pr_count).toBe(0)
+    expect(results[0].last_visited_at).toBeNull()
+  })
+
+  it('listReposWithMeta returns correct pr_count', () => {
+    const repo = insertRepo(db, '/a', 'a')
+    insertPr(db, { repoId: repo.id, title: 'PR1', description: null, baseBranch: 'main', compareBranch: 'f', baseSha: 'x', compareSha: 'y' })
+    insertPr(db, { repoId: repo.id, title: 'PR2', description: null, baseBranch: 'main', compareBranch: 'g', baseSha: 'x', compareSha: 'z' })
+    const results = listReposWithMeta(db)
+    expect(results[0].pr_count).toBe(2)
+  })
+
+  it('touchRepo sets last_visited_at', () => {
+    const repo = insertRepo(db, '/a', 'a')
+    expect(listReposWithMeta(db)[0].last_visited_at).toBeNull()
+    touchRepo(db, repo.id)
+    const updated = listReposWithMeta(db)[0]
+    expect(updated.last_visited_at).not.toBeNull()
+    expect(typeof updated.last_visited_at).toBe('string')
   })
 })
