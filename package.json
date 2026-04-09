@@ -8,7 +8,7 @@
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --build tsconfig.node.json && tsc --noEmit",
     "start": "electron-vite preview",
     "dev": "electron-vite",
     "build:mcp": "vite build --config vite.mcp.config.ts",
