@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import type { ReviewComment, PrDetail, ReviewFile } from '../../../shared/types'
+import type { PRFile, ReviewComment, PrDetail, ReviewFile } from '../../../shared/types'
+import { PRWorkflow } from '../../../shared/pr-workflow'
 import styles from './ReviewPanel.module.css'
 
 interface Props {
+  pr: PRFile
   review: ReviewFile | null
   comments: ReviewComment[]
   prId: string
@@ -28,11 +30,12 @@ function CheckIcon(): JSX.Element {
   )
 }
 
-export default function ReviewPanel({ review, comments, prId, repoPath, onClose, onSubmitted }: Props): JSX.Element {
+export default function ReviewPanel({ pr, review, comments, prId, repoPath, onClose, onSubmitted }: Props): JSX.Element {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [startingNew, setStartingNew] = useState(false)
   const nonStale = comments.filter((c) => !c.is_stale)
+  const workflow = new PRWorkflow(pr, review ?? null)
 
   async function handleSubmit(): Promise<void> {
     if (!review) return
@@ -79,14 +82,14 @@ export default function ReviewPanel({ review, comments, prId, repoPath, onClose,
         </button>
       </div>
 
-      {review?.status === 'submitted' && (
+      {(workflow.phase === 'reviewed' || workflow.phase === 'in_fix') && (
         <div className={styles.submittedBanner}>
           <CheckIcon />
           Review submitted
         </div>
       )}
 
-      {review?.status === 'complete' && (
+      {workflow.phase === 'fix_complete' && (
         <div className={styles.completeBanner}>
           <CheckIcon />
           All comments addressed
@@ -123,7 +126,7 @@ export default function ReviewPanel({ review, comments, prId, repoPath, onClose,
         )}
       </div>
 
-      {review?.status === 'in_progress' && (
+      {workflow.allowsSubmit() && (
         <div className={styles.footer}>
           {error && (
             <div className={styles.error}>
@@ -144,7 +147,7 @@ export default function ReviewPanel({ review, comments, prId, repoPath, onClose,
         </div>
       )}
 
-      {review?.status === 'complete' && (
+      {workflow.allowsNewReview() && (
         <div className={styles.footer}>
           <button
             className="primary"

@@ -2,11 +2,12 @@
 import { ipcMain } from 'electron'
 import type Database from 'better-sqlite3'
 import { ReviewStore } from '../../shared/review-store'
+import { PRWorkflow } from '../../shared/pr-workflow'
 import { deleteRepo } from '../db/repos'
 import { listBranches, resolveSha } from '../git/branches'
-import { execGit } from '../git/runner'
-import { parseDiff } from '../git/diff-parser'
-import type { Commit, CreatePrPayload, PrDetail } from '../../shared/types'
+import { getDiff } from '../git/diff-parser'
+import { listCommits, getCommitDiff } from '../git/commits'
+import type { CreatePrPayload, PrDetail } from '../../shared/types'
 
 const store = new ReviewStore()
 
@@ -52,13 +53,12 @@ export function registerPrHandlers(db: Database.Database): void {
 
       const reviews = store.listReviews(repoPath, prId)
       const review =
-        reviews.find((r) => r.status === 'in_progress') ??
+        store.getInProgressReview(repoPath, prId) ??
         reviews[0] ??
         store.createReview(repoPath, prId, { base_sha: currentBaseSha, compare_sha: currentCompareSha })
 
       // Always diff against current branch HEADs so the view shows latest code
-      const rawDiff = await execGit(repoPath, ['diff', `${currentBaseSha}..${currentCompareSha}`, '--unified=3'])
-      const diff = parseDiff(rawDiff)
+      const diff = await getDiff(repoPath, currentBaseSha, currentCompareSha)
 
       // When the branch has advanced since the review was started, detect newly
       // stale comments and persist the updated SHAs so the next load is cheaper.
@@ -105,11 +105,10 @@ export function registerPrHandlers(db: Database.Database): void {
       const compareSha = await resolveSha(repoPath, pr.compare_branch)
 
       const reviews = store.listReviews(repoPath, prId)
-      const inProgress = reviews.find((r) => r.status === 'in_progress')
+      const inProgress = store.getInProgressReview(repoPath, prId)
 
       if (inProgress) {
-        const rawDiff = await execGit(repoPath, ['diff', `${baseSha}..${compareSha}`, '--unified=3'])
-        const diff = parseDiff(rawDiff)
+        const diff = await getDiff(repoPath, baseSha, compareSha)
 
         for (const file of diff) {
           const validLineNums = new Set(file.lines.map((l) => l.diffLineNumber))
@@ -127,8 +126,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
       // No in-progress review — return the latest existing review without creating a new one.
       // New reviews are only created explicitly via reviews:new.
-      const rawDiff = await execGit(repoPath, ['diff', `${baseSha}..${compareSha}`, '--unified=3'])
-      const diff = parseDiff(rawDiff)
+      const diff = await getDiff(repoPath, baseSha, compareSha)
       const latestReview = reviews[0] ?? null
       return { pr, diff, review: latestReview, isStale: false }
     } catch (err) {
@@ -136,24 +134,12 @@ export function registerPrHandlers(db: Database.Database): void {
     }
   })
 
-  ipcMain.handle('commits:list', async (_e, prId: string, repoPath: string): Promise<Commit[] | { error: string }> => {
+  ipcMain.handle('commits:list', async (_e, prId: string, repoPath: string) => {
     try {
       const reviews = store.listReviews(repoPath, prId)
       const latest = reviews[0]
       if (!latest) return []
-      const raw = await execGit(repoPath, [
-        'log',
-        '--format=%H%x00%h%x00%s%x00%an%x00%ae%x00%at',
-        `${latest.base_sha}..${latest.compare_sha}`,
-      ])
-      return raw
-        .trim()
-        .split('\n')
-        .filter(Boolean)
-        .map((line) => {
-          const [hash, shortHash, subject, authorName, authorEmail, ts] = line.split('\x00')
-          return { hash, shortHash, subject, authorName, authorEmail, timestamp: parseInt(ts, 10) }
-        })
+      return await listCommits(repoPath, latest.base_sha, latest.compare_sha)
     } catch (err) {
       return { error: (err as Error).message }
     }
@@ -190,26 +176,19 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('commits:show', async (_e, repoPath: string, hash: string) => {
     try {
-      const raw = await execGit(repoPath, ['diff-tree', '--no-commit-id', '-p', '-r', '--unified=3', hash])
-      return { diff: parseDiff(raw) }
-    } catch {
-      try {
-        const raw = await execGit(repoPath, ['show', '--format=', '-p', '--unified=3', hash])
-        return { diff: parseDiff(raw.replace(/^[^\n]*\n/, '')) }
-      } catch (err) {
-        return { error: (err as Error).message }
-      }
+      return { diff: await getCommitDiff(repoPath, hash) }
+    } catch (err) {
+      return { error: (err as Error).message }
     }
   })
 
   ipcMain.handle('prs:assign', (_e, repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null) => {
     try {
-      // Assignment requires a submitted review — unassigning is always allowed
       if (assignee !== null) {
-        const reviews = store.listReviews(repoPath, prId)
-        const hasSubmitted = reviews.some((r) => r.status === 'submitted')
-        if (!hasSubmitted) {
-          return { error: 'Cannot assign until a review has been submitted.' }
+        const pr = store.getPR(repoPath, prId)
+        const workflow = new PRWorkflow(pr, store.getActiveReview(repoPath, prId))
+        if (!workflow.allowsAssignee()) {
+          return { error: PRWorkflow.assignDeniedReason(workflow.phase) }
         }
       }
       return store.assignPR(repoPath, prId, assignee)

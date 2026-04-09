@@ -123,8 +123,27 @@ export class ReviewStore {
     return readReview(repoPath, prId, reviewId)
   }
 
+  /**
+   * Returns the review that drives the current workflow phase.
+   * Priority: in_progress → submitted → most-recent complete → null
+   */
+  getActiveReview(repoPath: string, prId: string): ReviewFile | null {
+    const reviews = this.listReviews(repoPath, prId)
+    return (
+      reviews.find((r) => r.status === 'in_progress') ??
+      reviews.find((r) => r.status === 'submitted') ??
+      reviews[0] ??
+      null
+    )
+  }
+
+  /** Returns the in_progress review if one exists, otherwise null. */
+  getInProgressReview(repoPath: string, prId: string): ReviewFile | null {
+    return this.listReviews(repoPath, prId).find((r) => r.status === 'in_progress') ?? null
+  }
+
   getOrCreateInProgressReview(repoPath: string, prId: string, args: CreateReviewArgs): ReviewFile {
-    const existing = this.listReviews(repoPath, prId).find((r) => r.status === 'in_progress')
+    const existing = this.getInProgressReview(repoPath, prId)
     if (existing) return existing
     return this.createReview(repoPath, prId, args)
   }

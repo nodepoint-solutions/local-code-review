@@ -2,9 +2,9 @@
 import { ipcMain } from 'electron'
 import type Database from 'better-sqlite3'
 import { ReviewStore } from '../../shared/review-store'
+import { PRWorkflow } from '../../shared/pr-workflow'
 import { resolveSha } from '../git/branches'
-import { execGit } from '../git/runner'
-import { parseDiff } from '../git/diff-parser'
+import { getDiff } from '../git/diff-parser'
 import type { AddCommentPayload, PrDetail } from '../../shared/types'
 
 const store = new ReviewStore()
@@ -12,9 +12,11 @@ const store = new ReviewStore()
 export function registerReviewHandlers(_db: Database.Database): void {
   ipcMain.handle('comments:add', async (_e, payload: AddCommentPayload) => {
     try {
-      const review = store.getReview(payload.repoPath, payload.prId, payload.reviewId)
-      if (review.status !== 'in_progress') {
-        return { error: 'Cannot add comments to a review that is not in progress.' }
+      const pr = store.getPR(payload.repoPath, payload.prId)
+      const activeReview = store.getActiveReview(payload.repoPath, payload.prId)
+      const workflow = new PRWorkflow(pr, activeReview)
+      if (!workflow.allowsComments()) {
+        return { error: PRWorkflow.commentDeniedReason(workflow.phase) }
       }
       const updated = store.addComment(payload.repoPath, payload.prId, payload.reviewId, {
         file: payload.file,
@@ -40,24 +42,21 @@ export function registerReviewHandlers(_db: Database.Database): void {
 
   ipcMain.handle('reviews:new', async (_e, repoPath: string, prId: string): Promise<PrDetail | { error: string }> => {
     try {
-      const reviews = store.listReviews(repoPath, prId)
+      const pr = store.getPR(repoPath, prId)
+      const activeReview = store.getActiveReview(repoPath, prId)
+      const workflow = new PRWorkflow(pr, activeReview)
 
-      // Block if a review is submitted but not yet complete (agent still working)
-      const submittedReview = reviews.find((r) => r.status === 'submitted')
-      if (submittedReview) {
-        return { error: 'A review is currently submitted and awaiting completion. Wait for all comments to be resolved before starting a new review.' }
+      if (!workflow.allowsNewReview() && activeReview !== null) {
+        return { error: PRWorkflow.newReviewDeniedReason(workflow.phase) }
       }
 
-      // If an in_progress review already exists return it rather than creating a duplicate
-      const inProgressReview = reviews.find((r) => r.status === 'in_progress')
-      const pr = store.getPR(repoPath, prId)
       const baseSha = await resolveSha(repoPath, pr.base_branch)
       const compareSha = await resolveSha(repoPath, pr.compare_branch)
-      const rawDiff = await execGit(repoPath, ['diff', `${baseSha}..${compareSha}`, '--unified=3'])
-      const diff = parseDiff(rawDiff)
+      const diff = await getDiff(repoPath, baseSha, compareSha)
 
-      if (inProgressReview) {
-        return { pr, diff, review: inProgressReview, isStale: false }
+      // Return the in_progress review if one already exists rather than creating a duplicate
+      if (activeReview?.status === 'in_progress') {
+        return { pr, diff, review: activeReview, isStale: false }
       }
 
       const review = store.createReview(repoPath, prId, { base_sha: baseSha, compare_sha: compareSha })

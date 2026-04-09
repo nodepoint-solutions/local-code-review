@@ -34,6 +34,12 @@ const inProgressReview: ReviewFile = {
   submitted_at: null,
 }
 
+const completeReview: ReviewFile = {
+  ...submittedReview,
+  status: 'complete',
+  submitted_at: '2026-04-08T13:00:00Z',
+}
+
 const comments: ReviewComment[] = [
   {
     id: 'RVW-001', file: 'src/foo.ts',
@@ -99,5 +105,15 @@ describe('ReviewTimeline', () => {
   it('renders resolution reply for resolved comments', () => {
     render(<ReviewTimeline pr={pr} review={submittedReview} comments={comments} />)
     expect(screen.getByText('Fixed with optional chaining.')).toBeInTheDocument()
+  })
+
+  it('shows review entry when review is complete', () => {
+    render(<ReviewTimeline pr={pr} review={completeReview} comments={[]} />)
+    expect(screen.getByText(/review complete/i)).toBeInTheDocument()
+  })
+
+  it('uses "addressed" language for complete reviews', () => {
+    render(<ReviewTimeline pr={pr} review={completeReview} comments={[comments[0]]} />)
+    expect(screen.getByText(/review complete — 1 comment addressed/i)).toBeInTheDocument()
   })
 })

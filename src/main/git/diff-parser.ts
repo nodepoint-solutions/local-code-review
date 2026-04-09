@@ -1,4 +1,11 @@
+import { execGit } from './runner'
 import type { ParsedFile, ParsedLine } from '../../shared/types'
+
+/** Returns the parsed diff between two SHAs. */
+export async function getDiff(repoPath: string, baseSha: string, compareSha: string): Promise<ParsedFile[]> {
+  const raw = await execGit(repoPath, ['diff', `${baseSha}..${compareSha}`, '--unified=3'])
+  return parseDiff(raw)
+}
 
 export function parseDiff(raw: string): ParsedFile[] {
   if (!raw.trim()) return []

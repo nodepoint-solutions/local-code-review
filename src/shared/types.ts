@@ -1,5 +1,7 @@
 // src/shared/types.ts
 export type { PRFile, ReviewFile, ReviewComment, Resolution, ContextLineEntry } from './review-store'
+export { PRWorkflow } from './pr-workflow'
+export type { WorkflowPhase } from './pr-workflow'
 
 // ── Repository types (SQLite-backed) ─────────────────────────────────────────
 

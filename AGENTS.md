@@ -21,6 +21,7 @@ src/
 
 - **Never** import main process code from the renderer. Shared utilities go in `src/shared/`.
 - All git operations go through `src/main/git/runner.ts` (spawns system `git`).
+- **Never call `execGit` directly from IPC handlers.** All git operations used by IPC must be wrapped in a named function in `src/main/git/` (e.g. `getDiff`, `listCommits`, `getCommitDiff`, `resolveSha`). The IPC layer imports from those modules only.
 - All DB operations go through `src/main/db/` functions — no raw SQL outside those files.
 - IPC channel names follow `noun:verb` convention (e.g. `repos:list`, `prs:create`).
 

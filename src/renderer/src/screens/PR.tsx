@@ -8,6 +8,8 @@ import DiffView from '../components/DiffView'
 import ReviewPanel from '../components/ReviewPanel'
 import ReviewTimeline from '../components/ReviewTimeline'
 import type { AddCommentPayload, ReviewComment, Commit, ParsedFile, PrDetail } from '../../../shared/types'
+import { PRWorkflow } from '../../../shared/pr-workflow'
+import { formatRelativeTime } from '../utils/formatTime'
 import styles from './PR.module.css'
 
 type Tab = 'overview' | 'commits' | 'files'
@@ -36,19 +38,6 @@ function ReviewIcon(): JSX.Element {
   )
 }
 
-function formatRelativeTime(isoString: string): string {
-  const date = new Date(isoString)
-  const now = Date.now()
-  const diff = now - date.getTime()
-  const minutes = Math.floor(diff / 60000)
-  if (minutes < 1) return 'just now'
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d ago`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
 
 function formatCommitTime(timestamp: number): string {
   const date = new Date(timestamp * 1000)
@@ -265,6 +254,7 @@ export default function PR(): JSX.Element {
   const { pr, diff, review, isStale } = prDetail
   const comments: ReviewComment[] = review?.comments ?? []
   const activeComments = comments.filter((c) => !c.is_stale)
+  const workflow = new PRWorkflow(pr, review ?? null)
 
   return (
     <div className={styles.page}>
@@ -425,7 +415,7 @@ export default function PR(): JSX.Element {
               </div>
             )}
 
-            {review?.status === 'submitted' && (
+            {workflow.allowsAssignee() && (
               <div className={styles.sidebarSection}>
                 <div className={styles.sidebarLabel}>Assignees</div>
                 {!pr.assignee ? (
@@ -586,7 +576,7 @@ export default function PR(): JSX.Element {
                   comments={comments.filter((c) => c.file === file.newPath)}
                   view={diffView}
                   onAddComment={handleAddComment}
-                  readOnly={review?.status !== 'in_progress'}
+                  readOnly={workflow.isReadOnly()}
                 />
               </div>
             ))}
@@ -596,6 +586,7 @@ export default function PR(): JSX.Element {
 
       {reviewPanelOpen && (
         <ReviewPanel
+          pr={pr}
           review={review}
           comments={comments}
           prId={prId!}
