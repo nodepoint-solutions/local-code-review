@@ -91,6 +91,18 @@ export function buildTools() {
         required: ['repo_path', 'pr_id', 'review_id', 'comment_id', 'resolution_comment'],
       },
     },
+    {
+      name: 'complete_assignment',
+      description: 'Call this when you have finished addressing all open review issues. Unassigns you from the PR so the reviewer knows the work is done.',
+      inputSchema: {
+        type: 'object' as const,
+        properties: {
+          repo_path: { type: 'string', description: 'Absolute path to the repository' },
+          pr_id: { type: 'string', description: 'UUID of the PR' },
+        },
+        required: ['repo_path', 'pr_id'],
+      },
+    },
   ]
 }
 
@@ -154,6 +166,12 @@ export async function callTool(
         )
         socketClient.emit({ event: 'review:updated', repoPath: args.repo_path, prId: args.pr_id, reviewId: args.review_id })
         return ok({ success: true, comment: updated.comments.find((c) => c.id === args.comment_id) })
+      }
+
+      case 'complete_assignment': {
+        store.assignPR(args.repo_path, args.pr_id, null)
+        socketClient.emit({ event: 'pr:updated', repoPath: args.repo_path, prId: args.pr_id })
+        return ok({ success: true, message: 'Assignment cleared. You have been unassigned from this PR.' })
       }
 
       default:

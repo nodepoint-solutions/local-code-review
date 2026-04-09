@@ -59,7 +59,8 @@ Use get_open_issues() to find open issues in this repository. For each open issu
 Rules:
 - Never mark an issue without a resolution_comment
 - Work through all open issues before finishing
-- If an issue is already fixed by the time you get to it, mark_resolved() and explain what you observed`,
+- If an issue is already fixed by the time you get to it, mark_resolved() and explain what you observed
+- When all issues are addressed, call complete_assignment() to unassign yourself and signal that you are done`,
         },
       },
     ],
