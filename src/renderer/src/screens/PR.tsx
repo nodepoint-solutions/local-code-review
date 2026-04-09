@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useStore } from '../store'
 import NavBar from '../components/NavBar'
@@ -75,6 +75,8 @@ export default function PR(): JSX.Element {
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null)
   const [commitDiff, setCommitDiff] = useState<ParsedFile[] | null>(null)
   const [commitDiffLoading, setCommitDiffLoading] = useState(false)
+  const [fixLoading, setFixLoading] = React.useState<string | null>(null)
+  const [integrations, setIntegrations] = React.useState<import('../../../shared/types').IntegrationStatus[]>([])
   const fileRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [treeWidth, setTreeWidth] = useState(() => {
     const saved = localStorage.getItem('fileTreeWidth')
@@ -129,6 +131,29 @@ export default function PR(): JSX.Element {
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
     e.preventDefault()
+  }
+
+  React.useEffect(() => {
+    window.api.getIntegrations().then(setIntegrations)
+  }, [])
+
+  React.useEffect(() => {
+    window.api.onReviewUpdated(async ({ repoPath, prId: updatedPrId }) => {
+      if (!repo || !prDetail?.pr) return
+      if (repoPath !== repo.path) return
+      if (updatedPrId && updatedPrId !== prDetail.pr.id) return
+      const fresh = await window.api.getPr(repo.path, prDetail.pr.id)
+      if (fresh && !('error' in fresh)) setPrDetail(fresh)
+    })
+    return () => window.api.offReviewUpdated()
+  }, [repo?.path, prDetail?.pr?.id])
+
+  async function handleFix(tool: 'claude' | 'vscode'): Promise<void> {
+    if (!prDetail?.review || !prDetail.pr || !repo) return
+    setFixLoading(tool)
+    const result = await window.api.launchFix(tool, repo.path, prDetail.pr.id, prDetail.review.id)
+    if ('error' in result && result.error) console.error('Fix launch failed:', result.error)
+    setFixLoading(null)
   }
 
   useEffect(() => {
@@ -474,6 +499,29 @@ export default function PR(): JSX.Element {
           onSubmitted={(updated: PrDetail | null) => setPrDetail(updated)}
           repoPath={repo?.path ?? ''}
         />
+      )}
+
+      {prDetail.review?.status === 'submitted' && (
+        <div style={{ display: 'flex', gap: 8, marginTop: 8, padding: '0 16px 16px' }}>
+          {integrations.find((i) => i.id === 'claudeCode' && i.detected) && (
+            <button
+              onClick={() => handleFix('claude')}
+              disabled={fixLoading !== null}
+              title="Open Claude Code to fix open issues"
+            >
+              {fixLoading === 'claude' ? 'Launching…' : 'Fix with Claude'}
+            </button>
+          )}
+          {integrations.find((i) => (i.id === 'vscode' || i.id === 'cursor' || i.id === 'windsurf') && i.detected) && (
+            <button
+              onClick={() => handleFix('vscode')}
+              disabled={fixLoading !== null}
+              title="Open VS Code / Copilot to fix open issues (prompt copied to clipboard)"
+            >
+              {fixLoading === 'vscode' ? 'Launching…' : 'Fix with Copilot'}
+            </button>
+          )}
+        </div>
       )}
     </div>
   )
