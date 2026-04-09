@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3'
 import { app } from 'electron'
 import path from 'path'
-import { applySchema } from './schema'
+import { applySchema, runMigrations } from './schema'
 
 let _db: Database.Database | null = null
 
@@ -20,5 +20,6 @@ export function getDb(): Database.Database {
   _db.pragma('journal_mode = WAL')
   _db.pragma('foreign_keys = ON')
   applySchema(_db)
+  runMigrations(_db)
   return _db
 }

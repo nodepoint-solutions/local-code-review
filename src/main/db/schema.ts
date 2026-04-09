@@ -46,3 +46,21 @@ export function applySchema(db: Database.Database): void {
     );
   `)
 }
+
+export function runMigrations(db: Database.Database): void {
+  // settings table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+  `)
+
+  // last_visited_at on repositories
+  const hasCol = db
+    .prepare(`SELECT COUNT(*) as count FROM pragma_table_info('repositories') WHERE name = 'last_visited_at'`)
+    .get() as { count: number }
+  if (hasCol.count === 0) {
+    db.exec(`ALTER TABLE repositories ADD COLUMN last_visited_at TEXT;`)
+  }
+}

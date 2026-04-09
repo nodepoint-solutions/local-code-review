@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import Database from 'better-sqlite3'
-import { applySchema } from '../db/schema'
+import { applySchema, runMigrations } from '../db/schema'
 import { insertRepo, listRepos, findRepoByPath } from '../db/repos'
 import { insertPr, listPrs, getPr, updatePrShas } from '../db/prs'
 import {
@@ -165,5 +165,35 @@ describe('reviews and comments', () => {
     markCommentsStale(db, review.id, 'src/a.ts', [{ startLine: 5, endLine: 7 }])
     const comments = listComments(db, review.id)
     expect(comments[0].is_stale).toBe(true)
+  })
+})
+
+describe('schema migration', () => {
+  let db: Database.Database
+
+  beforeEach(() => {
+    db = new Database(':memory:')
+    applySchema(db)
+  })
+
+  it('creates the settings table', () => {
+    runMigrations(db)
+    const tables = db
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`)
+      .all() as { name: string }[]
+    expect(tables.map((t) => t.name)).toContain('settings')
+  })
+
+  it('adds last_visited_at column to repositories', () => {
+    runMigrations(db)
+    const cols = db
+      .prepare(`SELECT name FROM pragma_table_info('repositories')`)
+      .all() as { name: string }[]
+    expect(cols.map((c) => c.name)).toContain('last_visited_at')
+  })
+
+  it('runMigrations is idempotent', () => {
+    runMigrations(db)
+    expect(() => runMigrations(db)).not.toThrow()
   })
 })
