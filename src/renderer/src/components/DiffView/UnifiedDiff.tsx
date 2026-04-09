@@ -1,11 +1,11 @@
-import type { Comment, ParsedFile } from '../../../../shared/types'
+import type { ReviewComment, ParsedFile } from '../../../../shared/types'
 import DiffLine from './DiffLine'
 import CommentThread from '../CommentThread'
 import styles from './UnifiedDiff.module.css'
 
 interface Props {
   file: ParsedFile
-  comments: Comment[]
+  comments: ReviewComment[]
   language: string | null
   onStartComment: (diffLineNumber: number, side: 'left' | 'right') => void
   onExtendComment: (diffLineNumber: number) => void
@@ -21,7 +21,7 @@ export default function UnifiedDiff({
   onStartComment, onExtendComment, onHoverLine,
   isSelecting, selectionStart, selectionEnd, hoverLine,
 }: Props): JSX.Element {
-  const commentsByEndLine = new Map<number, Comment[]>()
+  const commentsByEndLine = new Map<number, ReviewComment[]>()
   for (const comment of comments) {
     const existing = commentsByEndLine.get(comment.end_line) ?? []
     commentsByEndLine.set(comment.end_line, [...existing, comment])

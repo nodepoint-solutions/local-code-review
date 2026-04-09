@@ -1,8 +1,10 @@
+// src/preload/index.ts
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
   Repository, RepositoryWithMeta, DiscoveredRepo,
-  PullRequest, Review, Comment,
-  ParsedFile, PrDetail, CreatePrPayload, AddCommentPayload, ExportResult, Commit
+  PRFile, ReviewFile,
+  ParsedFile, PrDetail, CreatePrPayload, AddCommentPayload, Commit,
+  IntegrationStatus,
 } from '../shared/types'
 
 const api = {
@@ -30,23 +32,23 @@ const api = {
   listBranches: (repoPath: string): Promise<string[]> =>
     ipcRenderer.invoke('branches:list', repoPath),
 
-  // PRs
-  listPrs: (repoId: string): Promise<PullRequest[]> =>
-    ipcRenderer.invoke('prs:list', repoId),
-  createPr: (payload: CreatePrPayload & { repoPath: string }): Promise<PullRequest> =>
+  // PRs (repoPath replaces repoId)
+  listPrs: (repoPath: string): Promise<PRFile[]> =>
+    ipcRenderer.invoke('prs:list', repoPath),
+  createPr: (payload: CreatePrPayload): Promise<PRFile | { error: string }> =>
     ipcRenderer.invoke('prs:create', payload),
-  getPr: (prId: string, repoPath: string): Promise<PrDetail | null> =>
-    ipcRenderer.invoke('prs:get', prId, repoPath),
-  refreshPr: (prId: string, repoPath: string): Promise<PrDetail | null> =>
-    ipcRenderer.invoke('prs:refresh', prId, repoPath),
+  getPr: (repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> =>
+    ipcRenderer.invoke('prs:get', repoPath, prId),
+  refreshPr: (repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> =>
+    ipcRenderer.invoke('prs:refresh', repoPath, prId),
 
   // Reviews & Comments
-  getCurrentReview: (prId: string): Promise<Review | null> =>
-    ipcRenderer.invoke('reviews:get-current', prId),
-  addComment: (payload: AddCommentPayload & { repoPath: string }): Promise<{ review: Review; comment: Comment }> =>
+  addComment: (payload: AddCommentPayload): Promise<ReviewFile | { error: string }> =>
     ipcRenderer.invoke('comments:add', payload),
-  listComments: (reviewId: string): Promise<Comment[]> =>
-    ipcRenderer.invoke('comments:list', reviewId),
+  submitReview: (repoPath: string, prId: string, reviewId: string): Promise<ReviewFile | { error: string }> =>
+    ipcRenderer.invoke('reviews:submit', repoPath, prId, reviewId),
+  downloadMarkdown: (repoPath: string, prId: string, reviewId: string): Promise<{ path: string } | { error: string }> =>
+    ipcRenderer.invoke('export:download-markdown', repoPath, prId, reviewId),
 
   // Commits
   listCommits: (prId: string, repoPath: string): Promise<Commit[] | { error: string }> =>
@@ -54,9 +56,29 @@ const api = {
   showCommit: (repoPath: string, hash: string): Promise<{ diff: ParsedFile[] } | { error: string }> =>
     ipcRenderer.invoke('commits:show', repoPath, hash),
 
-  // Export
-  submitAndExport: (reviewId: string, prId: string): Promise<ExportResult | { error: string }> =>
-    ipcRenderer.invoke('export:submit', reviewId, prId),
+  // MCP controls
+  getMcpStatus: (): Promise<{ running: boolean }> =>
+    ipcRenderer.invoke('mcp:get-status'),
+  toggleMcp: (): Promise<{ running: boolean }> =>
+    ipcRenderer.invoke('mcp:toggle'),
+
+  // Integrations
+  getIntegrations: (): Promise<IntegrationStatus[]> =>
+    ipcRenderer.invoke('integrations:get'),
+  installIntegrations: (): Promise<void> =>
+    ipcRenderer.invoke('integrations:install'),
+
+  // "Fix with" launcher
+  launchFix: (tool: 'claude' | 'vscode', repoPath: string, prId: string, reviewId: string): Promise<{ error?: string }> =>
+    ipcRenderer.invoke('fix:launch', tool, repoPath, prId, reviewId),
+
+  // Push events from main to renderer
+  onReviewUpdated: (callback: (data: { repoPath: string; prId: string; reviewId: string }) => void) => {
+    ipcRenderer.on('review:updated', (_e, data) => callback(data))
+  },
+  offReviewUpdated: () => {
+    ipcRenderer.removeAllListeners('review:updated')
+  },
 }
 
 contextBridge.exposeInMainWorld('api', api)

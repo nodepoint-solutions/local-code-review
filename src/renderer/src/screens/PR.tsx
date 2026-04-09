@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import React, { useEffect, useRef, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { useStore } from '../store'
 import NavBar from '../components/NavBar'
 import StaleBanner from '../components/StaleBanner'
 import FileTree from '../components/FileTree'
 import DiffView from '../components/DiffView'
 import ReviewPanel from '../components/ReviewPanel'
-import type { AddCommentPayload, Commit, ParsedFile } from '../../../shared/types'
+import type { AddCommentPayload, ReviewComment, Commit, ParsedFile, PrDetail } from '../../../shared/types'
 import styles from './PR.module.css'
 
 type Tab = 'overview' | 'commits' | 'files'
@@ -66,7 +66,6 @@ function getInitials(name: string): string {
 
 export default function PR(): JSX.Element {
   const { repoId, prId } = useParams<{ repoId: string; prId: string }>()
-  const navigate = useNavigate()
   const { repos, prDetail, setPrDetail, diffView, setDiffView, reviewPanelOpen, setReviewPanelOpen } = useStore()
   const repo = repos.find((r) => r.id === repoId)
   const [tab, setTab] = useState<Tab>('overview')
@@ -76,6 +75,8 @@ export default function PR(): JSX.Element {
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null)
   const [commitDiff, setCommitDiff] = useState<ParsedFile[] | null>(null)
   const [commitDiffLoading, setCommitDiffLoading] = useState(false)
+  const [fixLoading, setFixLoading] = React.useState<string | null>(null)
+  const [integrations, setIntegrations] = React.useState<import('../../../shared/types').IntegrationStatus[]>([])
   const fileRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [treeWidth, setTreeWidth] = useState(() => {
     const saved = localStorage.getItem('fileTreeWidth')
@@ -132,9 +133,32 @@ export default function PR(): JSX.Element {
     e.preventDefault()
   }
 
+  React.useEffect(() => {
+    window.api.getIntegrations().then(setIntegrations)
+  }, [])
+
+  React.useEffect(() => {
+    window.api.onReviewUpdated(async ({ repoPath, prId: updatedPrId }) => {
+      if (!repo || !prDetail?.pr) return
+      if (repoPath !== repo.path) return
+      if (updatedPrId && updatedPrId !== prDetail.pr.id) return
+      const fresh = await window.api.getPr(repo.path, prDetail.pr.id)
+      if (fresh && !('error' in fresh)) setPrDetail(fresh)
+    })
+    return () => window.api.offReviewUpdated()
+  }, [repo?.path, prDetail?.pr?.id])
+
+  async function handleFix(tool: 'claude' | 'vscode'): Promise<void> {
+    if (!prDetail?.review || !prDetail.pr || !repo) return
+    setFixLoading(tool)
+    const result = await window.api.launchFix(tool, repo.path, prDetail.pr.id, prDetail.review.id)
+    if ('error' in result && result.error) console.error('Fix launch failed:', result.error)
+    setFixLoading(null)
+  }
+
   useEffect(() => {
     if (repo && prId) {
-      window.api.getPr(prId, repo.path).then((result) => {
+      window.api.getPr(repo.path, prId).then((result) => {
         if (result && 'error' in result) return
         setPrDetail(result as any)
       })
@@ -172,18 +196,18 @@ export default function PR(): JSX.Element {
   async function handleRefresh(): Promise<void> {
     if (!repo || !prId) return
     setRefreshing(true)
-    const updated = await window.api.refreshPr(prId, repo.path)
+    const updated = await window.api.refreshPr(repo.path, prId)
     if (updated && 'error' in updated) { setRefreshing(false); return }
     setPrDetail(updated as any)
     setCommits(null) // invalidate commits cache on refresh
     setRefreshing(false)
   }
 
-  async function handleAddComment(payload: Omit<AddCommentPayload, 'prId'>): Promise<void> {
-    if (!repo || !prId || !prDetail) return
-    await window.api.addComment({ ...payload, prId, repoPath: repo.path })
-    const updated = await window.api.getPr(prId, repo.path)
-    setPrDetail(updated)
+  async function handleAddComment(payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>): Promise<void> {
+    if (!repo || !prId || !prDetail || !prDetail.review) return
+    await window.api.addComment({ ...payload, prId, repoPath: repo.path, reviewId: prDetail.review.id })
+    const updated = await window.api.getPr(repo.path, prId)
+    if (updated && !('error' in updated)) setPrDetail(updated)
   }
 
   function scrollToFile(filePath: string): void {
@@ -199,7 +223,8 @@ export default function PR(): JSX.Element {
     )
   }
 
-  const { pr, diff, review, comments, isStale } = prDetail
+  const { pr, diff, review, isStale } = prDetail
+  const comments: ReviewComment[] = review?.comments ?? []
   const activeComments = comments.filter((c) => !c.is_stale)
 
   return (
@@ -229,7 +254,7 @@ export default function PR(): JSX.Element {
       <div className={styles.prHeader}>
         <div className={styles.prTitleRow}>
           <h1 className={styles.prTitle}>{pr.title}</h1>
-          <span className={`${styles.statusBadge} ${styles[pr.status]}`}>{pr.status === 'in_progress' ? 'Open' : 'Submitted'}</span>
+          <span className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}>{pr.status === 'open' ? 'Open' : 'Closed'}</span>
         </div>
         <div className={styles.prMeta}>
           <code className={styles.branch}>{pr.compare_branch}</code>
@@ -296,8 +321,8 @@ export default function PR(): JSX.Element {
             <div className={styles.sidebarSection}>
               <div className={styles.sidebarLabel}>Status</div>
               <div className={styles.sidebarValue}>
-                <span className={`${styles.statusBadge} ${styles[pr.status]}`}>
-                  {pr.status === 'in_progress' ? 'Open' : 'Submitted'}
+                <span className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}>
+                  {pr.status === 'open' ? 'Open' : 'Closed'}
                 </span>
               </div>
             </div>
@@ -455,7 +480,7 @@ export default function PR(): JSX.Element {
               <div key={file.newPath} ref={(el) => { fileRefs.current[file.newPath] = el }}>
                 <DiffView
                   file={file}
-                  comments={comments.filter((c) => c.file_path === file.newPath)}
+                  comments={comments.filter((c) => c.file === file.newPath)}
                   view={diffView}
                   onAddComment={handleAddComment}
                 />
@@ -471,9 +496,32 @@ export default function PR(): JSX.Element {
           comments={comments}
           prId={prId!}
           onClose={() => setReviewPanelOpen(false)}
-          onSubmitted={(updated: typeof prDetail) => setPrDetail(updated)}
+          onSubmitted={(updated: PrDetail | null) => setPrDetail(updated)}
           repoPath={repo?.path ?? ''}
         />
+      )}
+
+      {prDetail.review?.status === 'submitted' && (
+        <div style={{ display: 'flex', gap: 8, marginTop: 8, padding: '0 16px 16px' }}>
+          {integrations.find((i) => i.id === 'claudeCode' && i.detected) && (
+            <button
+              onClick={() => handleFix('claude')}
+              disabled={fixLoading !== null}
+              title="Open Claude Code to fix open issues"
+            >
+              {fixLoading === 'claude' ? 'Launching…' : 'Fix with Claude'}
+            </button>
+          )}
+          {integrations.find((i) => (i.id === 'vscode' || i.id === 'cursor' || i.id === 'windsurf') && i.detected) && (
+            <button
+              onClick={() => handleFix('vscode')}
+              disabled={fixLoading !== null}
+              title="Open VS Code / Copilot to fix open issues (prompt copied to clipboard)"
+            >
+              {fixLoading === 'vscode' ? 'Launching…' : 'Fix with Copilot'}
+            </button>
+          )}
+        </div>
       )}
     </div>
   )

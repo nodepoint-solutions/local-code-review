@@ -1,14 +1,17 @@
-import type { Comment, ContextLine, PullRequest, Review } from '../../shared/types'
+// src/main/export/markdown.ts
+import type { PRFile, ReviewFile } from '../../shared/review-store'
 
-export function buildMarkdown(
-  pr: PullRequest,
-  review: Review,
-  comments: Comment[],
-  contextMap: Record<string, ContextLine[]>
-): string {
-  const date = review.submitted_at
-    ? new Date(review.submitted_at).toISOString().slice(0, 10)
-    : new Date().toISOString().slice(0, 10)
+export function prTitleSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 50)
+}
+
+export function buildMarkdown(pr: PRFile, review: ReviewFile): string {
+  const date = (review.submitted_at ?? review.created_at).slice(0, 10)
+  const nonStale = review.comments.filter((c) => !c.is_stale)
 
   const lines: string[] = [
     `# Review: ${pr.title}`,
@@ -20,44 +23,36 @@ export function buildMarkdown(
     '',
   ]
 
-  const nonStale = comments.filter((c) => !c.is_stale)
-
-  nonStale.forEach((comment, index) => {
-    const id = `RVW-${String(index + 1).padStart(3, '0')}`
-    const ctx = contextMap[comment.id] ?? []
-    const ext = comment.file_path.split('.').pop() ?? ''
-
-    lines.push(`## Issue ${id}`)
-    lines.push(`**File:** \`${comment.file_path}\``)
+  for (const comment of nonStale) {
+    lines.push(`## Issue ${comment.id}`)
+    lines.push(`**File:** \`${comment.file}\``)
     lines.push(`**Lines:** ${comment.start_line}–${comment.end_line}`)
     lines.push('')
-    lines.push('```' + ext)
 
-    for (const ctxLine of ctx) {
-      if (ctxLine.line_number === comment.start_line) {
-        lines.push('// [selected lines start]')
+    if (comment.context.length > 0) {
+      const ext = comment.file.split('.').pop() ?? ''
+      lines.push('```' + ext)
+      for (const l of comment.context) {
+        const prefix = l.type === 'added' ? '+' : l.type === 'removed' ? '-' : ' '
+        lines.push(`${prefix} ${l.content}`)
       }
-      lines.push(ctxLine.content)
-      if (ctxLine.line_number === comment.end_line) {
-        lines.push('// [selected lines end]')
-      }
+      lines.push('```')
+      lines.push('')
     }
 
-    lines.push('```')
-    lines.push('')
     lines.push(`**Comment:**`)
     lines.push(comment.body)
+
+    if (comment.resolution) {
+      lines.push('')
+      const statusLabel = comment.status === 'resolved' ? 'Resolved' : 'Won\'t Fix'
+      lines.push(`**${statusLabel} by ${comment.resolution.resolved_by}:** ${comment.resolution.comment}`)
+    }
+
     lines.push('')
     lines.push('---')
     lines.push('')
-  })
+  }
 
   return lines.join('\n')
-}
-
-export function prTitleSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
 }

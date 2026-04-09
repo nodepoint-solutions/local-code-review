@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import NavBar from '../components/NavBar'
-import type { RepositoryWithMeta, DiscoveredRepo } from '../../../../shared/types'
+import type { RepositoryWithMeta, DiscoveredRepo } from '../../../shared/types'
 import styles from './Home.module.css'
 
 function FolderIcon(): JSX.Element {

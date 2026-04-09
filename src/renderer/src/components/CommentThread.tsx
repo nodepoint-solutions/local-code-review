@@ -1,8 +1,8 @@
-import type { Comment } from '../../../shared/types'
+import type { ReviewComment } from '../../../shared/types'
 import styles from './CommentThread.module.css'
 
 interface Props {
-  comment: Comment
+  comment: ReviewComment
 }
 
 export default function CommentThread({ comment }: Props): JSX.Element {

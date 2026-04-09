@@ -1,15 +1,21 @@
 import { ipcMain, dialog } from 'electron'
 import path from 'path'
 import type Database from 'better-sqlite3'
-import { insertRepo, listReposWithMeta, touchRepo } from '../db/repos'
-import { getSetting, setSetting, resetAllData } from '../db/settings'
+import { insertRepo, listRepos, touchRepo } from '../db/repos'
+import { getSetting, setSetting } from '../db/settings'
 import { isGitRepo } from '../git/branches'
 import { scanForRepos } from '../git/scanner'
+import { ReviewStore } from '../../shared/review-store'
+const store = new ReviewStore()
 
 export function registerRepoHandlers(db: Database.Database): void {
   ipcMain.handle('repos:list', () => {
     try {
-      return listReposWithMeta(db)
+      const repos = listRepos(db)
+      return repos.map((repo) => ({
+        ...repo,
+        pr_count: store.listPRs(repo.path).length,
+      }))
     } catch {
       return []
     }
@@ -99,7 +105,7 @@ export function registerRepoHandlers(db: Database.Database): void {
 
   ipcMain.handle('repos:reset', () => {
     try {
-      resetAllData(db)
+      db.exec('DELETE FROM repositories; DELETE FROM settings;')
     } catch {
       // non-fatal
     }

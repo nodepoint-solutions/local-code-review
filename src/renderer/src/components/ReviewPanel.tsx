@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import type { Comment, PrDetail, Review } from '../../../shared/types'
+import type { ReviewComment, PrDetail, ReviewFile } from '../../../shared/types'
 import styles from './ReviewPanel.module.css'
 
 interface Props {
-  review: Review | null
-  comments: Comment[]
+  review: ReviewFile | null
+  comments: ReviewComment[]
   prId: string
   repoPath: string
   onClose: () => void
@@ -37,14 +37,15 @@ export default function ReviewPanel({ review, comments, prId, repoPath, onClose,
     if (!review) return
     setSubmitting(true)
     setError('')
-    const result = await window.api.submitAndExport(review.id, prId)
+    const result = await window.api.submitReview(repoPath, prId, review.id)
     if ('error' in result) {
-      if (result.error !== 'cancelled') setError(result.error)
+      setError(result.error)
       setSubmitting(false)
       return
     }
-    const updated = await window.api.getPr(prId, repoPath)
-    onSubmitted(updated)
+    const updated = await window.api.getPr(repoPath, prId)
+    if (updated && 'error' in updated) { setSubmitting(false); return }
+    onSubmitted(updated as PrDetail | null)
     setSubmitting(false)
   }
 
@@ -92,8 +93,8 @@ export default function ReviewPanel({ review, comments, prId, repoPath, onClose,
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
-                <span className={styles.commentFileName} title={comment.file_path}>
-                  {getFileName(comment.file_path)}
+                <span className={styles.commentFileName} title={comment.file}>
+                  {getFileName(comment.file)}
                 </span>
                 <span className={styles.commentLines}>
                   :{comment.start_line}

@@ -1,32 +1,32 @@
-import type { Comment, ParsedLine } from '../../../../shared/types'
+import type { ReviewComment, ParsedLine } from '../../../../shared/types'
 import { highlightLine } from '../../utils/syntax'
 import styles from './DiffLine.module.css'
 
 interface Props {
   line: ParsedLine
-  comments: Comment[]
-  language: string | null
+  comments: ReviewComment[]
+  language?: string | null
   onStartComment: (diffLineNumber: number, side: 'left' | 'right') => void
   onExtendComment: (diffLineNumber: number) => void
-  onHoverLine: (lineNumber: number) => void
+  onHoverLine?: (lineNumber: number) => void
   isSelecting: boolean
   selectionStart: number | null
-  selectionEnd: number | null
-  hoverLine: number | null
+  selectionEnd?: number | null
+  hoverLine?: number | null
   side?: 'left' | 'right'
 }
 
 export default function DiffLine({
   line,
   comments,
-  language,
+  language = null,
   onStartComment,
   onExtendComment,
-  onHoverLine,
+  onHoverLine = () => {},
   isSelecting,
   selectionStart,
-  selectionEnd,
-  hoverLine,
+  selectionEnd = null,
+  hoverLine = null,
   side = 'right',
 }: Props): JSX.Element | null {
   if (line.type === 'hunk-header') {
@@ -45,7 +45,7 @@ export default function DiffLine({
     line.diffLineNumber >= Math.min(selectionStart, activeEnd) &&
     line.diffLineNumber <= Math.max(selectionStart, activeEnd)
 
-  const hasComments = comments.length > 0
+  const hasReviewComments = comments.length > 0
 
   function handleMouseEnter(): void {
     if (isSelecting) onHoverLine(line.diffLineNumber)
@@ -61,7 +61,7 @@ export default function DiffLine({
     styles.line,
     styles[line.type],
     isInSelection ? styles.inSelection : '',
-    hasComments ? styles.hasComment : '',
+    hasReviewComments ? styles.hasReviewComment : '',
   ].filter(Boolean).join(' ')
 
   // Strip prefix char from content for syntax highlighting

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import NavBar from '../components/NavBar'
 import styles from './Settings.module.css'
+import type { IntegrationStatus } from '../../../shared/types'
 
 function FolderIcon(): JSX.Element {
   return (
@@ -18,10 +19,34 @@ export default function Settings(): JSX.Element {
 
   const [scanDir, setScanDir] = useState<string | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [mcpRunning, setMcpRunning] = React.useState(false)
+  const [mcpLoading, setMcpLoading] = React.useState(false)
+  const [integrations, setIntegrations] = React.useState<IntegrationStatus[]>([])
+  const [installing, setInstalling] = React.useState(false)
 
   useEffect(() => {
     window.api.getSetting('scan_base_dir').then(setScanDir)
   }, [])
+
+  React.useEffect(() => {
+    window.api.getMcpStatus().then(({ running }) => setMcpRunning(running))
+    window.api.getIntegrations().then(setIntegrations)
+  }, [])
+
+  async function handleToggleMcp() {
+    setMcpLoading(true)
+    const { running } = await window.api.toggleMcp()
+    setMcpRunning(running)
+    setMcpLoading(false)
+  }
+
+  async function handleInstallIntegrations() {
+    setInstalling(true)
+    await window.api.installIntegrations()
+    const updated = await window.api.getIntegrations()
+    setIntegrations(updated)
+    setInstalling(false)
+  }
 
   async function handleChangeScanDir(): Promise<void> {
     const result = await window.api.openScanDirPicker()
@@ -56,6 +81,53 @@ export default function Settings(): JSX.Element {
               {scanDir ? 'Change' : 'Set directory'}
             </button>
           </div>
+        </section>
+
+        {/* MCP Server */}
+        <section style={{ marginTop: 32 }}>
+          <h2>MCP Server</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+            Expose a local MCP server so AI agents (Claude, Copilot) can read reviews and mark issues resolved.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+            <button onClick={handleToggleMcp} disabled={mcpLoading}>
+              {mcpRunning ? 'Stop MCP Server' : 'Start MCP Server'}
+            </button>
+            <span style={{ fontSize: 13, color: mcpRunning ? 'var(--green)' : 'var(--text-muted)' }}>
+              {mcpRunning ? 'Running' : 'Stopped'}
+            </span>
+          </div>
+        </section>
+
+        {/* MCP Integrations */}
+        <section style={{ marginTop: 32 }}>
+          <h2>MCP Integrations</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+            Install the MCP server config into your AI tools so they can connect automatically.
+          </p>
+          <table style={{ width: '100%', marginTop: 12, borderCollapse: 'collapse' }}>
+            <tbody>
+              {integrations.map((tool) => (
+                <tr key={tool.id} style={{ opacity: tool.detected ? 1 : 0.4 }}>
+                  <td style={{ padding: '6px 0', width: 160 }}>{tool.name}</td>
+                  <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    {!tool.detected
+                      ? '(not detected)'
+                      : tool.installed
+                      ? '✓ Installed'
+                      : 'Not installed'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button
+            onClick={handleInstallIntegrations}
+            disabled={installing}
+            style={{ marginTop: 12 }}
+          >
+            {installing ? 'Installing…' : 'Install / Repair All'}
+          </button>
         </section>
 
         <section className={`${styles.section} ${styles.dangerSection}`}>

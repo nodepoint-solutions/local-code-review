@@ -1,48 +1,33 @@
+// src/main/ipc/reviews.ts
 import { ipcMain } from 'electron'
 import type Database from 'better-sqlite3'
-import { getOrCreateInProgressReview, addComment, listComments, getCommentContext } from '../db/reviews'
+import { ReviewStore } from '../../shared/review-store'
 import type { AddCommentPayload } from '../../shared/types'
 
-export function registerReviewHandlers(db: Database.Database): void {
-  ipcMain.handle('reviews:get-current', (_e, prId: string) => {
-    try {
-      return db.prepare(`SELECT * FROM reviews WHERE pr_id = ? AND status = 'in_progress' LIMIT 1`).get(prId) ?? null
-    } catch {
-      return null
-    }
-  })
+const store = new ReviewStore()
 
-  ipcMain.handle('comments:add', async (_e, payload: AddCommentPayload & { repoPath: string }) => {
+export function registerReviewHandlers(_db: Database.Database): void {
+  ipcMain.handle('comments:add', async (_e, payload: AddCommentPayload) => {
     try {
-      const review = getOrCreateInProgressReview(db, payload.prId)
-      const comment = addComment(db, {
-        reviewId: review.id,
-        filePath: payload.filePath,
-        startLine: payload.startLine,
-        endLine: payload.endLine,
+      const updated = store.addComment(payload.repoPath, payload.prId, payload.reviewId, {
+        file: payload.file,
+        start_line: payload.startLine,
+        end_line: payload.endLine,
         side: payload.side,
         body: payload.body,
-        contextLines: payload.contextLines,
+        context: payload.context,
       })
-      return { review, comment }
+      return updated
     } catch (err) {
-      return { error: 'db-failed', message: (err as Error).message }
+      return { error: 'store-failed', message: (err as Error).message }
     }
   })
 
-  ipcMain.handle('comments:list', (_e, reviewId: string) => {
+  ipcMain.handle('reviews:submit', async (_e, repoPath: string, prId: string, reviewId: string) => {
     try {
-      return listComments(db, reviewId)
-    } catch {
-      return []
-    }
-  })
-
-  ipcMain.handle('comments:context', (_e, commentId: string) => {
-    try {
-      return getCommentContext(db, commentId)
-    } catch {
-      return []
+      return store.submitReview(repoPath, prId, reviewId)
+    } catch (err) {
+      return { error: 'store-failed', message: (err as Error).message }
     }
   })
 }

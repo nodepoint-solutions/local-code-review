@@ -1,15 +1,22 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import ReviewPanel from '../components/ReviewPanel'
-import type { Comment, Review } from '../../../../shared/types'
+import type { ReviewComment, ReviewFile } from '../../../shared/types'
 
-const review: Review = {
-  id: 'rev1', pr_id: 'pr1', status: 'in_progress', submitted_at: null, created_at: '2026-04-08T10:00:00Z',
+const review: ReviewFile = {
+  version: 1,
+  id: 'rev1',
+  status: 'in_progress',
+  base_sha: 'abc123',
+  compare_sha: 'def456',
+  submitted_at: null,
+  created_at: '2026-04-08T10:00:00Z',
+  comments: [],
 }
 
-const comments: Comment[] = [
-  { id: 'c1', review_id: 'rev1', file_path: 'src/foo.ts', start_line: 3, end_line: 3, side: 'right', body: 'Fix null check', is_stale: false, created_at: '2026-04-08T11:00:00Z' },
-  { id: 'c2', review_id: 'rev1', file_path: 'src/bar.ts', start_line: 10, end_line: 12, side: 'right', body: 'Rename this', is_stale: false, created_at: '2026-04-08T11:05:00Z' },
+const comments: ReviewComment[] = [
+  { id: 'c1', file: 'src/foo.ts', start_line: 3, end_line: 3, side: 'right', body: 'Fix null check', is_stale: false, status: 'open', resolution: null, context: [], created_at: '2026-04-08T11:00:00Z' },
+  { id: 'c2', file: 'src/bar.ts', start_line: 10, end_line: 12, side: 'right', body: 'Rename this', is_stale: false, status: 'open', resolution: null, context: [], created_at: '2026-04-08T11:05:00Z' },
 ]
 
 describe('ReviewPanel', () => {
