@@ -73,6 +73,8 @@ export interface PrDetail {
   pr: PRFile
   diff: ParsedFile[]
   review: ReviewFile | null
+  reviews: ReviewFile[]
+  reviewCommitCounts: Record<string, number>
   isStale: boolean
 }
 

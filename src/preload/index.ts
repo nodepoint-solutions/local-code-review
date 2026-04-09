@@ -58,6 +58,12 @@ const api = {
   downloadMarkdown: (repoPath: string, prId: string, reviewId: string): Promise<{ path: string } | { error: string }> =>
     ipcRenderer.invoke('export:download-markdown', repoPath, prId, reviewId),
 
+  getDiffAtShas: (repoPath: string, baseSha: string, compareSha: string): Promise<ParsedFile[] | { error: string }> =>
+    ipcRenderer.invoke('git:diff-at-shas', repoPath, baseSha, compareSha),
+
+  deleteComment: (repoPath: string, prId: string, reviewId: string, commentId: string): Promise<ReviewFile | { error: string }> =>
+    ipcRenderer.invoke('comments:delete', repoPath, prId, reviewId, commentId),
+
   // Commits
   listCommits: (prId: string, repoPath: string): Promise<Commit[] | { error: string }> =>
     ipcRenderer.invoke('commits:list', prId, repoPath),

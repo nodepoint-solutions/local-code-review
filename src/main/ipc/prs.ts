@@ -6,7 +6,7 @@ import { PRWorkflow } from '../../shared/pr-workflow'
 import { deleteRepo } from '../db/repos'
 import { listBranches, resolveSha } from '../git/branches'
 import { getDiff } from '../git/diff-parser'
-import { listCommits, getCommitDiff } from '../git/commits'
+import { listCommits, getCommitDiff, countCommitsBetween } from '../git/commits'
 import type { CreatePrPayload, PrDetail } from '../../shared/types'
 
 const store = new ReviewStore()
@@ -92,7 +92,16 @@ export function registerPrHandlers(db: Database.Database): void {
         }
       }
 
-      return { pr, diff, review: activeReview, isStale: false }
+      const allReviews = store.listReviews(repoPath, prId).slice().reverse()
+      const reviewCommitCounts: Record<string, number> = {}
+      for (let i = 0; i < allReviews.length; i++) {
+        const r = allReviews[i]
+        if (r.status === 'complete') {
+          const toSha = allReviews[i + 1]?.compare_sha ?? currentCompareSha
+          reviewCommitCounts[r.id] = await countCommitsBetween(repoPath, r.compare_sha, toSha)
+        }
+      }
+      return { pr, diff, review: activeReview, reviews: allReviews, reviewCommitCounts, isStale: false }
     } catch (err) {
       return { error: (err as Error).message }
     }
@@ -121,14 +130,32 @@ export function registerPrHandlers(db: Database.Database): void {
         }
 
         const freshReview = store.getReview(repoPath, prId, inProgress.id)
-        return { pr, diff, review: freshReview, isStale: false }
+        const allReviews1 = store.listReviews(repoPath, prId).slice().reverse()
+        const counts1: Record<string, number> = {}
+        for (let i = 0; i < allReviews1.length; i++) {
+          const r = allReviews1[i]
+          if (r.status === 'complete') {
+            const toSha = allReviews1[i + 1]?.compare_sha ?? compareSha
+            counts1[r.id] = await countCommitsBetween(repoPath, r.compare_sha, toSha)
+          }
+        }
+        return { pr, diff, review: freshReview, reviews: allReviews1, reviewCommitCounts: counts1, isStale: false }
       }
 
       // No in-progress review — return the latest existing review without creating a new one.
       // New reviews are only created explicitly via reviews:new.
       const diff = await getDiff(repoPath, baseSha, compareSha)
       const latestReview = reviews[0] ?? null
-      return { pr, diff, review: latestReview, isStale: false }
+      const allReviews2 = reviews.slice().reverse()
+      const counts2: Record<string, number> = {}
+      for (let i = 0; i < allReviews2.length; i++) {
+        const r = allReviews2[i]
+        if (r.status === 'complete') {
+          const toSha = allReviews2[i + 1]?.compare_sha ?? compareSha
+          counts2[r.id] = await countCommitsBetween(repoPath, r.compare_sha, toSha)
+        }
+      }
+      return { pr, diff, review: latestReview, reviews: allReviews2, reviewCommitCounts: counts2, isStale: false }
     } catch (err) {
       return { error: (err as Error).message }
     }
@@ -192,6 +219,14 @@ export function registerPrHandlers(db: Database.Database): void {
         }
       }
       return store.assignPR(repoPath, prId, assignee)
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('git:diff-at-shas', async (_e, repoPath: string, baseSha: string, compareSha: string) => {
+    try {
+      return await getDiff(repoPath, baseSha, compareSha)
     } catch (err) {
       return { error: (err as Error).message }
     }

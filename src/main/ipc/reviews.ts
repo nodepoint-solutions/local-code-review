@@ -5,6 +5,7 @@ import { ReviewStore } from '../../shared/review-store'
 import { PRWorkflow } from '../../shared/pr-workflow'
 import { resolveSha } from '../git/branches'
 import { getDiff } from '../git/diff-parser'
+import { countCommitsBetween } from '../git/commits'
 import type { AddCommentPayload, PrDetail } from '../../shared/types'
 
 const store = new ReviewStore()
@@ -32,6 +33,18 @@ export function registerReviewHandlers(_db: Database.Database): void {
     }
   })
 
+  ipcMain.handle('comments:delete', (_e, repoPath: string, prId: string, reviewId: string, commentId: string) => {
+    try {
+      const review = store.getReview(repoPath, prId, reviewId)
+      if (review.status !== 'in_progress') {
+        return { error: 'Comments can only be deleted from in-progress reviews' }
+      }
+      return store.deleteComment(repoPath, prId, reviewId, commentId)
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
+
   ipcMain.handle('reviews:submit', async (_e, repoPath: string, prId: string, reviewId: string) => {
     try {
       return store.submitReview(repoPath, prId, reviewId)
@@ -56,11 +69,21 @@ export function registerReviewHandlers(_db: Database.Database): void {
 
       // Return the in_progress review if one already exists rather than creating a duplicate
       if (activeReview?.status === 'in_progress') {
-        return { pr, diff, review: activeReview, isStale: false }
+        const allReviewsA = store.listReviews(repoPath, prId).slice().reverse()
+        const countsA: Record<string, number> = {}
+        for (let i = 0; i < allReviewsA.length; i++) {
+          const r = allReviewsA[i]
+          if (r.status === 'complete') {
+            const toSha = allReviewsA[i + 1]?.compare_sha ?? compareSha
+            countsA[r.id] = await countCommitsBetween(repoPath, r.compare_sha, toSha)
+          }
+        }
+        return { pr, diff, review: activeReview, reviews: allReviewsA, reviewCommitCounts: countsA, isStale: false }
       }
 
       const review = store.createReview(repoPath, prId, { base_sha: baseSha, compare_sha: compareSha })
-      return { pr, diff, review, isStale: false }
+      const allReviewsB = store.listReviews(repoPath, prId).slice().reverse()
+      return { pr, diff, review, reviews: allReviewsB, reviewCommitCounts: {}, isStale: false }
     } catch (err) {
       return { error: (err as Error).message }
     }

@@ -19,6 +19,17 @@ export async function listCommits(repoPath: string, baseSha: string, compareSha:
     })
 }
 
+/** Returns the number of commits reachable from toSha but not fromSha. */
+export async function countCommitsBetween(repoPath: string, fromSha: string, toSha: string): Promise<number> {
+  if (fromSha === toSha) return 0
+  try {
+    const raw = await execGit(repoPath, ['rev-list', '--count', `${fromSha}..${toSha}`])
+    return parseInt(raw.trim(), 10) || 0
+  } catch {
+    return 0
+  }
+}
+
 /** Returns the file diffs introduced by a single commit. */
 export async function getCommitDiff(repoPath: string, hash: string): Promise<ParsedFile[]> {
   try {
