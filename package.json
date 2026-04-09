@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "start": "electron-vite preview",
     "dev": "electron-vite",
-    "build": "npm run typecheck && electron-vite build",
+    "build:mcp": "vite build --config vite.mcp.config.ts",
+    "build": "npm run build:mcp && npm run typecheck && electron-vite build",
     "preview": "electron-vite preview",
     "test": "vitest --workspace vitest.workspace.ts",
     "test:main": "vitest --workspace vitest.workspace.ts --project main",
@@ -20,12 +21,14 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "better-sqlite3": "^11.10.0",
     "highlight.js": "^11.11.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.0",
     "uuid": "^9.0.1",
+    "zod": "^4.3.6",
     "zustand": "^4.4.6"
   },
   "devDependencies": {
