@@ -169,4 +169,12 @@ export function registerPrHandlers(db: Database.Database): void {
       }
     }
   })
+
+  ipcMain.handle('prs:assign', (_e, repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null) => {
+    try {
+      return store.assignPR(repoPath, prId, assignee)
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
 }
