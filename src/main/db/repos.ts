@@ -1,6 +1,7 @@
+// src/main/db/repos.ts
 import type Database from 'better-sqlite3'
 import { v4 as uuidv4 } from 'uuid'
-import type { Repository, RepositoryWithMeta } from '../../shared/types'
+import type { Repository } from '../../shared/types'
 
 export function findRepoByPath(db: Database.Database, repoPath: string): Repository | null {
   return (db.prepare('SELECT * FROM repositories WHERE path = ?').get(repoPath) as Repository) ?? null
@@ -22,17 +23,9 @@ export function insertRepo(db: Database.Database, repoPath: string, name: string
 }
 
 export function listRepos(db: Database.Database): Repository[] {
-  return db.prepare('SELECT * FROM repositories ORDER BY created_at DESC').all() as Repository[]
-}
-
-export function listReposWithMeta(db: Database.Database): RepositoryWithMeta[] {
-  return db.prepare(`
-    SELECT r.*, COUNT(p.id) as pr_count
-    FROM repositories r
-    LEFT JOIN pull_requests p ON p.repo_id = r.id
-    GROUP BY r.id
-    ORDER BY r.last_visited_at DESC NULLS LAST, r.created_at DESC
-  `).all() as RepositoryWithMeta[]
+  return db
+    .prepare('SELECT * FROM repositories ORDER BY last_visited_at DESC NULLS LAST, created_at DESC')
+    .all() as Repository[]
 }
 
 export function touchRepo(db: Database.Database, repoId: string): void {
