@@ -42,6 +42,7 @@ export default function Repo(): JSX.Element {
   useEffect(() => {
     if (repo) {
       setSelectedRepo(repo)
+      window.api.touchRepo(repo.id)
       window.api.listPrs(repo.id).then(setPrs)
     }
   }, [repo?.id])
