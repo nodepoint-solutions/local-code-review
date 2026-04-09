@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import type { ParsedFile } from '../../../shared/types'
 import styles from './FileTree.module.css'
 
@@ -21,6 +22,12 @@ type FolderNode = {
 }
 
 type TreeNode = FileNode | FolderNode
+
+// Layout constants — keep in sync with CSS
+const INDENT = 16   // px per depth level
+const BASE   = 8    // base left padding
+const CHEV   = 12   // chevron width
+const GAP    = 4    // gap between chevron and icon
 
 function getStatusChar(f: ParsedFile): { char: string; cls: string } {
   if (f.isNew) return { char: 'A', cls: styles.statusAdded }
@@ -83,7 +90,10 @@ function TreeNodeItem({
   onToggleFolder,
   onSelectFile
 }: NodeProps): JSX.Element {
-  const indent = depth * 12
+  // Icons for folders and files start at the same X for the same depth
+  const folderPL = depth * INDENT + BASE          // chevron starts here
+  const filePL   = depth * INDENT + BASE + CHEV + GAP  // icon starts here (matches folder icon)
+  const lineX    = depth * INDENT + BASE + CHEV / 2    // center of chevron column
 
   if (node.type === 'file') {
     const { char, cls } = getStatusChar(node.file)
@@ -91,7 +101,7 @@ function TreeNodeItem({
     return (
       <button
         className={`${styles.fileBtn} ${isActive ? styles.fileBtnActive : ''}`}
-        style={{ paddingLeft: indent + 8 }}
+        style={{ paddingLeft: filePL }}
         onClick={() => onSelectFile(node.file.newPath)}
         title={node.file.newPath}
       >
@@ -109,7 +119,7 @@ function TreeNodeItem({
     <>
       <button
         className={styles.folderBtn}
-        style={{ paddingLeft: indent + 8 }}
+        style={{ paddingLeft: folderPL }}
         onClick={() => onToggleFolder(node.path)}
       >
         <svg
@@ -130,18 +140,24 @@ function TreeNodeItem({
         )}
         <span className={styles.folderName}>{node.name}</span>
       </button>
-      {isOpen &&
-        node.children.map((child) => (
-          <TreeNodeItem
-            key={child.type === 'file' ? child.file.newPath : child.path}
-            node={child}
-            depth={depth + 1}
-            activeFile={activeFile}
-            openFolders={openFolders}
-            onToggleFolder={onToggleFolder}
-            onSelectFile={onSelectFile}
-          />
-        ))}
+      {isOpen && (
+        <div
+          className={styles.children}
+          style={{ '--line-x': `${lineX}px` } as CSSProperties}
+        >
+          {node.children.map((child) => (
+            <TreeNodeItem
+              key={child.type === 'file' ? child.file.newPath : child.path}
+              node={child}
+              depth={depth + 1}
+              activeFile={activeFile}
+              openFolders={openFolders}
+              onToggleFolder={onToggleFolder}
+              onSelectFile={onSelectFile}
+            />
+          ))}
+        </div>
+      )}
     </>
   )
 }

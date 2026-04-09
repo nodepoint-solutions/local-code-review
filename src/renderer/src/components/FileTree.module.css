@@ -38,9 +38,26 @@
 }
 
 .list {
-  padding: 4px 0;
+  padding: 6px 0;
   overflow-y: auto;
   flex: 1;
+}
+
+/* ── Tree lines ─────────────────────────────────────────────── */
+
+.children {
+  position: relative;
+}
+
+.children::before {
+  content: '';
+  position: absolute;
+  left: var(--line-x);
+  top: 0;
+  bottom: 6px;
+  width: 1px;
+  background: var(--border);
+  pointer-events: none;
 }
 
 /* ── Folder row ─────────────────────────────────────────────── */
@@ -50,7 +67,7 @@
   align-items: center;
   gap: 4px;
   width: 100%;
-  padding: 3px 8px;
+  padding: 5px 10px;
   background: transparent;
   border: none;
   text-align: left;
@@ -91,7 +108,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 18px;
+  line-height: 1;
+  padding: 1px 0;
 }
 
 /* ── File row ───────────────────────────────────────────────── */
@@ -101,7 +119,7 @@
   align-items: center;
   gap: 4px;
   width: 100%;
-  padding: 3px 8px;
+  padding: 5px 10px;
   background: transparent;
   border: none;
   text-align: left;
@@ -137,7 +155,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
-  line-height: 18px;
+  line-height: 1;
+  padding: 1px 0;
 }
 
 /* ── Status badge (right-aligned) ───────────────────────────── */
@@ -148,10 +167,9 @@
   font-family: var(--font-mono);
   flex-shrink: 0;
   margin-left: 4px;
-  line-height: 18px;
 }
 
-.statusAdded { color: var(--added-text); }
-.statusDeleted { color: var(--removed-text); }
-.statusRenamed { color: var(--badge-renamed-text); }
+.statusAdded    { color: var(--added-text); }
+.statusDeleted  { color: var(--removed-text); }
+.statusRenamed  { color: var(--badge-renamed-text); }
 .statusModified { color: var(--accent-text); }
