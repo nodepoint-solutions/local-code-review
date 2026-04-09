@@ -104,3 +104,26 @@
   line-height: 1.5;
   white-space: pre-wrap;
 }
+
+.deleteBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  opacity: 0.6;
+}
+.deleteBtn:hover {
+  color: var(--danger, #e05c5c);
+  opacity: 1;
+}
+@keyframes focusPulse {
+  0%   { box-shadow: 0 0 0 2px var(--accent); }
+  100% { box-shadow: 0 0 0 0px transparent; }
+}
+.focused {
+  animation: focusPulse 1.2s ease-out forwards;
+}

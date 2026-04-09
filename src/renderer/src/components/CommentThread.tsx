@@ -4,15 +4,29 @@ import { formatRelativeTime } from '../utils/formatTime'
 
 interface Props {
   comment: ReviewComment
+  allowDelete?: boolean
+  onDelete?: () => void
+  focused?: boolean
 }
 
-export default function CommentThread({ comment }: Props): JSX.Element {
+function TrashIcon(): JSX.Element {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+    </svg>
+  )
+}
+
+export default function CommentThread({ comment, allowDelete, onDelete, focused }: Props): JSX.Element {
   const lineRange = comment.start_line === comment.end_line
     ? `Line ${comment.start_line}`
     : `Lines ${comment.start_line}–${comment.end_line}`
 
   return (
-    <div className={`${styles.thread} ${comment.is_stale ? styles.stale : ''}`}>
+    <div
+      data-comment-id={comment.id}
+      className={`${styles.thread} ${comment.is_stale ? styles.stale : ''} ${focused ? styles.focused : ''}`}
+    >
       <div className={styles.header}>
         <div className={styles.meta}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -24,6 +38,11 @@ export default function CommentThread({ comment }: Props): JSX.Element {
           {comment.is_stale && <span className={styles.staleTag}>outdated</span>}
           {comment.status === 'resolved' && <span className={styles.badgeResolved}>Resolved</span>}
           {comment.status === 'wont_fix' && <span className={styles.badgeWontFix}>Won't fix</span>}
+          {allowDelete && (
+            <button aria-label="Delete comment" className={styles.deleteBtn} onClick={onDelete}>
+              <TrashIcon />
+            </button>
+          )}
         </div>
       </div>
       <div className={styles.body}>{comment.body}</div>

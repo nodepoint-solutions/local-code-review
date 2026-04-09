@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import CommentThread from '../components/CommentThread'
 import type { ReviewComment } from '../../../shared/types'
 
@@ -57,5 +58,27 @@ describe('CommentThread', () => {
     }} />)
     expect(screen.getByText('Added null guard on line 3.')).toBeInTheDocument()
     expect(screen.getByText('Claude Code')).toBeInTheDocument()
+  })
+
+  it('does not show delete button by default', () => {
+    render(<CommentThread comment={base} />)
+    expect(screen.queryByRole('button', { name: /delete comment/i })).not.toBeInTheDocument()
+  })
+
+  it('shows delete button when allowDelete is true', () => {
+    render(<CommentThread comment={base} allowDelete onDelete={() => {}} />)
+    expect(screen.getByRole('button', { name: /delete comment/i })).toBeInTheDocument()
+  })
+
+  it('calls onDelete when delete button clicked', async () => {
+    const onDelete = vi.fn()
+    render(<CommentThread comment={base} allowDelete onDelete={onDelete} />)
+    await userEvent.click(screen.getByRole('button', { name: /delete comment/i }))
+    expect(onDelete).toHaveBeenCalledOnce()
+  })
+
+  it('applies focused class when focused prop is true', () => {
+    const { container } = render(<CommentThread comment={base} focused />)
+    expect((container.firstChild as HTMLElement)?.className).toContain('focused')
   })
 })
