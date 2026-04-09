@@ -1,4 +1,7 @@
-// ── Entity types (mirror the SQLite schema) ─────────────────────────────────
+// src/shared/types.ts
+export type { PRFile, ReviewFile, ReviewComment, Resolution, ContextLineEntry } from './review-store'
+
+// ── Repository types (SQLite-backed) ─────────────────────────────────────────
 
 export interface Repository {
   id: string
@@ -17,77 +20,31 @@ export interface DiscoveredRepo {
   name: string
 }
 
-export interface PullRequest {
-  id: string
-  repo_id: string
-  title: string
-  description: string | null
-  base_branch: string
-  compare_branch: string
-  base_sha: string
-  compare_sha: string
-  status: 'open' | 'closed'
-  created_at: string
-  updated_at: string
-}
-
-export interface Review {
-  id: string
-  pr_id: string
-  status: 'in_progress' | 'submitted'
-  submitted_at: string | null
-  created_at: string
-}
-
-export interface Comment {
-  id: string
-  review_id: string
-  file_path: string
-  start_line: number
-  end_line: number
-  side: 'left' | 'right'
-  body: string
-  is_stale: boolean
-  created_at: string
-}
-
-export interface CommentContext {
-  id: string
-  comment_id: string
-  context_lines: ContextLine[]
-}
-
-export interface ContextLine {
-  line_number: number
-  type: 'added' | 'removed' | 'context'
-  content: string
-}
-
 // ── Diff types ───────────────────────────────────────────────────────────────
 
 export type DiffLineType = 'added' | 'removed' | 'context' | 'hunk-header'
 
 export interface ParsedLine {
-  diffLineNumber: number    // 1-based sequential index within this file's diff
+  diffLineNumber: number
   type: DiffLineType
-  content: string           // raw line content (no leading +/-/ prefix for code lines)
-  oldLineNumber: number | null  // null for added lines and hunk-header
-  newLineNumber: number | null  // null for removed lines and hunk-header
+  content: string
+  oldLineNumber: number | null
+  newLineNumber: number | null
 }
 
 export interface ParsedFile {
-  oldPath: string           // e.g. "src/foo.ts"
-  newPath: string           // e.g. "src/foo.ts" (same unless renamed)
+  oldPath: string
+  newPath: string
   isNew: boolean
   isDeleted: boolean
   isRenamed: boolean
-  lines: ParsedLine[]       // all lines across all hunks, flattened
+  lines: ParsedLine[]
 }
 
 // ── IPC payload types ────────────────────────────────────────────────────────
 
 export interface CreatePrPayload {
-  repoId: string
+  repoPath: string
   title: string
   description: string | null
   baseBranch: string
@@ -95,27 +52,29 @@ export interface CreatePrPayload {
 }
 
 export interface AddCommentPayload {
+  repoPath: string
   prId: string
-  filePath: string
+  reviewId: string
+  file: string
   startLine: number
   endLine: number
   side: 'left' | 'right'
   body: string
-  contextLines: ContextLine[]
+  context: Array<{ line: number; type: 'added' | 'removed' | 'context'; content: string }>
 }
 
+// ── Composite view types ──────────────────────────────────────────────────────
+
+import type { PRFile, ReviewFile } from './review-store'
+
 export interface PrDetail {
-  pr: PullRequest
+  pr: PRFile
   diff: ParsedFile[]
-  review: Review | null
-  comments: Comment[]
+  review: ReviewFile | null
   isStale: boolean
 }
 
-export interface ExportResult {
-  mdPath: string
-  jsonPath: string
-}
+// ── Commits ───────────────────────────────────────────────────────────────────
 
 export interface Commit {
   hash: string
@@ -123,5 +82,14 @@ export interface Commit {
   subject: string
   authorName: string
   authorEmail: string
-  timestamp: number // unix seconds
+  timestamp: number
+}
+
+// ── MCP / Integrations ────────────────────────────────────────────────────────
+
+export interface IntegrationStatus {
+  id: 'claudeCode' | 'claudeDesktop' | 'vscode' | 'cursor' | 'windsurf'
+  name: string
+  detected: boolean
+  installed: boolean
 }
