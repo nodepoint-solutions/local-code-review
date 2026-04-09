@@ -69,7 +69,9 @@ export class ReviewStore {
 
   updatePRStatus(repoPath: string, prId: string, status: 'open' | 'closed'): PRFile {
     const pr = readPR(repoPath, prId)
-    const updated: PRFile = { ...pr, status, updated_at: new Date().toISOString() }
+    const now = new Date().toISOString()
+    const updated_at = now > pr.updated_at ? now : new Date(new Date(pr.updated_at).getTime() + 1).toISOString()
+    const updated: PRFile = { ...pr, status, updated_at }
     writePR(repoPath, updated)
     return updated
   }
