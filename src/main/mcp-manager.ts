@@ -9,7 +9,7 @@ export interface McpEvent {
   event: string
   repoPath: string
   prId: string
-  reviewId: string
+  reviewId?: string
 }
 
 export class McpManager {

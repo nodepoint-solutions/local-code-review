@@ -8,6 +8,14 @@ export interface ReviewUpdatedEvent {
   reviewId: string
 }
 
+export interface PrUpdatedEvent {
+  event: 'pr:updated'
+  repoPath: string
+  prId: string
+}
+
+export type SocketEvent = ReviewUpdatedEvent | PrUpdatedEvent
+
 export class SocketClient {
   private client: net.Socket | null = null
 
@@ -18,7 +26,7 @@ export class SocketClient {
     })
   }
 
-  emit(event: ReviewUpdatedEvent): void {
+  emit(event: SocketEvent): void {
     if (!this.client || this.client.destroyed) return
     try {
       this.client.write(JSON.stringify(event) + '\n')
