@@ -1,15 +1,28 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
-  Repository, PullRequest, Review, Comment,
+  Repository, RepositoryWithMeta, DiscoveredRepo,
+  PullRequest, Review, Comment,
   ParsedFile, PrDetail, CreatePrPayload, AddCommentPayload, ExportResult, Commit
 } from '../shared/types'
 
 const api = {
   // Repos
-  listRepos: (): Promise<Repository[]> =>
+  listRepos: (): Promise<RepositoryWithMeta[]> =>
     ipcRenderer.invoke('repos:list'),
   openRepo: (): Promise<{ repo?: Repository; error?: string }> =>
     ipcRenderer.invoke('repos:open'),
+  addRepoByPath: (repoPath: string): Promise<{ repo?: Repository; error?: string }> =>
+    ipcRenderer.invoke('repos:add-by-path', repoPath),
+  touchRepo: (repoId: string): Promise<void> =>
+    ipcRenderer.invoke('repos:touch', repoId),
+  getSetting: (key: string): Promise<string | null> =>
+    ipcRenderer.invoke('repos:get-setting', key),
+  setSetting: (key: string, value: string): Promise<void> =>
+    ipcRenderer.invoke('repos:set-setting', key, value),
+  scanRepos: (): Promise<DiscoveredRepo[]> =>
+    ipcRenderer.invoke('repos:scan'),
+  openScanDirPicker: (): Promise<string | null> =>
+    ipcRenderer.invoke('repos:open-scan-dir-picker'),
 
   // Branches
   listBranches: (repoPath: string): Promise<string[]> =>
@@ -46,5 +59,4 @@ const api = {
 
 contextBridge.exposeInMainWorld('api', api)
 
-// Type augmentation for renderer TypeScript
 export type Api = typeof api
