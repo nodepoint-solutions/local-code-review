@@ -6,6 +6,7 @@ import StaleBanner from '../components/StaleBanner'
 import FileTree from '../components/FileTree'
 import DiffView from '../components/DiffView'
 import ReviewPanel from '../components/ReviewPanel'
+import ReviewTimeline from '../components/ReviewTimeline'
 import type { AddCommentPayload, ReviewComment, Commit, ParsedFile, PrDetail } from '../../../shared/types'
 import styles from './PR.module.css'
 
@@ -351,6 +352,12 @@ export default function PR(): JSX.Element {
               ) : (
                 <div className={styles.descriptionEmpty}>No description provided.</div>
               )}
+            </div>
+            <div className={styles.descriptionCard}>
+              <div className={styles.cardHeader}>
+                <span className={styles.cardTitle}>Activity</span>
+              </div>
+              <ReviewTimeline pr={pr} review={review} comments={comments} />
             </div>
           </div>
 
