@@ -56,6 +56,8 @@ export class ReviewStore {
       base_branch: args.base_branch,
       compare_branch: args.compare_branch,
       status: 'open',
+      assignee: null,
+      assigned_at: null,
       created_at: now,
       updated_at: now,
     }

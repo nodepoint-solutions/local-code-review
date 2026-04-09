@@ -65,6 +65,36 @@ describe('ReviewStore', () => {
       fs.writeFileSync(indexPath, 'not json')
       expect(store.listPRs(repoPath)).toHaveLength(0)
     })
+
+    it('createPR sets assignee to null by default', () => {
+      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      expect(pr.assignee).toBeNull()
+      expect(pr.assigned_at).toBeNull()
+    })
+
+    it('assignPR sets and clears assignee', () => {
+      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      const assigned = store.assignPR(repoPath, pr.id, 'claude')
+      expect(assigned.assignee).toBe('claude')
+      expect(assigned.assigned_at).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+
+      const cleared = store.assignPR(repoPath, pr.id, null)
+      expect(cleared.assignee).toBeNull()
+      expect(cleared.assigned_at).toBeNull()
+    })
+
+    it('existing index.json without assignee fields parses correctly', () => {
+      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      // Write a file without the new fields (simulating a pre-migration file)
+      const indexPath = path.join(repoPath, '.reviews', pr.id, 'index.json')
+      const raw = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
+      delete raw.assignee
+      delete raw.assigned_at
+      fs.writeFileSync(indexPath, JSON.stringify(raw))
+      const fetched = store.getPR(repoPath, pr.id)
+      expect(fetched.assignee).toBeNull()
+      expect(fetched.assigned_at).toBeNull()
+    })
   })
 
   describe('Reviews', () => {
