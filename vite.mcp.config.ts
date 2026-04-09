@@ -12,7 +12,7 @@ export default defineConfig({
     },
     outDir: 'dist/mcp-server',
     rollupOptions: {
-      external: ['fs', 'path', 'net', 'os', 'crypto', 'events', 'stream', 'util', 'buffer'],
+      external: ['fs', 'path', 'net', 'os', 'crypto', 'events', 'stream', 'util', 'buffer', 'http', 'https', 'url', 'zlib', 'tls', 'querystring', 'child_process', 'worker_threads'],
     },
     minify: false,
   },
