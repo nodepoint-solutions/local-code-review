@@ -224,7 +224,7 @@
 }
 
 .overviewMain {
-  flex: 1;
+  flex: 3;
   min-width: 0;
 }
 
@@ -264,8 +264,7 @@
 
 /* ─── Sidebar ─────────────────────────────── */
 .overviewSidebar {
-  width: 240px;
-  flex-shrink: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -326,10 +325,7 @@
   background: var(--accent-subtle);
   padding: 1px 6px;
   border-radius: var(--radius-sm);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-all;
 }
 
 .filesChanged {

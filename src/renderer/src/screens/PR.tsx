@@ -89,7 +89,7 @@ export default function PR(): JSX.Element {
   }, [prId, repo?.path])
 
   useEffect(() => {
-    if (tab === 'commits' && commits === null && repo && prId) {
+    if (commits === null && repo && prId) {
       setCommitsLoading(true)
       window.api.listCommits(prId, repo.path).then((result) => {
         if (!Array.isArray(result)) { setCommits([]); return }
@@ -97,7 +97,7 @@ export default function PR(): JSX.Element {
         setCommitsLoading(false)
       })
     }
-  }, [tab, prId, repo?.path])
+  }, [prId, repo?.path])
 
   function handleSelectCommit(commit: Commit): void {
     if (selectedCommit?.hash === commit.hash) {
@@ -300,6 +300,13 @@ export default function PR(): JSX.Element {
                 )}
               </div>
             )}
+
+            <div className={styles.sidebarSection}>
+              <div className={styles.sidebarLabel}>Commits</div>
+              <div className={styles.sidebarValue}>
+                {commits === null ? '—' : `${commits.length} commit${commits.length !== 1 ? 's' : ''}`}
+              </div>
+            </div>
 
             <div className={styles.sidebarSection}>
               <div className={styles.sidebarLabel}>Created</div>
