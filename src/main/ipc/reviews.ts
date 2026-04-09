@@ -2,7 +2,10 @@
 import { ipcMain } from 'electron'
 import type Database from 'better-sqlite3'
 import { ReviewStore } from '../../shared/review-store'
-import type { AddCommentPayload } from '../../shared/types'
+import { resolveSha } from '../git/branches'
+import { execGit } from '../git/runner'
+import { parseDiff } from '../git/diff-parser'
+import type { AddCommentPayload, PrDetail } from '../../shared/types'
 
 const store = new ReviewStore()
 
@@ -28,6 +31,20 @@ export function registerReviewHandlers(_db: Database.Database): void {
       return store.submitReview(repoPath, prId, reviewId)
     } catch (err) {
       return { error: 'store-failed', message: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('reviews:new', async (_e, repoPath: string, prId: string): Promise<PrDetail | { error: string }> => {
+    try {
+      const pr = store.getPR(repoPath, prId)
+      const baseSha = await resolveSha(repoPath, pr.base_branch)
+      const compareSha = await resolveSha(repoPath, pr.compare_branch)
+      const review = store.createReview(repoPath, prId, { base_sha: baseSha, compare_sha: compareSha })
+      const rawDiff = await execGit(repoPath, ['diff', `${baseSha}..${compareSha}`, '--unified=3'])
+      const diff = parseDiff(rawDiff)
+      return { pr, diff, review, isStale: false }
+    } catch (err) {
+      return { error: (err as Error).message }
     }
   })
 }

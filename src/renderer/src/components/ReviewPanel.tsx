@@ -31,6 +31,7 @@ function CheckIcon(): JSX.Element {
 export default function ReviewPanel({ review, comments, prId, repoPath, onClose, onSubmitted }: Props): JSX.Element {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [startingNew, setStartingNew] = useState(false)
   const nonStale = comments.filter((c) => !c.is_stale)
 
   async function handleSubmit(): Promise<void> {
@@ -47,6 +48,14 @@ export default function ReviewPanel({ review, comments, prId, repoPath, onClose,
     if (updated && 'error' in updated) { setSubmitting(false); return }
     onSubmitted(updated as PrDetail | null)
     setSubmitting(false)
+  }
+
+  async function handleStartNewReview(): Promise<void> {
+    setStartingNew(true)
+    const result = await window.api.newReview(repoPath, prId)
+    if (result && 'error' in result) { setStartingNew(false); return }
+    onSubmitted(result as PrDetail)
+    setStartingNew(false)
   }
 
   function getFileName(path: string): string {
@@ -74,6 +83,13 @@ export default function ReviewPanel({ review, comments, prId, repoPath, onClose,
         <div className={styles.submittedBanner}>
           <CheckIcon />
           Review submitted
+        </div>
+      )}
+
+      {review?.status === 'complete' && (
+        <div className={styles.completeBanner}>
+          <CheckIcon />
+          All comments addressed
         </div>
       )}
 
@@ -124,6 +140,19 @@ export default function ReviewPanel({ review, comments, prId, repoPath, onClose,
             style={{ width: '100%' }}
           >
             {submitting ? 'Submitting…' : `Submit review (${nonStale.length} comment${nonStale.length !== 1 ? 's' : ''})`}
+          </button>
+        </div>
+      )}
+
+      {review?.status === 'complete' && (
+        <div className={styles.footer}>
+          <button
+            className="primary"
+            onClick={handleStartNewReview}
+            disabled={startingNew}
+            style={{ width: '100%' }}
+          >
+            {startingNew ? 'Creating…' : 'Start new review'}
           </button>
         </div>
       )}

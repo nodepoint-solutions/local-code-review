@@ -56,6 +56,9 @@ export default function SplitDiff({
     commentsByEndLine.set(comment.end_line, [...existing, comment])
   }
 
+  const lineNums = new Set(file.lines.map((l) => l.diffLineNumber))
+  const orphanedStale = comments.filter((c) => c.is_stale && !lineNums.has(c.end_line))
+
   return (
     <table className={styles.table}>
       <tbody>
@@ -124,6 +127,13 @@ export default function SplitDiff({
             </>
           )
         })}
+        {orphanedStale.map((comment) => (
+          <tr key={`orphan-${comment.id}`}>
+            <td colSpan={2}>
+              <CommentThread comment={comment} />
+            </td>
+          </tr>
+        ))}
       </tbody>
     </table>
   )

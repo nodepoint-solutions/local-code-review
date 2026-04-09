@@ -414,8 +414,8 @@ export default function PR(): JSX.Element {
               <div className={styles.sidebarSection}>
                 <div className={styles.sidebarLabel}>Review</div>
                 <div className={styles.sidebarValue}>
-                  <span className={`${styles.reviewStatus} ${review.status === 'submitted' ? styles.reviewSubmitted : styles.reviewInProgress}`}>
-                    {review.status === 'submitted' ? 'Submitted' : 'In progress'}
+                  <span className={`${styles.reviewStatus} ${review.status === 'submitted' ? styles.reviewSubmitted : review.status === 'complete' ? styles.reviewComplete : styles.reviewInProgress}`}>
+                    {review.status === 'submitted' ? 'Submitted' : review.status === 'complete' ? 'Complete' : 'In progress'}
                   </span>
                 </div>
                 {activeComments.length > 0 && (

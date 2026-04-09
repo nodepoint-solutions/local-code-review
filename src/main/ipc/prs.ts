@@ -56,12 +56,39 @@ export function registerPrHandlers(db: Database.Database): void {
         reviews[0] ??
         store.createReview(repoPath, prId, { base_sha: currentBaseSha, compare_sha: currentCompareSha })
 
-      const isStale = currentBaseSha !== review.base_sha || currentCompareSha !== review.compare_sha
-
-      const rawDiff = await execGit(repoPath, ['diff', `${review.base_sha}..${review.compare_sha}`, '--unified=3'])
+      // Always diff against current branch HEADs so the view shows latest code
+      const rawDiff = await execGit(repoPath, ['diff', `${currentBaseSha}..${currentCompareSha}`, '--unified=3'])
       const diff = parseDiff(rawDiff)
 
-      return { pr, diff, review, isStale }
+      // When the branch has advanced since the review was started, detect newly
+      // stale comments and persist the updated SHAs so the next load is cheaper.
+      const shasChanged = currentBaseSha !== review.base_sha || currentCompareSha !== review.compare_sha
+      if (shasChanged && review.status === 'in_progress') {
+        for (const file of diff) {
+          const validLineNums = new Set(file.lines.map((l) => l.diffLineNumber))
+          const staleRanges = review.comments
+            .filter((c) => c.file === file.newPath && !c.is_stale && (!validLineNums.has(c.start_line) || !validLineNums.has(c.end_line)))
+            .map((c) => ({ startLine: c.start_line, endLine: c.end_line }))
+          if (staleRanges.length > 0) {
+            store.markStale(repoPath, prId, review.id, file.newPath, staleRanges)
+          }
+        }
+        store.updateReviewShas(repoPath, prId, review.id, currentBaseSha, currentCompareSha)
+      }
+
+      let activeReview = (shasChanged && review.status === 'in_progress')
+        ? store.getReview(repoPath, prId, review.id)
+        : review
+
+      // Auto-complete a submitted review once all non-stale comments are resolved/wont_fix
+      if (activeReview.status === 'submitted') {
+        const nonStale = activeReview.comments.filter((c) => !c.is_stale)
+        if (nonStale.length > 0 && nonStale.every((c) => c.status === 'resolved' || c.status === 'wont_fix')) {
+          activeReview = store.completeReview(repoPath, prId, activeReview.id)
+        }
+      }
+
+      return { pr, diff, review: activeReview, isStale: false }
     } catch (err) {
       return { error: (err as Error).message }
     }

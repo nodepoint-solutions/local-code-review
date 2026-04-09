@@ -30,7 +30,7 @@ export const ReviewCommentSchema = z.object({
 export const ReviewFileSchema = z.object({
   version: z.literal(1),
   id: z.string().uuid(),
-  status: z.enum(['in_progress', 'submitted']),
+  status: z.enum(['in_progress', 'submitted', 'complete']),
   base_sha: z.string(),
   compare_sha: z.string(),
   created_at: z.string(),

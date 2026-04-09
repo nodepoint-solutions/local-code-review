@@ -53,6 +53,8 @@ const api = {
     ipcRenderer.invoke('comments:add', payload),
   submitReview: (repoPath: string, prId: string, reviewId: string): Promise<ReviewFile | { error: string }> =>
     ipcRenderer.invoke('reviews:submit', repoPath, prId, reviewId),
+  newReview: (repoPath: string, prId: string): Promise<PrDetail | { error: string }> =>
+    ipcRenderer.invoke('reviews:new', repoPath, prId),
   downloadMarkdown: (repoPath: string, prId: string, reviewId: string): Promise<{ path: string } | { error: string }> =>
     ipcRenderer.invoke('export:download-markdown', repoPath, prId, reviewId),
 

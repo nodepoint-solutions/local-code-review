@@ -78,6 +78,20 @@
   flex-shrink: 0;
 }
 
+/* ─── Complete Banner ─────────────────────── */
+.completeBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--added-bg, rgba(46, 160, 67, 0.15));
+  color: var(--added-text, #3fb950);
+  border-bottom: 1px solid var(--added-border, rgba(46, 160, 67, 0.3));
+  font-size: 13px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
 /* ─── Comment List ────────────────────────── */
 .list {
   flex: 1;

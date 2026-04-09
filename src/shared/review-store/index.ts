@@ -140,6 +140,19 @@ export class ReviewStore {
     return updated
   }
 
+  completeReview(repoPath: string, prId: string, reviewId: string): ReviewFile {
+    const review = readReview(repoPath, prId, reviewId)
+    const updated: ReviewFile = { ...review, status: 'complete' }
+    writeReview(repoPath, prId, updated)
+    return updated
+  }
+
+  updateReviewShas(repoPath: string, prId: string, reviewId: string, baseSha: string, compareSha: string): void {
+    const review = readReview(repoPath, prId, reviewId)
+    const updated: ReviewFile = { ...review, base_sha: baseSha, compare_sha: compareSha }
+    writeReview(repoPath, prId, updated)
+  }
+
   // ── Comments ──────────────────────────────────────────────────────────────
 
   addComment(repoPath: string, prId: string, reviewId: string, args: AddCommentArgs): ReviewFile {

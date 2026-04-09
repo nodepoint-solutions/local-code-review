@@ -10,9 +10,13 @@ interface Props {
 }
 
 export default function ReviewTimeline({ pr, review, comments }: Props): JSX.Element {
-  const showReview = review !== null && review.status === 'submitted'
+  const showReview = review !== null && (review.status === 'submitted' || review.status === 'complete')
   const visibleComments = comments.filter((c) => !c.is_stale)
   const commentCount = visibleComments.length
+
+  const reviewLabel = review?.status === 'complete'
+    ? `Review complete — ${commentCount} ${commentCount === 1 ? 'comment' : 'comments'} addressed`
+    : `Review submitted with ${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}`
 
   return (
     <div className={styles.timeline}>
@@ -36,7 +40,7 @@ export default function ReviewTimeline({ pr, review, comments }: Props): JSX.Ele
           <div className={styles.content}>
             <div className={styles.entryHeader}>
               <span className={styles.entryTitle}>
-                Review submitted with {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+                {reviewLabel}
               </span>
               {review.submitted_at && (
                 <span className={styles.entryTime}>{formatRelativeTime(review.submitted_at)}</span>

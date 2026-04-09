@@ -420,6 +420,11 @@
   color: var(--status-submitted-text);
   border-color: var(--status-submitted-border);
 }
+.reviewComplete {
+  background: var(--added-bg, rgba(46, 160, 67, 0.15));
+  color: var(--added-text, #3fb950);
+  border-color: var(--added-border, rgba(46, 160, 67, 0.3));
+}
 
 .commentSummary {
   font-size: 12px;
