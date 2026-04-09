@@ -14,12 +14,16 @@ interface Props {
   selectionStart: number | null
   selectionEnd: number | null
   hoverLine: number | null
+  allowDeleteComment?: boolean
+  onDeleteComment?: (commentId: string) => void
+  focusedCommentId?: string
 }
 
 export default function UnifiedDiff({
   file, comments, language,
   onStartComment, onExtendComment, onHoverLine,
   isSelecting, selectionStart, selectionEnd, hoverLine,
+  allowDeleteComment, onDeleteComment, focusedCommentId,
 }: Props): JSX.Element {
   const commentsByEndLine = new Map<number, ReviewComment[]>()
   for (const comment of comments) {
@@ -52,7 +56,12 @@ export default function UnifiedDiff({
             {(commentsByEndLine.get(line.diffLineNumber) ?? []).map((comment) => (
               <tr key={`comment-${comment.id}`}>
                 <td colSpan={4}>
-                  <CommentThread comment={comment} />
+                  <CommentThread
+                    comment={comment}
+                    allowDelete={allowDeleteComment}
+                    onDelete={onDeleteComment ? () => onDeleteComment(comment.id) : undefined}
+                    focused={focusedCommentId === comment.id}
+                  />
                 </td>
               </tr>
             ))}
@@ -61,7 +70,12 @@ export default function UnifiedDiff({
         {orphanedStale.map((comment) => (
           <tr key={`orphan-${comment.id}`}>
             <td colSpan={4}>
-              <CommentThread comment={comment} />
+              <CommentThread
+                comment={comment}
+                allowDelete={allowDeleteComment}
+                onDelete={onDeleteComment ? () => onDeleteComment(comment.id) : undefined}
+                focused={focusedCommentId === comment.id}
+              />
             </td>
           </tr>
         ))}

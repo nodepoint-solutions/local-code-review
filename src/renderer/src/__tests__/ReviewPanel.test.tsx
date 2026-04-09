@@ -1,7 +1,21 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import ReviewPanel from '../components/ReviewPanel'
-import type { ReviewComment, ReviewFile } from '../../../shared/types'
+import type { ReviewComment, ReviewFile, PRFile } from '../../../shared/types'
+
+const pr: PRFile = {
+  version: 1,
+  id: 'pr1',
+  title: 'Test PR',
+  description: null,
+  base_branch: 'main',
+  compare_branch: 'feature/x',
+  status: 'open',
+  assignee: null,
+  assigned_at: null,
+  created_at: '2026-04-08T09:00:00Z',
+  updated_at: '2026-04-08T09:00:00Z',
+}
 
 const review: ReviewFile = {
   version: 1,
@@ -21,18 +35,18 @@ const comments: ReviewComment[] = [
 
 describe('ReviewPanel', () => {
   it('lists non-stale comments', () => {
-    render(<ReviewPanel review={review} comments={comments} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
+    render(<ReviewPanel pr={pr} review={review} comments={comments} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
     expect(screen.getByText('Fix null check')).toBeInTheDocument()
     expect(screen.getByText('Rename this')).toBeInTheDocument()
   })
 
   it('shows submit button when review is in_progress', () => {
-    render(<ReviewPanel review={review} comments={comments} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
+    render(<ReviewPanel pr={pr} review={review} comments={comments} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
     expect(screen.getByRole('button', { name: /submit review/i })).toBeInTheDocument()
   })
 
   it('does not show submit button when review is null', () => {
-    render(<ReviewPanel review={null} comments={[]} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
+    render(<ReviewPanel pr={pr} review={null} comments={[]} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
     expect(screen.queryByRole('button', { name: /submit review/i })).not.toBeInTheDocument()
   })
 })

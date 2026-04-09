@@ -7,12 +7,14 @@ import FileTree from '../components/FileTree'
 import DiffView from '../components/DiffView'
 import ReviewPanel from '../components/ReviewPanel'
 import ReviewTimeline from '../components/ReviewTimeline'
+import PreviousReviews from '../components/PreviousReviews'
+import CommentNav from '../components/CommentNav'
 import type { AddCommentPayload, ReviewComment, Commit, ParsedFile, PrDetail } from '../../../shared/types'
 import { PRWorkflow } from '../../../shared/pr-workflow'
 import { formatRelativeTime } from '../utils/formatTime'
 import styles from './PR.module.css'
 
-type Tab = 'overview' | 'commits' | 'files'
+type Tab = 'overview' | 'commits' | 'files' | 'previous-reviews'
 
 function UnifiedIcon(): JSX.Element {
   return (
@@ -66,6 +68,7 @@ export default function PR(): JSX.Element {
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null)
   const [commitDiff, setCommitDiff] = useState<ParsedFile[] | null>(null)
   const [commitDiffLoading, setCommitDiffLoading] = useState(false)
+  const [focusedCommentIndex, setFocusedCommentIndex] = useState(-1)
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = React.useState(false)
   const [integrations, setIntegrations] = React.useState<import('../../../shared/types').IntegrationStatus[]>([])
   const fileRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -238,6 +241,16 @@ export default function PR(): JSX.Element {
     if (updated && !('error' in updated)) setPrDetail(updated)
   }
 
+  async function handleDeleteComment(commentId: string): Promise<void> {
+    if (!repo || !prId || !review || review.status !== 'in_progress') return
+    await window.api.deleteComment(repo.path, prId, review.id, commentId)
+    const updated = await window.api.getPr(repo.path, prId)
+    if (updated && !('error' in updated)) {
+      setPrDetail(updated)
+      setFocusedCommentIndex(-1)
+    }
+  }
+
   function scrollToFile(filePath: string): void {
     fileRefs.current[filePath]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -254,7 +267,16 @@ export default function PR(): JSX.Element {
   const { pr, diff, review, isStale } = prDetail
   const comments: ReviewComment[] = review?.comments ?? []
   const activeComments = comments.filter((c) => !c.is_stale)
+  const navComments = comments.filter((c) => !c.is_stale)
   const workflow = new PRWorkflow(pr, review ?? null)
+
+  function handleCommentNav(index: number): void {
+    setFocusedCommentIndex(index)
+    const comment = navComments[index]
+    if (!comment) return
+    const el = document.querySelector(`[data-comment-id="${comment.id}"]`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   return (
     <div className={styles.page}>
@@ -277,7 +299,13 @@ export default function PR(): JSX.Element {
         }
       />
 
-      {isStale && <StaleBanner onRefresh={handleRefresh} loading={refreshing} />}
+      {isStale && (
+        <StaleBanner
+          onRefresh={handleRefresh}
+          loading={refreshing}
+          midReview={review?.status === 'in_progress'}
+        />
+      )}
 
       {/* PR header */}
       <div className={styles.prHeader}>
@@ -303,6 +331,9 @@ export default function PR(): JSX.Element {
             { key: 'overview', label: 'Overview' },
             { key: 'commits', label: 'Commits' },
             { key: 'files', label: 'Files changed', count: diff.length },
+            ...(prDetail.reviews.some((r) => r.status === 'complete')
+              ? [{ key: 'previous-reviews' as Tab, label: 'Previous reviews' }]
+              : []),
           ] as { key: Tab; label: string; count?: number }[]).map(({ key, label, count }) => (
             <button
               key={key}
@@ -316,6 +347,12 @@ export default function PR(): JSX.Element {
         </div>
         {tab === 'files' && (
           <div className={styles.viewToggle}>
+            <CommentNav
+              total={navComments.length}
+              current={focusedCommentIndex}
+              onPrev={() => handleCommentNav(Math.max(0, focusedCommentIndex - 1))}
+              onNext={() => handleCommentNav(Math.min(navComments.length - 1, focusedCommentIndex + 1))}
+            />
             <button
               className={`${styles.toggleBtn} ${diffView === 'unified' ? styles.toggleActive : ''}`}
               onClick={() => setDiffView('unified')}
@@ -348,7 +385,11 @@ export default function PR(): JSX.Element {
               <div className={styles.cardHeader}>
                 <span className={styles.cardTitle}>Activity</span>
               </div>
-              <ReviewTimeline pr={pr} review={review} comments={comments} />
+              <ReviewTimeline
+                  pr={pr}
+                  reviews={prDetail.reviews}
+                  reviewCommitCounts={prDetail.reviewCommitCounts}
+                />
             </div>
           </div>
 
@@ -577,11 +618,22 @@ export default function PR(): JSX.Element {
                   view={diffView}
                   onAddComment={handleAddComment}
                   readOnly={workflow.isReadOnly()}
+                  allowDeleteComment={review?.status === 'in_progress'}
+                  onDeleteComment={handleDeleteComment}
+                  focusedCommentId={navComments[focusedCommentIndex]?.id}
                 />
               </div>
             ))}
           </div>
         </div>
+      )}
+
+      {/* ── Previous reviews tab ── */}
+      {tab === 'previous-reviews' && (
+        <PreviousReviews
+          reviews={prDetail.reviews.filter((r) => r.status === 'complete')}
+          repoPath={repo?.path ?? ''}
+        />
       )}
 
       {reviewPanelOpen && (

@@ -13,6 +13,9 @@ interface Props {
   view: 'unified' | 'split'
   onAddComment: (payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>) => Promise<void>
   readOnly?: boolean
+  allowDeleteComment?: boolean
+  onDeleteComment?: (commentId: string) => void
+  focusedCommentId?: string
 }
 
 function ChevronDownIcon(): JSX.Element {
@@ -31,7 +34,10 @@ function ChevronRightIcon(): JSX.Element {
   )
 }
 
-export default function DiffView({ file, comments, view, onAddComment, readOnly = false }: Props): JSX.Element {
+export default function DiffView({
+  file, comments, view, onAddComment, readOnly = false,
+  allowDeleteComment, onDeleteComment, focusedCommentId,
+}: Props): JSX.Element {
   const [expanded, setExpanded] = useState(true)
   const [isSelecting, setIsSelecting] = useState(false)
   const [selectionStart, setSelectionStart] = useState<number | null>(null)
@@ -152,6 +158,9 @@ export default function DiffView({ file, comments, view, onAddComment, readOnly 
               selectionStart={selectionStart}
               selectionEnd={selectionEnd}
               hoverLine={hoverLine}
+              allowDeleteComment={allowDeleteComment}
+              onDeleteComment={onDeleteComment}
+              focusedCommentId={focusedCommentId}
             />
           ) : (
             <SplitDiff
@@ -165,6 +174,9 @@ export default function DiffView({ file, comments, view, onAddComment, readOnly 
               selectionStart={selectionStart}
               selectionEnd={selectionEnd}
               hoverLine={hoverLine}
+              allowDeleteComment={allowDeleteComment}
+              onDeleteComment={onDeleteComment}
+              focusedCommentId={focusedCommentId}
             />
           )}
           {showCommentBox && (

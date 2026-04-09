@@ -14,6 +14,9 @@ interface Props {
   selectionStart: number | null
   selectionEnd: number | null
   hoverLine: number | null
+  allowDeleteComment?: boolean
+  onDeleteComment?: (commentId: string) => void
+  focusedCommentId?: string
 }
 
 function pairLines(lines: ParsedLine[]): Array<{ left: ParsedLine | null; right: ParsedLine | null }> {
@@ -47,6 +50,7 @@ export default function SplitDiff({
   file, comments, language,
   onStartComment, onExtendComment, onHoverLine,
   isSelecting, selectionStart, selectionEnd, hoverLine,
+  allowDeleteComment, onDeleteComment, focusedCommentId,
 }: Props): JSX.Element {
   const pairs = pairLines(file.lines)
 
@@ -120,7 +124,12 @@ export default function SplitDiff({
               {allEndReviewComments.map((comment) => (
                 <tr key={`comment-${comment.id}`}>
                   <td colSpan={2}>
-                    <CommentThread comment={comment} />
+                    <CommentThread
+                      comment={comment}
+                      allowDelete={allowDeleteComment}
+                      onDelete={onDeleteComment ? () => onDeleteComment(comment.id) : undefined}
+                      focused={focusedCommentId === comment.id}
+                    />
                   </td>
                 </tr>
               ))}
@@ -130,7 +139,12 @@ export default function SplitDiff({
         {orphanedStale.map((comment) => (
           <tr key={`orphan-${comment.id}`}>
             <td colSpan={2}>
-              <CommentThread comment={comment} />
+              <CommentThread
+                comment={comment}
+                allowDelete={allowDeleteComment}
+                onDelete={onDeleteComment ? () => onDeleteComment(comment.id) : undefined}
+                focused={focusedCommentId === comment.id}
+              />
             </td>
           </tr>
         ))}
