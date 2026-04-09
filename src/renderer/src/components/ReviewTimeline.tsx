@@ -1,25 +1,18 @@
-import type { PRFile, ReviewFile, ReviewComment } from '../../../shared/types'
+import type { PRFile, ReviewFile } from '../../../shared/types'
 import CommentThread from './CommentThread'
 import { formatRelativeTime, formatAbsoluteDate } from '../utils/formatTime'
 import styles from './ReviewTimeline.module.css'
 
 interface Props {
   pr: PRFile
-  review: ReviewFile | null
-  comments: ReviewComment[]
+  reviews: ReviewFile[]
+  reviewCommitCounts: Record<string, number>
 }
 
-export default function ReviewTimeline({ pr, review, comments }: Props): JSX.Element {
-  const showReview = review !== null && (review.status === 'submitted' || review.status === 'complete')
-  const visibleComments = comments.filter((c) => !c.is_stale)
-  const commentCount = visibleComments.length
-
-  const reviewLabel = review?.status === 'complete'
-    ? `Review complete — ${commentCount} ${commentCount === 1 ? 'comment' : 'comments'} addressed`
-    : `Review submitted with ${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}`
-
+export default function ReviewTimeline({ pr, reviews, reviewCommitCounts }: Props): JSX.Element {
   return (
     <div className={styles.timeline}>
+      {/* PR opened */}
       <div className={styles.entry}>
         <div className={styles.rail}>
           <div className={styles.dot} />
@@ -32,30 +25,73 @@ export default function ReviewTimeline({ pr, review, comments }: Props): JSX.Ele
         </div>
       </div>
 
-      {showReview && (
-        <div className={styles.entry}>
-          <div className={styles.rail}>
-            <div className={`${styles.dot} ${styles.dotActive}`} />
-          </div>
-          <div className={styles.content}>
-            <div className={styles.entryHeader}>
-              <span className={styles.entryTitle}>
-                {reviewLabel}
-              </span>
-              {review.submitted_at && (
-                <span className={styles.entryTime}>{formatRelativeTime(review.submitted_at)}</span>
+      {reviews.map((review) => {
+        const visibleComments = review.comments.filter((c) => !c.is_stale)
+
+        if (review.status === 'in_progress') {
+          return (
+            <div key={review.id} className={styles.entry}>
+              <div className={styles.rail}>
+                <div className={styles.dot} />
+              </div>
+              <div className={styles.content}>
+                <div className={styles.entryHeader}>
+                  <span className={styles.entryTitle}>Review in progress</span>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
+        // submitted or complete: always render "Review submitted" with comments
+        const submittedEntry = (
+          <div key={`${review.id}-submitted`} className={styles.entry}>
+            <div className={styles.rail}>
+              <div className={`${styles.dot} ${styles.dotActive}`} />
+            </div>
+            <div className={styles.content}>
+              <div className={styles.entryHeader}>
+                <span className={styles.entryTitle}>Review submitted</span>
+                {review.submitted_at && (
+                  <span className={styles.entryTime}>{formatRelativeTime(review.submitted_at)}</span>
+                )}
+              </div>
+              {visibleComments.length > 0 && (
+                <div className={styles.commentList}>
+                  {visibleComments.map((comment) => (
+                    <CommentThread key={comment.id} comment={comment} />
+                  ))}
+                </div>
               )}
             </div>
-            {visibleComments.length > 0 && (
-              <div className={styles.commentList}>
-                {visibleComments.map((comment) => (
-                  <CommentThread key={comment.id} comment={comment} />
-                ))}
-              </div>
-            )}
           </div>
-        </div>
-      )}
+        )
+
+        if (review.status === 'submitted') {
+          return submittedEntry
+        }
+
+        // complete: render "Review submitted" + "Review feedback implemented"
+        const commitCount = reviewCommitCounts[review.id] ?? 0
+        const commitLabel = `${commitCount} ${commitCount === 1 ? 'commit' : 'commits'} created`
+
+        return (
+          <div key={review.id}>
+            {submittedEntry}
+            <div className={styles.entry}>
+              <div className={styles.rail}>
+                <div className={`${styles.dot} ${styles.dotComplete}`} />
+              </div>
+              <div className={styles.content}>
+                <div className={styles.entryHeader}>
+                  <span className={styles.entryTitle}>Review feedback implemented</span>
+                </div>
+                <div className={styles.commitCount}>{commitLabel}</div>
+              </div>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

@@ -72,3 +72,14 @@
   flex-direction: column;
   gap: 8px;
 }
+
+.dotComplete {
+  border-color: var(--success, #4caf50);
+  background: var(--success, #4caf50);
+}
+
+.commitCount {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
