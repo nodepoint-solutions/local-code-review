@@ -195,6 +195,19 @@ export class ReviewStore {
     return updated
   }
 
+  deleteComment(
+    repoPath: string,
+    prId: string,
+    reviewId: string,
+    commentId: string,
+  ): ReviewFile {
+    const review = readReview(repoPath, prId, reviewId)
+    if (!review.comments.some((c) => c.id === commentId)) throw new Error('Comment not found')
+    const updated: ReviewFile = { ...review, comments: review.comments.filter((c) => c.id !== commentId) }
+    writeReview(repoPath, prId, updated)
+    return updated
+  }
+
   resolveComment(
     repoPath: string,
     prId: string,

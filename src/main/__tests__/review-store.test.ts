@@ -200,6 +200,36 @@ describe('ReviewStore', () => {
     })
   })
 
+  describe('deleteComment', () => {
+    let dcPrId: string
+    let dcReviewId: string
+
+    beforeEach(() => {
+      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      const review = store.createReview(repoPath, pr.id, { base_sha: 'a', compare_sha: 'b' })
+      dcPrId = pr.id
+      dcReviewId = review.id
+    })
+
+    it('removes the comment from the review', () => {
+      store.addComment(repoPath, dcPrId, dcReviewId, { file: 'src/a.ts', start_line: 1, end_line: 1, side: 'right', body: 'Fix this', context: [] })
+      const commentId = store.getReview(repoPath, dcPrId, dcReviewId).comments[0].id
+      const updated = store.deleteComment(repoPath, dcPrId, dcReviewId, commentId)
+      expect(updated.comments).toHaveLength(0)
+    })
+
+    it('persists deletion to disk', () => {
+      store.addComment(repoPath, dcPrId, dcReviewId, { file: 'src/a.ts', start_line: 1, end_line: 1, side: 'right', body: 'Fix this', context: [] })
+      const commentId = store.getReview(repoPath, dcPrId, dcReviewId).comments[0].id
+      store.deleteComment(repoPath, dcPrId, dcReviewId, commentId)
+      expect(store.getReview(repoPath, dcPrId, dcReviewId).comments).toHaveLength(0)
+    })
+
+    it('throws if comment does not exist', () => {
+      expect(() => store.deleteComment(repoPath, dcPrId, dcReviewId, 'RVW-999')).toThrow('Comment not found')
+    })
+  })
+
   describe('InvalidReviewFileError', () => {
     it('getPR throws InvalidReviewFileError for corrupt file', () => {
       const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
