@@ -5,11 +5,17 @@ import { insertRepo, listReposWithMeta, touchRepo } from '../db/repos'
 import { getSetting, setSetting } from '../db/settings'
 import { isGitRepo } from '../git/branches'
 import { scanForRepos } from '../git/scanner'
+import { ReviewStore } from '../../shared/review-store'
+const store = new ReviewStore()
 
 export function registerRepoHandlers(db: Database.Database): void {
   ipcMain.handle('repos:list', () => {
     try {
-      return listReposWithMeta(db)
+      const repos = listReposWithMeta(db)
+      return repos.map((repo) => ({
+        ...repo,
+        pr_count: store.listPRs(repo.path).length,
+      }))
     } catch {
       return []
     }

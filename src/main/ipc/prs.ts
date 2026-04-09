@@ -1,16 +1,18 @@
+// src/main/ipc/prs.ts
 import { ipcMain } from 'electron'
 import type Database from 'better-sqlite3'
-import { insertPr, getPr, listPrs, updatePrShas } from '../db/prs'
-import { getOrCreateInProgressReview, listComments, markCommentsStale } from '../db/reviews'
+import { ReviewStore } from '../../shared/review-store'
 import { listBranches, resolveSha } from '../git/branches'
 import { execGit } from '../git/runner'
 import { parseDiff } from '../git/diff-parser'
-import type { Commit, CreatePrPayload, PrDetail, Review } from '../../shared/types'
+import type { Commit, CreatePrPayload, PrDetail } from '../../shared/types'
+
+const store = new ReviewStore()
 
 export function registerPrHandlers(db: Database.Database): void {
-  ipcMain.handle('prs:list', (_e, repoId: string) => {
+  ipcMain.handle('prs:list', (_e, repoPath: string) => {
     try {
-      return listPrs(db, repoId)
+      return store.listPRs(repoPath)
     } catch {
       return []
     }
@@ -24,40 +26,77 @@ export function registerPrHandlers(db: Database.Database): void {
     }
   })
 
-  ipcMain.handle('prs:create', async (_e, payload: CreatePrPayload & { repoPath: string }) => {
+  ipcMain.handle('prs:create', async (_e, payload: CreatePrPayload) => {
     try {
       const baseSha = await resolveSha(payload.repoPath, payload.baseBranch)
       const compareSha = await resolveSha(payload.repoPath, payload.compareBranch)
-      return insertPr(db, {
-        repoId: payload.repoId,
+      return store.createPR(payload.repoPath, {
         title: payload.title,
         description: payload.description,
-        baseBranch: payload.baseBranch,
-        compareBranch: payload.compareBranch,
-        baseSha,
-        compareSha,
+        base_branch: payload.baseBranch,
+        compare_branch: payload.compareBranch,
       })
+      // SHAs are resolved but stored on the first review, not on the PR itself
     } catch (err) {
       return { error: 'git-failed', message: (err as Error).message }
     }
   })
 
-  ipcMain.handle('prs:get', async (_e, prId: string, repoPath: string): Promise<PrDetail | { error: string } | null> => {
+  ipcMain.handle('prs:get', async (_e, repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> => {
     try {
-      const pr = getPr(db, prId)
-      if (!pr) return null
+      const pr = store.getPR(repoPath, prId)
 
       const currentBaseSha = await resolveSha(repoPath, pr.base_branch)
       const currentCompareSha = await resolveSha(repoPath, pr.compare_branch)
-      const isStale = currentBaseSha !== pr.base_sha || currentCompareSha !== pr.compare_sha
 
-      const rawDiff = await execGit(repoPath, ['diff', `${pr.base_sha}..${pr.compare_sha}`, '--unified=3'])
+      const review = store.getOrCreateInProgressReview(repoPath, prId, {
+        base_sha: currentBaseSha,
+        compare_sha: currentCompareSha,
+      })
+
+      const isStale = currentBaseSha !== review.base_sha || currentCompareSha !== review.compare_sha
+
+      const rawDiff = await execGit(repoPath, ['diff', `${review.base_sha}..${review.compare_sha}`, '--unified=3'])
       const diff = parseDiff(rawDiff)
 
-      const review = db.prepare(`SELECT * FROM reviews WHERE pr_id = ? AND status = 'in_progress' LIMIT 1`).get(prId) as Review | undefined ?? null
-      const comments = review ? listComments(db, review.id) : []
+      return { pr, diff, review, isStale }
+    } catch (err) {
+      return { error: 'git-failed', message: (err as Error).message }
+    }
+  })
 
-      return { pr, diff, review, comments, isStale }
+  ipcMain.handle('prs:refresh', async (_e, repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> => {
+    try {
+      const pr = store.getPR(repoPath, prId)
+      const baseSha = await resolveSha(repoPath, pr.base_branch)
+      const compareSha = await resolveSha(repoPath, pr.compare_branch)
+
+      const reviews = store.listReviews(repoPath, prId)
+      const inProgress = reviews.find((r) => r.status === 'in_progress')
+
+      if (inProgress) {
+        const rawDiff = await execGit(repoPath, ['diff', `${baseSha}..${compareSha}`, '--unified=3'])
+        const diff = parseDiff(rawDiff)
+
+        for (const file of diff) {
+          const validLineNums = new Set(file.lines.map((l) => l.diffLineNumber))
+          const staleRanges = inProgress.comments
+            .filter((c) => c.file === file.newPath && (!validLineNums.has(c.start_line) || !validLineNums.has(c.end_line)))
+            .map((c) => ({ startLine: c.start_line, endLine: c.end_line }))
+          if (staleRanges.length > 0) {
+            store.markStale(repoPath, prId, inProgress.id, file.newPath, staleRanges)
+          }
+        }
+
+        const freshReview = store.getReview(repoPath, prId, inProgress.id)
+        return { pr, diff, review: freshReview, isStale: false }
+      }
+
+      // No in-progress review: create one for the new SHAs
+      const newReview = store.createReview(repoPath, prId, { base_sha: baseSha, compare_sha: compareSha })
+      const rawDiff = await execGit(repoPath, ['diff', `${baseSha}..${compareSha}`, '--unified=3'])
+      const diff = parseDiff(rawDiff)
+      return { pr, diff, review: newReview, isStale: false }
     } catch (err) {
       return { error: 'git-failed', message: (err as Error).message }
     }
@@ -65,12 +104,13 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('commits:list', async (_e, prId: string, repoPath: string): Promise<Commit[] | { error: string }> => {
     try {
-      const pr = getPr(db, prId)
-      if (!pr) return []
+      const reviews = store.listReviews(repoPath, prId)
+      const latest = reviews[0]
+      if (!latest) return []
       const raw = await execGit(repoPath, [
         'log',
         '--format=%H%x00%h%x00%s%x00%an%x00%ae%x00%at',
-        `${pr.base_sha}..${pr.compare_sha}`,
+        `${latest.base_sha}..${latest.compare_sha}`,
       ])
       return raw
         .trim()
@@ -87,51 +127,15 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('commits:show', async (_e, repoPath: string, hash: string) => {
     try {
-      // git diff-tree gives only the patch, no commit header
       const raw = await execGit(repoPath, ['diff-tree', '--no-commit-id', '-p', '-r', '--unified=3', hash])
       return { diff: parseDiff(raw) }
     } catch {
-      // Root commit (no parent): fall back to git show
       try {
         const raw = await execGit(repoPath, ['show', '--format=', '-p', '--unified=3', hash])
         return { diff: parseDiff(raw.replace(/^[^\n]*\n/, '')) }
       } catch (err) {
         return { error: (err as Error).message }
       }
-    }
-  })
-
-  ipcMain.handle('prs:refresh', async (_e, prId: string, repoPath: string): Promise<PrDetail | { error: string } | null> => {
-    try {
-      const pr = getPr(db, prId)
-      if (!pr) return null
-
-      const baseSha = await resolveSha(repoPath, pr.base_branch)
-      const compareSha = await resolveSha(repoPath, pr.compare_branch)
-      updatePrShas(db, prId, baseSha, compareSha)
-
-      const rawDiff = await execGit(repoPath, ['diff', `${baseSha}..${compareSha}`, '--unified=3'])
-      const diff = parseDiff(rawDiff)
-
-      const review = db.prepare(`SELECT * FROM reviews WHERE pr_id = ? AND status = 'in_progress' LIMIT 1`).get(prId) as Review | undefined ?? null
-      if (review) {
-        for (const file of diff) {
-          const validLineNums = new Set(file.lines.map((l) => l.diffLineNumber))
-          const comments = listComments(db, review.id).filter((c) => c.file_path === file.newPath)
-          const staleRanges = comments
-            .filter((c) => !validLineNums.has(c.start_line) || !validLineNums.has(c.end_line))
-            .map((c) => ({ startLine: c.start_line, endLine: c.end_line }))
-          if (staleRanges.length > 0) {
-            markCommentsStale(db, review.id, file.newPath, staleRanges)
-          }
-        }
-      }
-
-      const freshPr = getPr(db, prId) ?? pr
-      const freshComments = review ? listComments(db, review.id) : []
-      return { pr: freshPr, diff, review, comments: freshComments, isStale: false }
-    } catch (err) {
-      return { error: 'git-failed', message: (err as Error).message }
     }
   })
 }
