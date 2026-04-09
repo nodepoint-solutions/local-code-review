@@ -3,9 +3,14 @@ import styles from './StaleBanner.module.css'
 interface Props {
   onRefresh: () => void
   loading: boolean
+  midReview?: boolean
 }
 
-export default function StaleBanner({ onRefresh, loading }: Props): JSX.Element {
+export default function StaleBanner({ onRefresh, loading, midReview }: Props): JSX.Element {
+  const message = midReview
+    ? 'The code has changed since you started this review. Your existing comments may be mispositioned — review them and delete any that no longer apply.'
+    : 'This PR is out of sync — branches may have changed since last refresh.'
+
   return (
     <div className={styles.banner}>
       <div className={styles.left}>
@@ -14,7 +19,7 @@ export default function StaleBanner({ onRefresh, loading }: Props): JSX.Element 
           <line x1="12" y1="9" x2="12" y2="13" />
           <line x1="12" y1="17" x2="12.01" y2="17" />
         </svg>
-        <span>This PR is out of sync — branches may have changed since last refresh.</span>
+        <span>{message}</span>
       </div>
       <button onClick={onRefresh} disabled={loading}>
         {loading ? (
