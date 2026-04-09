@@ -61,11 +61,19 @@ Removes a comment from an in-progress review. Main process enforces `review.stat
 1. **Opened this PR** — always first, unchanged.
 2. For each `ReviewFile` in `reviews` (oldest first):
    - `in_progress`: render a single "Review in progress" entry; no comments nested.
-   - `submitted`: render a single "Review submitted" entry; no comments (fix not yet complete).
+   - `submitted`: render a single "Review submitted" entry with all comments nested under it. Each comment renders its body and, if resolved/wont_fix, the agent's resolution reply beneath it (the `resolution.comment` and `resolution.resolved_by` fields).
    - `complete`: render **two** entries for this review round:
-     1. "Review submitted" — no content body (marks when it was submitted)
-     2. "Review complete — N comments addressed" — comments collapsed under this entry
-3. Between a `complete` review and the next round's first entry, insert a **"Fixes applied"** connector — a smaller, dimmer dot with no content body — to visually separate rounds.
+     1. "Review submitted" — with all comments nested, each showing the agent's resolution reply (same as `submitted` above).
+     2. "Review feedback implemented" — shows "X commits created" as a detail line, where X is the commit count between this review's `compare_sha` and either the next review's `compare_sha` or the current branch HEAD (whichever applies).
+3. No separate connector is needed between rounds — "Review feedback implemented" already serves as the visual separator.
+
+**New IPC handler: `countCommitsBetween`**
+
+```ts
+countCommitsBetween(repoPath: string, fromSha: string, toSha: string): Promise<number>
+```
+
+Runs `git rev-list --count <fromSha>..<toSha>`. Used to populate the commit count in "Review feedback implemented". `toSha` is either the next review's `compare_sha` or the result of `git rev-parse HEAD` on the compare branch.
 
 The existing single-review rendering path is removed. All display logic derives from the `reviews` array.
 
