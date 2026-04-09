@@ -13,6 +13,7 @@ import { McpManager } from './mcp-manager'
 import { ReviewWatcher } from './review-watcher'
 import { getSetting, setSetting } from './db/settings'
 import { listRepos } from './db/repos'
+import { getIntegrations, installIntegrations } from './integrations'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -144,6 +145,37 @@ app.whenReady().then(() => {
     const running = mcpManager!.running
     mainWindow?.webContents.send('mcp:status-changed', { running })
     return { running }
+  })
+
+  // Integrations
+  ipcMain.handle('integrations:get', () => getIntegrations())
+  ipcMain.handle('integrations:install', () => installIntegrations())
+
+  // "Fix with" launcher
+  ipcMain.handle('fix:launch', async (_e, tool: string, repoPath: string, prId: string, reviewId: string) => {
+    try {
+      if (tool === 'claude') {
+        const mcpFlag = mcpManager?.running ? ['--mcp-server', 'local-code-review'] : []
+        const prompt = `Fix the open issues in .reviews/${prId}/reviews/${reviewId}.json`
+        const { execFile } = await import('child_process')
+        await new Promise<void>((res, rej) =>
+          execFile('claude', [...mcpFlag, prompt], { cwd: repoPath }, (err) => (err ? rej(err) : res()))
+        )
+        return {}
+      }
+      if (tool === 'vscode') {
+        const prompt = `Fix the open issues in .reviews/${prId}/reviews/${reviewId}.json`
+        mainWindow?.webContents.executeJavaScript(`navigator.clipboard.writeText(${JSON.stringify(prompt)})`)
+        const { execFile } = await import('child_process')
+        await new Promise<void>((res, rej) =>
+          execFile('code', [repoPath], (err) => (err ? rej(err) : res()))
+        )
+        return {}
+      }
+      return { error: `Unknown tool: ${tool}` }
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
   })
 
   createTray(db)
