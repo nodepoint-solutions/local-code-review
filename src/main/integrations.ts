@@ -26,7 +26,7 @@ function resolveConfigs(): ToolConfig[] {
     {
       id: 'claudeCode',
       name: 'Claude Code',
-      configPath: path.join(home, '.claude', 'settings.json'),
+      configPath: path.join(home, '.claude.json'),
       keyPath: ['mcpServers'],
       entryShape: 'claude',
     },
@@ -88,11 +88,20 @@ function mcpBinaryPath(): string {
   return path.join(app.getAppPath(), 'dist', 'mcp-server', 'index.js')
 }
 
+function resolveNodePath(): string {
+  const { execSync } = require('child_process') as typeof import('child_process')
+  try {
+    return execSync('which node', { encoding: 'utf8' }).trim()
+  } catch {
+    return 'node'
+  }
+}
+
 function buildEntry(shape: 'claude' | 'vscode') {
-  const command = process.execPath
+  const command = resolveNodePath()
   const args = [mcpBinaryPath()]
   if (shape === 'claude') {
-    return { command, args }
+    return { type: 'stdio', command, args, env: {} }
   }
   return { type: 'stdio', command, args }
 }

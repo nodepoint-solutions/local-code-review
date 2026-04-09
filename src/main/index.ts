@@ -157,13 +157,21 @@ app.whenReady().then(() => {
 
   // "Fix with" launcher — interactive, fire and forget
   ipcMain.handle('fix:launch', (_e, tool: string, repoPath: string, prId: string, reviewId: string) => {
-    const prompt = `Fix the open review comments in .reviews/${prId}/reviews/${reviewId}.json. When you are done, call the complete_assignment MCP tool to unassign yourself from this PR.`
+    const prompt = `You are implementing fixes from a local code review. Use the local-code-review MCP tools.
+
+repo_path: ${repoPath}
+pr_id: ${prId}
+review_id: ${reviewId}
+
+1. Call get_open_issues(repo_path, pr_id, review_id) to see all open issues
+2. For each open issue: implement the fix in the codebase, then call mark_resolved() or mark_wont_fix() with a clear explanation
+3. Never mark an issue without a resolution_comment
+4. When all issues are addressed, call complete_assignment(repo_path, pr_id) to unassign yourself and signal that you are done`
 
     if (tool === 'claude') {
-      const mcpArgs = mcpManager?.running ? ' --mcp-server local-code-review' : ''
       const safeRepo = repoPath.replace(/'/g, "'\\''")
       const safePrompt = prompt.replace(/'/g, "'\\''")
-      const shellCmd = `cd '${safeRepo}' && claude${mcpArgs} '${safePrompt}'`
+      const shellCmd = `cd '${safeRepo}' && claude '${safePrompt}'`
       const appleScript = `tell application "Terminal" to do script "${shellCmd.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
       const { spawn } = require('child_process') as typeof import('child_process')
       spawn('osascript', ['-e', appleScript], { detached: true, stdio: 'ignore' }).unref()
