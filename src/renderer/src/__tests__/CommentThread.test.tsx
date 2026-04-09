@@ -18,6 +18,6 @@ describe('CommentThread', () => {
 
   it('shows stale indicator for stale comments', () => {
     render(<CommentThread comment={{ ...comment, is_stale: true }} />)
-    expect(screen.getByText(/stale/i)).toBeInTheDocument()
+    expect(screen.getByText(/outdated/i)).toBeInTheDocument()
   })
 })
