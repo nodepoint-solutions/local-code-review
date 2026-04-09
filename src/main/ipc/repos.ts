@@ -2,7 +2,7 @@ import { ipcMain, dialog } from 'electron'
 import path from 'path'
 import type Database from 'better-sqlite3'
 import { insertRepo, listReposWithMeta, touchRepo } from '../db/repos'
-import { getSetting, setSetting } from '../db/settings'
+import { getSetting, setSetting, resetAllData } from '../db/settings'
 import { isGitRepo } from '../git/branches'
 import { scanForRepos } from '../git/scanner'
 
@@ -94,6 +94,14 @@ export function registerRepoHandlers(db: Database.Database): void {
       return result.filePaths[0]
     } catch {
       return null
+    }
+  })
+
+  ipcMain.handle('repos:reset', () => {
+    try {
+      resetAllData(db)
+    } catch {
+      // non-fatal
     }
   })
 }

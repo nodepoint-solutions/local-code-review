@@ -5,6 +5,7 @@ import Home from './screens/Home'
 import Repo from './screens/Repo'
 import OpenPR from './screens/OpenPR'
 import PR from './screens/PR'
+import Settings from './screens/Settings'
 import './App.css'
 
 function ThemeApplier(): null {
@@ -24,6 +25,7 @@ export default function App(): JSX.Element {
         <Route path="/repo/:repoId" element={<Repo />} />
         <Route path="/repo/:repoId/open-pr" element={<OpenPR />} />
         <Route path="/repo/:repoId/pr/:prId" element={<PR />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </HashRouter>
   )

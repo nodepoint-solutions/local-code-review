@@ -100,7 +100,7 @@ export default function Home(): JSX.Element {
     .sort((a, b) => a.name.localeCompare(b.name))
 
   const showOnboarding = !onboardingComplete && repos.length === 0 && !baseDirSet
-  const showScanHint = !baseDirSet && repos.length > 0 && onboardingComplete
+  const showScanHint = !baseDirSet && repos.length > 0
   const hasAnyContent = myRepos.length > 0 || recentRepos.length > 0 || discoveredRepos.length > 0
 
   async function handleOpenRepo(): Promise<void> {

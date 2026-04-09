@@ -23,6 +23,8 @@ const api = {
     ipcRenderer.invoke('repos:scan'),
   openScanDirPicker: (): Promise<string | null> =>
     ipcRenderer.invoke('repos:open-scan-dir-picker'),
+  resetDb: (): Promise<void> =>
+    ipcRenderer.invoke('repos:reset'),
 
   // Branches
   listBranches: (repoPath: string): Promise<string[]> =>
