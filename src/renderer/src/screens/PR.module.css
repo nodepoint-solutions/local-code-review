@@ -582,11 +582,37 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
   transition: padding-right var(--transition);
 }
 .bodyShifted {
   padding-right: 360px;
 }
+
+.treePanel {
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  will-change: width;
+}
+
+.resizeHandle {
+  width: 4px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 120ms ease;
+  position: relative;
+  z-index: 1;
+}
+.resizeHandle:hover,
+.resizeHandle:active {
+  background: var(--accent);
+}
+
 .diffPane {
   flex: 1;
   overflow-y: auto;

@@ -77,6 +77,60 @@ export default function PR(): JSX.Element {
   const [commitDiff, setCommitDiff] = useState<ParsedFile[] | null>(null)
   const [commitDiffLoading, setCommitDiffLoading] = useState(false)
   const fileRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const [treeWidth, setTreeWidth] = useState(() => {
+    const saved = localStorage.getItem('fileTreeWidth')
+    return saved ? parseInt(saved, 10) : 280
+  })
+  const treePanelRef = useRef<HTMLDivElement | null>(null)
+  const diffPaneRef = useRef<HTMLDivElement | null>(null)
+  const dragging = useRef(false)
+  const dragStartX = useRef(0)
+  const dragStartWidth = useRef(0)
+
+  useEffect(() => {
+    function onMouseMove(e: MouseEvent): void {
+      if (!dragging.current || !treePanelRef.current) return
+      const delta = e.clientX - dragStartX.current
+      const next = Math.max(160, Math.min(520, dragStartWidth.current + delta))
+      treePanelRef.current.style.width = `${next}px`
+    }
+    function onMouseUp(): void {
+      if (!dragging.current || !treePanelRef.current) return
+      dragging.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      // Unfreeze the diff pane — one reflow on release
+      if (diffPaneRef.current) {
+        diffPaneRef.current.style.flex = ''
+        diffPaneRef.current.style.width = ''
+        diffPaneRef.current.style.pointerEvents = ''
+      }
+      const finalWidth = parseInt(treePanelRef.current.style.width, 10)
+      setTreeWidth(finalWidth)
+      localStorage.setItem('fileTreeWidth', String(finalWidth))
+    }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [])
+
+  function handleResizeStart(e: React.MouseEvent): void {
+    if (!treePanelRef.current || !diffPaneRef.current) return
+    // Freeze the diff pane at its current pixel width so its content
+    // never reflows during the drag — only the narrow tree panel moves.
+    diffPaneRef.current.style.flex = 'none'
+    diffPaneRef.current.style.width = `${diffPaneRef.current.offsetWidth}px`
+    diffPaneRef.current.style.pointerEvents = 'none'
+    dragging.current = true
+    dragStartX.current = e.clientX
+    dragStartWidth.current = parseInt(treePanelRef.current.style.width, 10) || treeWidth
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    e.preventDefault()
+  }
 
   useEffect(() => {
     if (repo && prId) {
@@ -392,8 +446,11 @@ export default function PR(): JSX.Element {
       {/* ── Files tab ── */}
       {tab === 'files' && (
         <div className={`${styles.filesBody} ${reviewPanelOpen ? styles.bodyShifted : ''}`}>
-          <FileTree files={diff} onSelect={scrollToFile} />
-          <div className={styles.diffPane}>
+          <div ref={treePanelRef} className={styles.treePanel} style={{ width: treeWidth }}>
+            <FileTree files={diff} onSelect={scrollToFile} />
+          </div>
+          <div className={styles.resizeHandle} onMouseDown={handleResizeStart} />
+          <div ref={diffPaneRef} className={styles.diffPane}>
             {diff.map((file) => (
               <div key={file.newPath} ref={(el) => { fileRefs.current[file.newPath] = el }}>
                 <DiffView

@@ -1,7 +1,7 @@
 .tree {
-  width: 240px;
-  min-width: 240px;
-  border-right: 1px solid var(--border);
+  width: 100%;
+  height: 100%;
+  border-right: none;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -38,59 +38,53 @@
 }
 
 .list {
-  list-style: none;
   padding: 4px 0;
   overflow-y: auto;
-}
-
-.fileBtn {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  width: 100%;
-  padding: 5px 12px;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--transition);
-  color: var(--text);
-}
-.fileBtn:hover {
-  background: var(--bg-surface-2);
-  border-color: transparent;
-}
-.fileBtnActive {
-  background: var(--accent-subtle);
-  border-color: transparent;
-}
-.fileBtnActive:hover {
-  background: var(--accent-subtle);
-}
-
-.status {
-  font-size: 10px;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  width: 14px;
-  flex-shrink: 0;
-  line-height: 18px;
-}
-
-.statusAdded { color: var(--added-text); }
-.statusDeleted { color: var(--removed-text); }
-.statusRenamed { color: var(--badge-renamed-text); }
-.statusModified { color: var(--accent-text); }
-
-.fileInfo {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
   flex: 1;
 }
 
-.fileName {
+/* ── Folder row ─────────────────────────────────────────────── */
+
+.folderBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 3px 8px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  transition: background var(--transition);
+}
+
+.folderBtn:hover {
+  background: var(--bg-surface-2);
+}
+
+.chevron {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  fill: var(--text-muted);
+  transition: transform 150ms ease;
+  transform: rotate(0deg);
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.folderIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: #79c0ff;
+  opacity: 0.8;
+}
+
+.folderName {
   font-size: 12px;
   font-family: var(--font-mono);
   color: var(--text);
@@ -100,11 +94,64 @@
   line-height: 18px;
 }
 
-.fileDir {
-  font-size: 10px;
+/* ── File row ───────────────────────────────────────────────── */
+
+.fileBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 3px 8px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  transition: background var(--transition);
+}
+
+.fileBtn:hover {
+  background: var(--bg-surface-2);
+}
+
+.fileBtnActive {
+  background: var(--accent-subtle);
+}
+
+.fileBtnActive:hover {
+  background: var(--accent-subtle);
+}
+
+.fileIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: var(--text-subtle);
+}
+
+.fileName {
+  font-size: 12px;
   font-family: var(--font-mono);
-  color: var(--text-subtle);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+  line-height: 18px;
 }
+
+/* ── Status badge (right-aligned) ───────────────────────────── */
+
+.status {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  margin-left: 4px;
+  line-height: 18px;
+}
+
+.statusAdded { color: var(--added-text); }
+.statusDeleted { color: var(--removed-text); }
+.statusRenamed { color: var(--badge-renamed-text); }
+.statusModified { color: var(--accent-text); }
