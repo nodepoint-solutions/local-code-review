@@ -5,6 +5,16 @@ export interface Repository {
   path: string
   name: string
   created_at: string
+  last_visited_at: string | null
+}
+
+export interface RepositoryWithMeta extends Repository {
+  pr_count: number
+}
+
+export interface DiscoveredRepo {
+  path: string
+  name: string
 }
 
 export interface PullRequest {
