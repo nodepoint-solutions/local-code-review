@@ -1,0 +1,78 @@
+.layout {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.listPanel {
+  width: 240px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.reviewItem {
+  padding: 10px 16px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+
+.reviewItem:hover {
+  background: var(--bg-hover, rgba(255,255,255,0.04));
+}
+
+.reviewItemActive {
+  border-left-color: var(--accent);
+  background: var(--bg-hover, rgba(255,255,255,0.04));
+}
+
+.reviewLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.reviewMeta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.sha {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.reviewTime {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.reviewCommentCount {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.diffPanel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.diffToolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.empty,
+.loading {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 24px 0;
+  text-align: center;
+}
