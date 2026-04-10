@@ -17,6 +17,9 @@ import type { CreatePrPayload, PrDetail } from '../../shared/types'
 const store = new ReviewStore()
 
 export function registerPrHandlers(db: Database.Database): void {
+  const fetchCache = new Map<string, number>()
+  const FETCH_TTL_MS = 30_000
+
   ipcMain.handle('prs:list', (_e, repoPath: string) => {
     try {
       return store.listPRs(repoPath)
@@ -56,7 +59,11 @@ export function registerPrHandlers(db: Database.Database): void {
       // Fetch origin for open PRs so remote refs are available for merge detection
       // and as a fallback if the local compare branch has been deleted post-merge
       if (pr.status === 'open') {
-        await fetchOrigin(repoPath)
+        const lastFetch = fetchCache.get(repoPath) ?? 0
+        if (Date.now() - lastFetch > FETCH_TTL_MS) {
+          await fetchOrigin(repoPath)
+          fetchCache.set(repoPath, Date.now())
+        }
       }
 
       const currentBaseSha = await resolveSha(repoPath, pr.base_branch)

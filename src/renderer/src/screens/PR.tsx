@@ -153,7 +153,7 @@ export default function PR(): JSX.Element {
   React.useEffect(() => {
     window.api.getIntegrations().then(setIntegrations)
     if (repo) window.api.getRemoteInfo(repo.path).then(setGithubInfo)
-  }, [])
+  }, [repo?.path])
 
   React.useEffect(() => {
     window.api.onReviewUpdated(async ({ repoPath, prId: updatedPrId }) => {
@@ -313,7 +313,9 @@ export default function PR(): JSX.Element {
     const bodyParam = currentPr.description
       ? `&body=${encodeURIComponent(currentPr.description)}`
       : ''
-    const url = `https://github.com/${githubInfo.owner}/${githubInfo.repo}/compare/${currentPr.base_branch}...${currentPr.compare_branch}?expand=1&title=${encodedTitle}${bodyParam}`
+    const encodedBase = encodeURIComponent(currentPr.base_branch)
+    const encodedCompare = encodeURIComponent(currentPr.compare_branch)
+    const url = `https://github.com/${githubInfo.owner}/${githubInfo.repo}/compare/${encodedBase}...${encodedCompare}?expand=1&title=${encodedTitle}${bodyParam}`
     window.open(url, '_blank')
   }
 

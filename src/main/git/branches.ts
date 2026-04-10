@@ -47,8 +47,17 @@ export async function isWorkingDirClean(repoPath: string): Promise<boolean> {
 }
 
 export async function isBranchPushed(repoPath: string, branch: string): Promise<boolean> {
-  const output = await execGit(repoPath, ['ls-remote', '--heads', 'origin', branch])
-  return output.trim() !== ''
+  try {
+    // Ask the remote directly for the branch tip SHA
+    const lsRemoteOutput = await execGit(repoPath, ['ls-remote', '--heads', 'origin', branch])
+    if (lsRemoteOutput.trim() === '') return false  // branch doesn't exist on remote
+    const remoteSha = lsRemoteOutput.trim().split('\t')[0]
+    // Compare with local branch tip
+    const localSha = (await execGit(repoPath, ['rev-parse', `refs/heads/${branch}`])).trim()
+    return localSha === remoteSha
+  } catch {
+    return false
+  }
 }
 
 export async function pushBranch(repoPath: string, branch: string): Promise<void> {
