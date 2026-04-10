@@ -100,6 +100,13 @@ const api = {
   pushBranch: (repoPath: string, branch: string): Promise<{ error?: string }> =>
     ipcRenderer.invoke('git:push-branch', repoPath, branch),
 
+  onMcpStatusChanged: (callback: (data: { running: boolean }) => void) => {
+    ipcRenderer.on('mcp:status-changed', (_e, data) => callback(data))
+  },
+  offMcpStatusChanged: () => {
+    ipcRenderer.removeAllListeners('mcp:status-changed')
+  },
+
   onPrUpdated: (callback: (data: { repoPath: string; prId: string }) => void) => {
     ipcRenderer.on('pr:updated', (_e, data) => callback(data))
   },

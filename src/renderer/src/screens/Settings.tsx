@@ -31,6 +31,8 @@ export default function Settings(): JSX.Element {
   React.useEffect(() => {
     window.api.getMcpStatus().then(({ running }) => setMcpRunning(running))
     window.api.getIntegrations().then(setIntegrations)
+    window.api.onMcpStatusChanged(({ running }) => setMcpRunning(running))
+    return () => window.api.offMcpStatusChanged()
   }, [])
 
   async function handleToggleMcp() {

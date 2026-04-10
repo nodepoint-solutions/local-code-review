@@ -16,6 +16,7 @@ export class McpManager {
   private child: ChildProcess | null = null
   private socketServer: net.Server | null = null
   private socketPath: string
+  onChildExit?: () => void
 
   constructor(private onEvent: (event: McpEvent) => void) {
     const suffix = process.platform === 'win32' ? `local-review-${process.pid}` : `local-review-${process.pid}.sock`
@@ -64,6 +65,7 @@ export class McpManager {
 
     this.child.on('close', () => {
       this.child = null
+      this.onChildExit?.()
     })
 
     this.child.stderr?.on('data', (data: Buffer) => {

@@ -163,6 +163,9 @@ app.whenReady().then(() => {
       })
     }
   })
+  mcpManager.onChildExit = () => {
+    mainWindow?.webContents.send('mcp:status-changed', { running: false })
+  }
 
   if (getSetting(db, 'mcp_enabled') !== 'false') {
     mcpManager.start()
