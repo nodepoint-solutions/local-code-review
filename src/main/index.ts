@@ -3,6 +3,7 @@
 
 import { app, BrowserWindow, Tray, Menu, nativeImage, shell, ipcMain } from 'electron'
 import { join } from 'path'
+import { writeFileSync, mkdirSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { getDb } from './db'
 import { registerRepoHandlers } from './ipc/repos'
@@ -19,6 +20,25 @@ let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let mcpManager: McpManager | null = null
 let reviewWatcher: ReviewWatcher | null = null
+
+function writeErrorLog(err: unknown): void {
+  try {
+    const logsDir = join(app.getPath('logs'), 'local-code-review')
+    mkdirSync(logsDir, { recursive: true })
+    const msg = `[${new Date().toISOString()}] ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`
+    writeFileSync(join(logsDir, 'error.log'), msg, { flag: 'a' })
+  } catch {
+    // ignore — can't do anything if logging itself fails
+  }
+}
+
+process.on('uncaughtException', (err) => {
+  writeErrorLog(err)
+})
+
+process.on('unhandledRejection', (reason) => {
+  writeErrorLog(reason)
+})
 
 /** Path to the resources directory — works both in dev and in packaged builds. */
 function resourcesPath(): string {
@@ -37,8 +57,11 @@ function createTray(db: ReturnType<typeof getDb>): void {
       {
         label: 'Open Interface',
         click: () => {
-          mainWindow?.show()
-          mainWindow?.focus()
+          if (!mainWindow || mainWindow.isDestroyed()) {
+            mainWindow = createWindow()
+          } else {
+            mainWindow.show()
+          }
         },
       },
       { type: 'separator' },
@@ -91,15 +114,12 @@ function createWindow(): BrowserWindow {
 
   win.on('ready-to-show', () => win.show())
 
-  win.on('show', () => {
-    if (process.platform === 'darwin') {
-      app.dock.setIcon(nativeImage.createFromPath(join(resourcesPath(), 'icon-512.png')))
-      app.dock.show()
-    }
+  win.webContents.on('render-process-gone', (_event, details) => {
+    writeErrorLog(new Error(`Renderer process gone: ${details.reason} (exit ${details.exitCode})`))
   })
 
-  win.on('hide', () => {
-    if (process.platform === 'darwin') app.dock.hide()
+  win.webContents.on('did-fail-load', (_event, code, desc, url) => {
+    writeErrorLog(new Error(`Renderer failed to load ${url}: [${code}] ${desc}`))
   })
 
   win.on('close', (e) => {
@@ -124,6 +144,7 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  try {
   electronApp.setAppUserModelId('com.local-code-review')
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
 
@@ -217,13 +238,26 @@ review_id: ${reviewId}
   createTray(db)
   mainWindow = createWindow()
 
+  // Guard prevents rapid successive activate events from spawning multiple windows.
+  // On macOS dock-hidden apps, calling focus() inside the activate handler can
+  // re-trigger activate, so we only show/create — never focus — from here.
+  let _activating = false
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+    if (_activating) return
+    _activating = true
+    setTimeout(() => { _activating = false }, 500)
+
+    if (!mainWindow || mainWindow.isDestroyed()) {
       mainWindow = createWindow()
-    } else {
-      mainWindow?.show()
+    } else if (!mainWindow.isVisible()) {
+      mainWindow.show()
     }
+    // Do NOT call focus() — triggers re-entrant activate on dock-hidden macOS apps
   })
+  } catch (err) {
+    writeErrorLog(err)
+    app.quit()
+  }
 })
 
 app.on('before-quit', () => {

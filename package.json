@@ -46,6 +46,7 @@
       "output": "dist"
     },
     "files": ["out/**/*"],
+    "asarUnpack": ["**/*.node", "node_modules/better-sqlite3/**/*"],
     "extraResources": [
       { "from": "resources/iconTemplate.png", "to": "iconTemplate.png" },
       { "from": "resources/iconTemplate@2x.png", "to": "iconTemplate@2x.png" },
