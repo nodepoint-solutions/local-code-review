@@ -53,12 +53,23 @@ export function registerPrHandlers(db: Database.Database): void {
     try {
       let pr = store.getPR(repoPath, prId)
 
+      // Fetch origin for open PRs so remote refs are available for merge detection
+      // and as a fallback if the local compare branch has been deleted post-merge
+      if (pr.status === 'open') {
+        await fetchOrigin(repoPath)
+      }
+
       const currentBaseSha = await resolveSha(repoPath, pr.base_branch)
-      const currentCompareSha = await resolveSha(repoPath, pr.compare_branch)
+      // Try local compare branch first; fall back to remote ref if deleted post-merge
+      let currentCompareSha: string
+      try {
+        currentCompareSha = await resolveSha(repoPath, pr.compare_branch)
+      } catch {
+        currentCompareSha = await resolveSha(repoPath, `origin/${pr.compare_branch}`)
+      }
 
       // Auto-close if compare branch has been merged into the remote base
       if (pr.status === 'open') {
-        await fetchOrigin(repoPath)
         const merged = await isMergedIntoRemote(repoPath, currentCompareSha, pr.base_branch)
         if (merged) {
           pr = store.mergePR(repoPath, pr.id)
