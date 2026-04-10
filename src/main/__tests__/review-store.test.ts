@@ -83,6 +83,23 @@ describe('ReviewStore', () => {
       expect(cleared.assigned_at).toBeNull()
     })
 
+    it('mergePR sets status to closed and records merged_at', () => {
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'feature/x',
+      })
+      const merged = store.mergePR(repoPath, pr.id)
+      expect(merged.status).toBe('closed')
+      expect(typeof merged.merged_at).toBe('string')
+      expect(merged.merged_at).toBeTruthy()
+      // persisted to disk
+      const fetched = store.getPR(repoPath, pr.id)
+      expect(fetched.status).toBe('closed')
+      expect(fetched.merged_at).toBeTruthy()
+    })
+
     it('existing index.json without assignee fields parses correctly', () => {
       const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
       // Write a file without the new fields (simulating a pre-migration file)

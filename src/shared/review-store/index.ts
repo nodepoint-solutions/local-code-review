@@ -89,6 +89,17 @@ export class ReviewStore {
     return updated
   }
 
+  mergePR(repoPath: string, prId: string): PRFile {
+    const pr = readPR(repoPath, prId)
+    const now = new Date().toISOString()
+    const updated_at = now > pr.updated_at
+      ? now
+      : new Date(new Date(pr.updated_at).getTime() + 1).toISOString()
+    const updated: PRFile = { ...pr, status: 'closed', merged_at: now, updated_at }
+    writePR(repoPath, updated)
+    return updated
+  }
+
   assignPR(repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null): PRFile {
     const pr = readPR(repoPath, prId)
     const updated: PRFile = {
