@@ -96,4 +96,5 @@ export interface IntegrationStatus {
   name: string
   detected: boolean
   installed: boolean
+  skillInstalled: boolean
 }
