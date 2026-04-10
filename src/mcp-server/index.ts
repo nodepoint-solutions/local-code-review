@@ -67,13 +67,13 @@ Rules:
   }
 })
 
-// Only connect stdio transport when stdin is available (i.e. a client
-// such as Claude Code launched this process). When spawned as a background
-// daemon by the Electron app, stdin is null and we skip the transport —
-// the socket connection above handles event notification back to the app.
-if (process.stdin) {
+// Connect the stdio transport so MCP clients (Claude Code, VS Code) can
+// call tools. When spawned as a background daemon by the Electron app,
+// stdin is not a real stream and the transport will throw — swallow that
+// and keep running for the socket connection only.
+try {
   const transport = new StdioServerTransport()
-  server.connect(transport).then(() => {
-    // Server is running; stdio is the transport
-  })
+  server.connect(transport).catch(() => {})
+} catch {
+  // Running as daemon without a stdio client — socket-only mode.
 }
