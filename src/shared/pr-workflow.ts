@@ -29,13 +29,20 @@ export type WorkflowPhase =
 export class PRWorkflow {
   readonly phase: WorkflowPhase
 
-  constructor(pr: PRFile, review: ReviewFile | null) {
-    this.phase = PRWorkflow.derive(pr, review)
+  // allReviews is optional — pass it when available so the workflow can detect
+  // fix_complete when the active review is null (complete reviews filtered out
+  // of the active slot by prs:get but still present in the history).
+  constructor(pr: PRFile, review: ReviewFile | null, allReviews: ReviewFile[] = []) {
+    this.phase = PRWorkflow.derive(pr, review, allReviews)
   }
 
-  private static derive(pr: PRFile, review: ReviewFile | null): WorkflowPhase {
+  private static derive(pr: PRFile, review: ReviewFile | null, allReviews: ReviewFile[] = []): WorkflowPhase {
     if (pr.status === 'closed') return 'closed'
-    if (review === null) return 'awaiting_review'
+    if (review === null) {
+      // No active (in_progress/submitted) review. If a complete review exists in
+      // history we are in fix_complete so the user can start a new review round.
+      return allReviews.some(r => r.status === 'complete') ? 'fix_complete' : 'awaiting_review'
+    }
     if (review.status === 'in_progress') return 'reviewing'
     if (review.status === 'complete') return 'fix_complete'
     // review.status === 'submitted'

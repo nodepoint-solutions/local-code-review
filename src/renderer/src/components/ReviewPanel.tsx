@@ -6,6 +6,7 @@ import styles from './ReviewPanel.module.css'
 interface Props {
   pr: PRFile
   review: ReviewFile | null
+  reviews: ReviewFile[]
   comments: ReviewComment[]
   prId: string
   repoPath: string
@@ -30,12 +31,11 @@ function CheckIcon(): JSX.Element {
   )
 }
 
-export default function ReviewPanel({ pr, review, comments, prId, repoPath, onClose, onSubmitted }: Props): JSX.Element {
+export default function ReviewPanel({ pr, review, reviews, comments, prId, repoPath, onClose, onSubmitted }: Props): JSX.Element {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [startingNew, setStartingNew] = useState(false)
   const nonStale = comments.filter((c) => !c.is_stale)
-  const workflow = new PRWorkflow(pr, review ?? null)
+  const workflow = new PRWorkflow(pr, review ?? null, reviews)
 
   async function handleSubmit(): Promise<void> {
     if (!review) return
@@ -51,14 +51,6 @@ export default function ReviewPanel({ pr, review, comments, prId, repoPath, onCl
     if (updated && 'error' in updated) { setSubmitting(false); return }
     onSubmitted(updated as PrDetail | null)
     setSubmitting(false)
-  }
-
-  async function handleStartNewReview(): Promise<void> {
-    setStartingNew(true)
-    const result = await window.api.newReview(repoPath, prId)
-    if (result && 'error' in result) { setStartingNew(false); return }
-    onSubmitted(result as PrDetail)
-    setStartingNew(false)
   }
 
   function getFileName(path: string): string {
@@ -147,18 +139,6 @@ export default function ReviewPanel({ pr, review, comments, prId, repoPath, onCl
         </div>
       )}
 
-      {workflow.allowsNewReview() && (
-        <div className={styles.footer}>
-          <button
-            className="primary"
-            onClick={handleStartNewReview}
-            disabled={startingNew}
-            style={{ width: '100%' }}
-          >
-            {startingNew ? 'Creating…' : 'Start new review'}
-          </button>
-        </div>
-      )}
     </div>
   )
 }

@@ -52,13 +52,13 @@ export function registerPrHandlers(db: Database.Database): void {
       const currentCompareSha = await resolveSha(repoPath, pr.compare_branch)
 
       const reviews = store.listReviews(repoPath, prId)
-      // Only use an in-progress or submitted review as the active review.
-      // Complete reviews belong in the "Previous reviews" tab, not Files changed.
-      // Create a new review only when there are no reviews at all.
+      // Use an in-progress or submitted review as the active review.
+      // Auto-create a new review when there are none, or when all previous
+      // ones are complete (the prior fix cycle is done — start fresh).
       const review =
         store.getInProgressReview(repoPath, prId) ??
         reviews.find(r => r.status === 'submitted') ??
-        (reviews.length === 0
+        (reviews.length === 0 || reviews.every(r => r.status === 'complete')
           ? store.createReview(repoPath, prId, { base_sha: currentBaseSha, compare_sha: currentCompareSha })
           : null)
 
@@ -88,11 +88,14 @@ export function registerPrHandlers(db: Database.Database): void {
         if (activeReview !== null && activeReview.status === 'submitted') {
           const nonStale = activeReview.comments.filter((c) => !c.is_stale)
           if (nonStale.length > 0 && nonStale.every((c) => c.status === 'resolved' || c.status === 'wont_fix')) {
-            activeReview = store.completeReview(repoPath, prId, activeReview.id)
+            store.completeReview(repoPath, prId, activeReview.id)
             // Auto-unassign the agent now that the review cycle is complete
             if (pr.assignee !== null) {
               pr = store.assignPR(repoPath, prId, null)
             }
+            // Immediately start the next review round so Files changed is
+            // editable without requiring a manual "Start new review" click.
+            activeReview = store.createReview(repoPath, prId, { base_sha: currentBaseSha, compare_sha: currentCompareSha })
           }
         }
       }
@@ -147,10 +150,14 @@ export function registerPrHandlers(db: Database.Database): void {
         return { pr, diff, review: freshReview, reviews: allReviews1, reviewCommitCounts: counts1, isStale: false }
       }
 
-      // No in-progress review — return the latest submitted review if any.
-      // Complete reviews are not shown as active; new reviews are only created via reviews:new.
+      // No in-progress review — use submitted review if present, or auto-create
+      // a new in-progress one if all existing reviews are complete.
       const diff = await getDiff(repoPath, baseSha, compareSha)
-      const latestReview = reviews.find(r => r.status === 'submitted') ?? null
+      const latestReview =
+        reviews.find(r => r.status === 'submitted') ??
+        (reviews.length > 0 && reviews.every(r => r.status === 'complete')
+          ? store.createReview(repoPath, prId, { base_sha: baseSha, compare_sha: compareSha })
+          : null)
       const allReviews2 = reviews.slice().reverse()
       const counts2: Record<string, number> = {}
       for (let i = 0; i < allReviews2.length; i++) {

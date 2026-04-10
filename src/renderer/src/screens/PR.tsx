@@ -270,7 +270,7 @@ export default function PR(): JSX.Element {
   const comments: ReviewComment[] = review?.comments ?? []
   const activeComments = comments.filter((c) => !c.is_stale)
   const navComments = sortCommentsByPosition(comments.filter((c) => !c.is_stale))
-  const workflow = new PRWorkflow(pr, review ?? null)
+  const workflow = new PRWorkflow(pr, review ?? null, prDetail.reviews)
 
   function handleCommentNav(index: number): void {
     setFocusedCommentIndex(index)
@@ -649,6 +649,7 @@ export default function PR(): JSX.Element {
         <ReviewPanel
           pr={pr}
           review={review}
+          reviews={prDetail.reviews}
           comments={comments}
           prId={prId!}
           onClose={() => setReviewPanelOpen(false)}
