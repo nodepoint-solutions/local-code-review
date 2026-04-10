@@ -48,6 +48,7 @@ export const PRFileSchema = z.object({
   status: z.enum(['open', 'closed']),
   assignee: z.enum(['claude', 'vscode']).nullable().optional().default(null),
   assigned_at: z.string().nullable().optional().default(null),
+  merged_at: z.string().nullable().optional().default(null),
   created_at: z.string(),
   updated_at: z.string(),
 })
