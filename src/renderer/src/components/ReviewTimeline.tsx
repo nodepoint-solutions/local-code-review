@@ -43,7 +43,6 @@ export default function ReviewTimeline({ pr, reviews, reviewCommitCounts }: Prop
           )
         }
 
-        // submitted or complete: always render "Review submitted" with comments
         const submittedEntry = (
           <div key={`${review.id}-submitted`} className={styles.entry}>
             <div className={styles.rail}>
@@ -71,7 +70,6 @@ export default function ReviewTimeline({ pr, reviews, reviewCommitCounts }: Prop
           return submittedEntry
         }
 
-        // complete: render "Review submitted" + "Review feedback implemented"
         const commitCount = reviewCommitCounts[review.id] ?? 0
         const commitLabel = `${commitCount} ${commitCount === 1 ? 'commit' : 'commits'} created`
 
@@ -92,6 +90,22 @@ export default function ReviewTimeline({ pr, reviews, reviewCommitCounts }: Prop
           </div>
         )
       })}
+
+      {pr.merged_at && (
+        <div className={styles.entry}>
+          <div className={styles.rail}>
+            <div className={`${styles.dot} ${styles.dotMerged}`} />
+          </div>
+          <div className={styles.content}>
+            <div className={styles.entryHeader}>
+              <span className={styles.entryTitle}>
+                Merged into <code>{pr.base_branch}</code>
+              </span>
+              <span className={styles.entryTime}>{formatRelativeTime(pr.merged_at)}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

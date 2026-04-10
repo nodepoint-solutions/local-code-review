@@ -78,6 +78,11 @@
   background: var(--success, #4caf50);
 }
 
+.dotMerged {
+  border-color: #8250df;
+  background: #8250df;
+}
+
 .commitCount {
   font-size: 12px;
   color: var(--text-muted);
