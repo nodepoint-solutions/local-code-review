@@ -1,5 +1,5 @@
 // src/main/mcp-manager.ts
-import { spawn, type ChildProcess } from 'child_process'
+import { spawn, execSync, type ChildProcess } from 'child_process'
 import net from 'net'
 import os from 'os'
 import path from 'path'
@@ -33,7 +33,7 @@ export class McpManager {
 
   start(): void {
     if (this.running) return
-    this.startSocketServer()
+    if (!this.socketServer) this.startSocketServer()
     this.spawnChild()
   }
 
@@ -51,21 +51,28 @@ export class McpManager {
     return path.join(app.getAppPath(), 'dist', 'mcp-server', 'index.js')
   }
 
+  private resolveNodeBinary(): string {
+    try {
+      return execSync('which node', { encoding: 'utf8' }).trim()
+    } catch {
+      return 'node'
+    }
+  }
+
   private spawnChild(): void {
     const env = {
       ...process.env,
-      ELECTRON_RUN_AS_NODE: '1',
       LOCAL_REVIEW_SOCKET: this.socketPath,
       LOCAL_REVIEW_IDENTITY: 'mcp',
     }
 
-    this.child = spawn(process.execPath, [this.mcpBinaryPath()], {
+    this.child = spawn(this.resolveNodeBinary(), [this.mcpBinaryPath()], {
       env,
-      stdio: ['pipe', 'pipe', 'pipe'],
+      stdio: ['ignore', 'ignore', 'pipe'],
     })
 
     this.child.on('close', (code) => {
-      this.onStderr?.(`[mcp-server] exited with code ${code}`)
+      if (code !== 0) this.onStderr?.(`[mcp-server] exited with code ${code}`)
       this.child = null
       this.onChildExit?.()
     })
