@@ -20,8 +20,15 @@ let tray: Tray | null = null
 let mcpManager: McpManager | null = null
 let reviewWatcher: ReviewWatcher | null = null
 
+/** Path to the resources directory — works both in dev and in packaged builds. */
+function resourcesPath(): string {
+  return is.dev ? join(__dirname, '../../resources') : process.resourcesPath
+}
+
 function createTray(db: ReturnType<typeof getDb>): void {
-  const icon = nativeImage.createEmpty()
+  const iconPath = join(resourcesPath(), 'iconTemplate.png')
+  const icon = nativeImage.createFromPath(iconPath)
+  icon.setTemplateImage(true)
   tray = new Tray(icon)
 
   function updateMenu(): void {
@@ -74,6 +81,8 @@ function createWindow(): BrowserWindow {
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
+    // Window icon for Windows / Linux taskbar (macOS uses the bundle icon)
+    icon: join(resourcesPath(), 'icon-512.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -81,6 +90,17 @@ function createWindow(): BrowserWindow {
   })
 
   win.on('ready-to-show', () => win.show())
+
+  win.on('show', () => {
+    if (process.platform === 'darwin') {
+      app.dock.setIcon(nativeImage.createFromPath(join(resourcesPath(), 'icon-512.png')))
+      app.dock.show()
+    }
+  })
+
+  win.on('hide', () => {
+    if (process.platform === 'darwin') app.dock.hide()
+  })
 
   win.on('close', (e) => {
     if (mcpManager?.running) {
@@ -188,6 +208,11 @@ review_id: ${reviewId}
 
     return { error: `Unknown tool: ${tool}` }
   })
+
+  // Hide the dock icon — the tray owns the app lifecycle
+  if (process.platform === 'darwin') {
+    app.dock.hide()
+  }
 
   createTray(db)
   mainWindow = createWindow()
