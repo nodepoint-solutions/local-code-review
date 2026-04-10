@@ -35,18 +35,18 @@ const comments: ReviewComment[] = [
 
 describe('ReviewPanel', () => {
   it('lists non-stale comments', () => {
-    render(<ReviewPanel pr={pr} review={review} comments={comments} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
+    render(<ReviewPanel pr={pr} review={review} reviews={[review]} comments={comments} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
     expect(screen.getByText('Fix null check')).toBeInTheDocument()
     expect(screen.getByText('Rename this')).toBeInTheDocument()
   })
 
   it('shows submit button when review is in_progress', () => {
-    render(<ReviewPanel pr={pr} review={review} comments={comments} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
+    render(<ReviewPanel pr={pr} review={review} reviews={[review]} comments={comments} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
     expect(screen.getByRole('button', { name: /submit review/i })).toBeInTheDocument()
   })
 
   it('does not show submit button when review is null', () => {
-    render(<ReviewPanel pr={pr} review={null} comments={[]} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
+    render(<ReviewPanel pr={pr} review={null} reviews={[]} comments={[]} prId="pr1" repoPath="/repo" onClose={vi.fn()} onSubmitted={vi.fn()} />)
     expect(screen.queryByRole('button', { name: /submit review/i })).not.toBeInTheDocument()
   })
 })
