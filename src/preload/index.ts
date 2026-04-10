@@ -41,6 +41,8 @@ const api = {
     ipcRenderer.invoke('prs:get', repoPath, prId),
   refreshPr: (repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> =>
     ipcRenderer.invoke('prs:refresh', repoPath, prId),
+  updatePr: (repoPath: string, prId: string, changes: { title?: string; description?: string | null }): Promise<PRFile | { error: string }> =>
+    ipcRenderer.invoke('prs:update', repoPath, prId, changes),
   closePr: (repoPath: string, prId: string): Promise<PRFile | { error: string }> =>
     ipcRenderer.invoke('prs:close', repoPath, prId),
   reopenPr: (repoPath: string, prId: string): Promise<PRFile | { error: string }> =>

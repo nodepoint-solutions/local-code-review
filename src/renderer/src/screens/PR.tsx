@@ -89,6 +89,10 @@ export default function PR(): JSX.Element {
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = React.useState(false)
   const [integrations, setIntegrations] = React.useState<IntegrationStatus[]>([])
   const [notification, setNotification] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
+  const [editingDescription, setEditingDescription] = useState(false)
+  const [descriptionDraft, setDescriptionDraft] = useState('')
   const fileRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [treeWidth, setTreeWidth] = useState(() => {
     const saved = localStorage.getItem('fileTreeWidth')
@@ -263,6 +267,22 @@ export default function PR(): JSX.Element {
     setRefreshing(false)
   }
 
+  async function handleSaveTitle(): Promise<void> {
+    const trimmed = titleDraft.trim()
+    if (!repo || !prDetail || !trimmed) { setEditingTitle(false); return }
+    const result = await window.api.updatePr(repo.path, prDetail.pr.id, { title: trimmed })
+    if (!('error' in result)) setPrDetail({ ...prDetail, pr: result })
+    setEditingTitle(false)
+  }
+
+  async function handleSaveDescription(): Promise<void> {
+    if (!repo || !prDetail) { setEditingDescription(false); return }
+    const desc = descriptionDraft.trim() || null
+    const result = await window.api.updatePr(repo.path, prDetail.pr.id, { description: desc })
+    if (!('error' in result)) setPrDetail({ ...prDetail, pr: result })
+    setEditingDescription(false)
+  }
+
   async function handleAddComment(payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>): Promise<void> {
     if (!repo || !prId || !prDetail) return
 
@@ -350,7 +370,27 @@ export default function PR(): JSX.Element {
       {/* PR header */}
       <div className={styles.prHeader}>
         <div className={styles.prTitleRow}>
-          <h1 className={styles.prTitle}>{pr.title}</h1>
+          {editingTitle ? (
+            <input
+              className={styles.prTitleInput}
+              value={titleDraft}
+              autoFocus
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveTitle()
+                if (e.key === 'Escape') setEditingTitle(false)
+              }}
+              onBlur={handleSaveTitle}
+            />
+          ) : (
+            <h1
+              className={styles.prTitle}
+              title="Click to edit title"
+              onClick={() => { setTitleDraft(pr.title); setEditingTitle(true) }}
+            >
+              {pr.title}
+            </h1>
+          )}
           <span className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}>{pr.status === 'open' ? 'Open' : 'Closed'}</span>
         </div>
         <div className={styles.prMeta}>
@@ -414,8 +454,34 @@ export default function PR(): JSX.Element {
             <div className={styles.descriptionCard}>
               <div className={styles.cardHeader}>
                 <span className={styles.cardTitle}>Description</span>
+                {!editingDescription && (
+                  <button
+                    className={styles.editBtn}
+                    onClick={() => { setDescriptionDraft(pr.description ?? ''); setEditingDescription(true) }}
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
-              {pr.description ? (
+              {editingDescription ? (
+                <div className={styles.descriptionEditor}>
+                  <textarea
+                    className={styles.descriptionTextarea}
+                    value={descriptionDraft}
+                    autoFocus
+                    rows={6}
+                    onChange={(e) => setDescriptionDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setEditingDescription(false)
+                    }}
+                    placeholder="Add a description…"
+                  />
+                  <div className={styles.editActions}>
+                    <button className={styles.editSaveBtn} onClick={handleSaveDescription}>Save</button>
+                    <button className={styles.editCancelBtn} onClick={() => setEditingDescription(false)}>Cancel</button>
+                  </div>
+                </div>
+              ) : pr.description ? (
                 <div className={styles.descriptionBody}>{pr.description}</div>
               ) : (
                 <div className={styles.descriptionEmpty}>No description provided.</div>

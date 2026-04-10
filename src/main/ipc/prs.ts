@@ -176,6 +176,14 @@ export function registerPrHandlers(db: Database.Database): void {
     }
   })
 
+  ipcMain.handle('prs:update', (_e, repoPath: string, prId: string, changes: { title?: string; description?: string | null }) => {
+    try {
+      return store.updatePR(repoPath, prId, changes)
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
+
   ipcMain.handle('prs:close', (_e, repoPath: string, prId: string) => {
     try {
       return store.updatePRStatus(repoPath, prId, 'closed')
