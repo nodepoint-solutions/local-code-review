@@ -727,3 +727,41 @@
   font-size: 11px;
   padding: 2px 8px;
 }
+
+.assigneeDropdownItem:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.assigneeDropdownItem:disabled:hover {
+  background: none;
+}
+
+.assigneeItemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.assigneeStatusLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.notification {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text);
+  z-index: 1000;
+  white-space: nowrap;
+}

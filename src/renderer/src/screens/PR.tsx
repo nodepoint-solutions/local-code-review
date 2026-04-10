@@ -11,7 +11,7 @@ import PreviousReviews from '../components/PreviousReviews'
 import CommentNav from '../components/CommentNav'
 import CommentOutline from '../components/CommentOutline'
 import { sortCommentsByPosition } from '../utils/sortComments'
-import type { AddCommentPayload, ReviewComment, Commit, ParsedFile, PrDetail } from '../../../shared/types'
+import type { AddCommentPayload, ReviewComment, Commit, ParsedFile, PrDetail, IntegrationStatus } from '../../../shared/types'
 import { PRWorkflow } from '../../../shared/pr-workflow'
 import { formatRelativeTime } from '../utils/formatTime'
 import styles from './PR.module.css'
@@ -58,6 +58,21 @@ function getInitials(name: string): string {
   return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
+function getAssigneeStatus(
+  integrations: IntegrationStatus[],
+  ids: IntegrationStatus['id'][]
+): 'configured' | 'not-configured' | 'not-installed' {
+  const tools = integrations.filter((i) => ids.includes(i.id))
+  if (tools.some((i) => i.detected && i.installed && i.skillInstalled)) return 'configured'
+  if (tools.some((i) => i.detected && i.installed)) return 'not-configured'
+  return 'not-installed'
+}
+
+const ASSIGNEE_OPTIONS: { key: 'claude' | 'vscode'; label: string; ids: IntegrationStatus['id'][] }[] = [
+  { key: 'claude', label: 'Claude Code', ids: ['claudeCode', 'claudeDesktop'] },
+  { key: 'vscode', label: 'Copilot (VS Code)', ids: ['vscode', 'cursor', 'windsurf'] },
+]
+
 export default function PR(): JSX.Element {
   const { repoId, prId } = useParams<{ repoId: string; prId: string }>()
   const navigate = useNavigate()
@@ -72,7 +87,8 @@ export default function PR(): JSX.Element {
   const [commitDiffLoading, setCommitDiffLoading] = useState(false)
   const [focusedCommentIndex, setFocusedCommentIndex] = useState(-1)
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = React.useState(false)
-  const [integrations, setIntegrations] = React.useState<import('../../../shared/types').IntegrationStatus[]>([])
+  const [integrations, setIntegrations] = React.useState<IntegrationStatus[]>([])
+  const [notification, setNotification] = useState<string | null>(null)
   const fileRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [treeWidth, setTreeWidth] = useState(() => {
     const saved = localStorage.getItem('fileTreeWidth')
@@ -160,13 +176,26 @@ export default function PR(): JSX.Element {
     const updated = await window.api.getPr(repo.path, prId)
     if (updated && !('error' in updated)) setPrDetail(updated as any)
     if (prDetail?.review) {
-      window.api.launchFix(tool, repo.path, prId, prDetail.review.id)
+      const result = await window.api.launchFix(tool, repo.path, prId, prDetail.review.id)
+      if (result?.notification) {
+        setNotification(result.notification)
+        setTimeout(() => setNotification(null), 5000)
+      }
     }
   }
 
   async function handleNudge(): Promise<void> {
     if (!repo || !prId || !prDetail?.pr.assignee || !prDetail?.review) return
-    window.api.launchFix(prDetail.pr.assignee, repo.path, prId, prDetail.review.id)
+    const result = await window.api.launchFix(
+      prDetail.pr.assignee as 'claude' | 'vscode',
+      repo.path,
+      prId,
+      prDetail.review.id
+    )
+    if (result?.notification) {
+      setNotification(result.notification)
+      setTimeout(() => setNotification(null), 5000)
+    }
   }
 
   useEffect(() => {
@@ -471,22 +500,27 @@ export default function PR(): JSX.Element {
                     </button>
                     {assigneeDropdownOpen && (
                       <div className={styles.assigneeDropdownMenu}>
-                        {integrations.find((i) => i.id === 'claudeCode' && i.detected) && (
-                          <button
-                            className={styles.assigneeDropdownItem}
-                            onClick={() => handleAssign('claude')}
-                          >
-                            Claude Code
-                          </button>
-                        )}
-                        {integrations.find((i) => (i.id === 'vscode' || i.id === 'cursor' || i.id === 'windsurf') && i.detected) && (
-                          <button
-                            className={styles.assigneeDropdownItem}
-                            onClick={() => handleAssign('vscode')}
-                          >
-                            Copilot (VS Code)
-                          </button>
-                        )}
+                        {ASSIGNEE_OPTIONS.map(({ key, label, ids }) => {
+                          const status = getAssigneeStatus(integrations, ids)
+                          return (
+                            <button
+                              key={key}
+                              className={styles.assigneeDropdownItem}
+                              disabled={status !== 'configured'}
+                              onClick={status === 'configured' ? () => handleAssign(key) : undefined}
+                            >
+                              <span className={styles.assigneeItemRow}>
+                                <span>{label}</span>
+                                {status === 'not-installed' && (
+                                  <span className={styles.assigneeStatusLabel}>Not installed</span>
+                                )}
+                                {status === 'not-configured' && (
+                                  <span className={styles.assigneeStatusLabel}>Not configured — see settings</span>
+                                )}
+                              </span>
+                            </button>
+                          )
+                        })}
                       </div>
                     )}
                   </div>
@@ -658,6 +692,9 @@ export default function PR(): JSX.Element {
         />
       )}
 
+      {notification && (
+        <div className={styles.notification}>{notification}</div>
+      )}
     </div>
   )
 }
