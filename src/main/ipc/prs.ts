@@ -52,42 +52,47 @@ export function registerPrHandlers(db: Database.Database): void {
       const currentCompareSha = await resolveSha(repoPath, pr.compare_branch)
 
       const reviews = store.listReviews(repoPath, prId)
+      // Only use an in-progress or submitted review as the active review.
+      // Complete reviews belong in the "Previous reviews" tab, not Files changed.
+      // Create a new review only when there are no reviews at all.
       const review =
         store.getInProgressReview(repoPath, prId) ??
-        reviews[0] ??
-        store.createReview(repoPath, prId, { base_sha: currentBaseSha, compare_sha: currentCompareSha })
+        reviews.find(r => r.status === 'submitted') ??
+        (reviews.length === 0
+          ? store.createReview(repoPath, prId, { base_sha: currentBaseSha, compare_sha: currentCompareSha })
+          : null)
 
       // Always diff against current branch HEADs so the view shows latest code
       const diff = await getDiff(repoPath, currentBaseSha, currentCompareSha)
 
       // When the branch has advanced since the review was started, detect newly
       // stale comments and persist the updated SHAs so the next load is cheaper.
-      const shasChanged = currentBaseSha !== review.base_sha || currentCompareSha !== review.compare_sha
-      if (shasChanged && review.status === 'in_progress') {
-        for (const file of diff) {
-          const validLineNums = new Set(file.lines.map((l) => l.diffLineNumber))
-          const staleRanges = review.comments
-            .filter((c) => c.file === file.newPath && !c.is_stale && (!validLineNums.has(c.start_line) || !validLineNums.has(c.end_line)))
-            .map((c) => ({ startLine: c.start_line, endLine: c.end_line }))
-          if (staleRanges.length > 0) {
-            store.markStale(repoPath, prId, review.id, file.newPath, staleRanges)
+      let activeReview = review
+      if (review !== null) {
+        const shasChanged = currentBaseSha !== review.base_sha || currentCompareSha !== review.compare_sha
+        if (shasChanged && review.status === 'in_progress') {
+          for (const file of diff) {
+            const validLineNums = new Set(file.lines.map((l) => l.diffLineNumber))
+            const staleRanges = review.comments
+              .filter((c) => c.file === file.newPath && !c.is_stale && (!validLineNums.has(c.start_line) || !validLineNums.has(c.end_line)))
+              .map((c) => ({ startLine: c.start_line, endLine: c.end_line }))
+            if (staleRanges.length > 0) {
+              store.markStale(repoPath, prId, review.id, file.newPath, staleRanges)
+            }
           }
+          store.updateReviewShas(repoPath, prId, review.id, currentBaseSha, currentCompareSha)
+          activeReview = store.getReview(repoPath, prId, review.id)
         }
-        store.updateReviewShas(repoPath, prId, review.id, currentBaseSha, currentCompareSha)
-      }
 
-      let activeReview = (shasChanged && review.status === 'in_progress')
-        ? store.getReview(repoPath, prId, review.id)
-        : review
-
-      // Auto-complete a submitted review once all non-stale comments are resolved/wont_fix
-      if (activeReview.status === 'submitted') {
-        const nonStale = activeReview.comments.filter((c) => !c.is_stale)
-        if (nonStale.length > 0 && nonStale.every((c) => c.status === 'resolved' || c.status === 'wont_fix')) {
-          activeReview = store.completeReview(repoPath, prId, activeReview.id)
-          // Auto-unassign the agent now that the review cycle is complete
-          if (pr.assignee !== null) {
-            pr = store.assignPR(repoPath, prId, null)
+        // Auto-complete a submitted review once all non-stale comments are resolved/wont_fix
+        if (activeReview !== null && activeReview.status === 'submitted') {
+          const nonStale = activeReview.comments.filter((c) => !c.is_stale)
+          if (nonStale.length > 0 && nonStale.every((c) => c.status === 'resolved' || c.status === 'wont_fix')) {
+            activeReview = store.completeReview(repoPath, prId, activeReview.id)
+            // Auto-unassign the agent now that the review cycle is complete
+            if (pr.assignee !== null) {
+              pr = store.assignPR(repoPath, prId, null)
+            }
           }
         }
       }
@@ -142,10 +147,10 @@ export function registerPrHandlers(db: Database.Database): void {
         return { pr, diff, review: freshReview, reviews: allReviews1, reviewCommitCounts: counts1, isStale: false }
       }
 
-      // No in-progress review — return the latest existing review without creating a new one.
-      // New reviews are only created explicitly via reviews:new.
+      // No in-progress review — return the latest submitted review if any.
+      // Complete reviews are not shown as active; new reviews are only created via reviews:new.
       const diff = await getDiff(repoPath, baseSha, compareSha)
-      const latestReview = reviews[0] ?? null
+      const latestReview = reviews.find(r => r.status === 'submitted') ?? null
       const allReviews2 = reviews.slice().reverse()
       const counts2: Record<string, number> = {}
       for (let i = 0; i < allReviews2.length; i++) {

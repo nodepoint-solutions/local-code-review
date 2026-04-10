@@ -9,6 +9,8 @@ import ReviewPanel from '../components/ReviewPanel'
 import ReviewTimeline from '../components/ReviewTimeline'
 import PreviousReviews from '../components/PreviousReviews'
 import CommentNav from '../components/CommentNav'
+import CommentOutline from '../components/CommentOutline'
+import { sortCommentsByPosition } from '../utils/sortComments'
 import type { AddCommentPayload, ReviewComment, Commit, ParsedFile, PrDetail } from '../../../shared/types'
 import { PRWorkflow } from '../../../shared/pr-workflow'
 import { formatRelativeTime } from '../utils/formatTime'
@@ -267,7 +269,7 @@ export default function PR(): JSX.Element {
   const { pr, diff, review, isStale } = prDetail
   const comments: ReviewComment[] = review?.comments ?? []
   const activeComments = comments.filter((c) => !c.is_stale)
-  const navComments = comments.filter((c) => !c.is_stale)
+  const navComments = sortCommentsByPosition(comments.filter((c) => !c.is_stale))
   const workflow = new PRWorkflow(pr, review ?? null)
 
   function handleCommentNav(index: number): void {
@@ -625,6 +627,13 @@ export default function PR(): JSX.Element {
               </div>
             ))}
           </div>
+          {!reviewPanelOpen && (
+            <CommentOutline
+              comments={navComments}
+              focusedIndex={focusedCommentIndex}
+              onSelect={handleCommentNav}
+            />
+          )}
         </div>
       )}
 

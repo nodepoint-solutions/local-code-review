@@ -2,7 +2,9 @@ import { useState, useCallback } from 'react'
 import type { ReviewFile, ReviewComment, ParsedFile } from '../../../shared/types'
 import DiffView from './DiffView'
 import CommentNav from './CommentNav'
+import CommentOutline from './CommentOutline'
 import { formatRelativeTime } from '../utils/formatTime'
+import { sortCommentsByPosition } from '../utils/sortComments'
 import styles from './PreviousReviews.module.css'
 
 interface Props {
@@ -16,9 +18,9 @@ export default function PreviousReviews({ reviews, repoPath }: Props): JSX.Eleme
   const [loading, setLoading] = useState(false)
   const [focusedCommentIndex, setFocusedCommentIndex] = useState(-1)
 
-  // All non-stale comments for the selected review, flattened across files
+  // All non-stale comments for the selected review, sorted by file path then line
   const navComments: ReviewComment[] = selectedReview
-    ? selectedReview.comments.filter((c) => !c.is_stale)
+    ? sortCommentsByPosition(selectedReview.comments.filter((c) => !c.is_stale))
     : []
 
   async function handleSelectReview(review: ReviewFile): Promise<void> {
@@ -67,23 +69,25 @@ export default function PreviousReviews({ reviews, repoPath }: Props): JSX.Eleme
 
       {/* Right panel — historic diff */}
       <div className={styles.diffPanel}>
-        {!selectedReview && (
-          <div className={styles.empty}>Select a review to see the diff at that point in time.</div>
+        {selectedReview && (
+          <div className={styles.diffToolbar}>
+            <CommentNav
+              total={navComments.length}
+              current={focusedCommentIndex}
+              onPrev={() => handleNav(Math.max(0, focusedCommentIndex - 1))}
+              onNext={() => handleNav(Math.min(navComments.length - 1, focusedCommentIndex + 1))}
+            />
+          </div>
         )}
-        {selectedReview && loading && (
-          <div className={styles.loading}>Loading diff…</div>
-        )}
-        {selectedReview && !loading && historicDiff && (
-          <>
-            <div className={styles.diffToolbar}>
-              <CommentNav
-                total={navComments.length}
-                current={focusedCommentIndex}
-                onPrev={() => handleNav(Math.max(0, focusedCommentIndex - 1))}
-                onNext={() => handleNav(Math.min(navComments.length - 1, focusedCommentIndex + 1))}
-              />
-            </div>
-            {historicDiff.length === 0 ? (
+        <div className={styles.diffScroll}>
+          {!selectedReview && (
+            <div className={styles.empty}>Select a review to see the diff at that point in time.</div>
+          )}
+          {selectedReview && loading && (
+            <div className={styles.loading}>Loading diff…</div>
+          )}
+          {selectedReview && !loading && historicDiff && (
+            historicDiff.length === 0 ? (
               <div className={styles.empty}>No file changes in this review snapshot.</div>
             ) : (
               historicDiff.map((file) => (
@@ -96,10 +100,15 @@ export default function PreviousReviews({ reviews, repoPath }: Props): JSX.Eleme
                   readOnly
                 />
               ))
-            )}
-          </>
-        )}
+            )
+          )}
+        </div>
       </div>
+      <CommentOutline
+        comments={navComments}
+        focusedIndex={focusedCommentIndex}
+        onSelect={handleNav}
+      />
     </div>
   )
 }

@@ -59,14 +59,25 @@
 
 .diffPanel {
   flex: 1;
-  overflow-y: auto;
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .diffToolbar {
+  flex-shrink: 0;
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  margin-bottom: 12px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.diffScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
 }
 
 .empty,
