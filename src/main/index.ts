@@ -164,7 +164,7 @@ app.whenReady().then(() => {
     }
   })
 
-  if (getSetting(db, 'mcp_enabled') === 'true') {
+  if (getSetting(db, 'mcp_enabled') !== 'false') {
     mcpManager.start()
   }
 
