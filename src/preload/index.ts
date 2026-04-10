@@ -91,6 +91,15 @@ const api = {
   assignPr: (repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null): Promise<import('../shared/types').PRFile | { error: string }> =>
     ipcRenderer.invoke('prs:assign', repoPath, prId, assignee),
 
+  getRemoteInfo: (repoPath: string): Promise<{ owner: string; repo: string } | null> =>
+    ipcRenderer.invoke('git:remote-info', repoPath),
+  isWorkingDirClean: (repoPath: string): Promise<{ clean: boolean }> =>
+    ipcRenderer.invoke('git:working-dir-clean', repoPath),
+  isBranchPushed: (repoPath: string, branch: string): Promise<{ pushed: boolean }> =>
+    ipcRenderer.invoke('git:branch-pushed', repoPath, branch),
+  pushBranch: (repoPath: string, branch: string): Promise<{ error?: string }> =>
+    ipcRenderer.invoke('git:push-branch', repoPath, branch),
+
   onPrUpdated: (callback: (data: { repoPath: string; prId: string }) => void) => {
     ipcRenderer.on('pr:updated', (_e, data) => callback(data))
   },
