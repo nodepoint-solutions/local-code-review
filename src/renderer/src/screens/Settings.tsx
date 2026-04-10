@@ -110,12 +110,19 @@ export default function Settings(): JSX.Element {
               {integrations.map((tool) => (
                 <tr key={tool.id} style={{ opacity: tool.detected ? 1 : 0.4 }}>
                   <td style={{ padding: '6px 0', width: 160 }}>{tool.name}</td>
-                  <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  <td style={{ fontSize: 12, color: 'var(--text-muted)', width: 140 }}>
                     {!tool.detected
                       ? '(not detected)'
                       : tool.installed
-                      ? '✓ Installed'
-                      : 'Not installed'}
+                      ? '✓ MCP installed'
+                      : 'MCP not installed'}
+                  </td>
+                  <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    {!tool.detected
+                      ? ''
+                      : tool.skillInstalled
+                      ? '✓ Skill installed'
+                      : 'Skill not installed'}
                   </td>
                 </tr>
               ))}
