@@ -68,7 +68,8 @@ export class McpManager {
     })
 
     this.child.on('close', (code) => {
-      if (code !== 0) this.onStderr?.(`[mcp-server] exited with code ${code}`)
+      // null = killed by signal (normal stop), 0 = clean exit — only log unexpected exits
+      if (code !== null && code !== 0) this.onStderr?.(`[mcp-server] exited with code ${code}`)
       this.child = null
       this.onChildExit?.()
     })

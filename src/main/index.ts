@@ -198,6 +198,7 @@ app.whenReady().then(() => {
     }
     const running = mcpManager!.running
     mainWindow?.webContents.send('mcp:status-changed', { running })
+    updateTrayMenu?.()
     return { running }
   })
 
