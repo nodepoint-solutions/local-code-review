@@ -178,13 +178,14 @@ function buildEntry(shape: 'claude' | 'vscode') {
 }
 
 function toolEcosystem(id: IntegrationStatus['id']): 'claude' | 'copilot' {
+  // claudeCode and claudeDesktop → claude ecosystem; all VS Code-family tools → copilot
   return id === 'claudeCode' || id === 'claudeDesktop' ? 'claude' : 'copilot'
 }
 
 function skillDir(ecosystem: 'claude' | 'copilot'): string {
   const base = ecosystem === 'claude'
     ? path.join(home, '.claude', 'skills')
-    : path.join(home, '.copilot', 'skills')
+    : path.join(home, '.copilot', 'skills') // per Agent Skills spec (agentskills.io)
   return path.join(base, 'local-code-review')
 }
 
