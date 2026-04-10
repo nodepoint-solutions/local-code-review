@@ -1,5 +1,5 @@
 // src/main/mcp-manager.ts
-import { spawn, execSync, type ChildProcess } from 'child_process'
+import { spawn, type ChildProcess } from 'child_process'
 import net from 'net'
 import os from 'os'
 import path from 'path'
@@ -51,22 +51,18 @@ export class McpManager {
     return path.join(app.getAppPath(), 'dist', 'mcp-server', 'index.js')
   }
 
-  private resolveNodeBinary(): string {
-    try {
-      return execSync('which node', { encoding: 'utf8' }).trim()
-    } catch {
-      return 'node'
-    }
-  }
-
   private spawnChild(): void {
     const env = {
       ...process.env,
+      ELECTRON_RUN_AS_NODE: '1',
       LOCAL_REVIEW_SOCKET: this.socketPath,
       LOCAL_REVIEW_IDENTITY: 'mcp',
     }
 
-    this.child = spawn(this.resolveNodeBinary(), [this.mcpBinaryPath()], {
+    // stdio[0] is 'ignore' so process.stdin is null in the child — the MCP
+    // server detects this and skips the StdioServerTransport, running as a
+    // socket-only daemon.
+    this.child = spawn(process.execPath, [this.mcpBinaryPath()], {
       env,
       stdio: ['ignore', 'ignore', 'pipe'],
     })

@@ -67,7 +67,13 @@ Rules:
   }
 })
 
-const transport = new StdioServerTransport()
-server.connect(transport).then(() => {
-  // Server is running; stdio is the transport
-})
+// Only connect stdio transport when stdin is available (i.e. a client
+// such as Claude Code launched this process). When spawned as a background
+// daemon by the Electron app, stdin is null and we skip the transport —
+// the socket connection above handles event notification back to the app.
+if (process.stdin) {
+  const transport = new StdioServerTransport()
+  server.connect(transport).then(() => {
+    // Server is running; stdio is the transport
+  })
+}
