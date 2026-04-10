@@ -35,8 +35,8 @@ export function parseGithubRemote(url: string): { owner: string; repo: string } 
   // SSH: git@github.com:owner/repo.git
   const sshMatch = url.match(/^git@github\.com:([^/]+)\/(.+?)(?:\.git)?$/)
   if (sshMatch) return { owner: sshMatch[1], repo: sshMatch[2] }
-  // HTTPS: https://github.com/owner/repo[.git]
-  const httpsMatch = url.match(/^https?:\/\/github\.com\/([^/]+)\/(.+?)(?:\.git)?$/)
+  // HTTPS: https://github.com/owner/repo[.git] or https://credentials@github.com/owner/repo[.git]
+  const httpsMatch = url.match(/^https?:\/\/(?:[^@]+@)?github\.com\/([^/]+)\/(.+?)(?:\.git)?$/)
   if (httpsMatch) return { owner: httpsMatch[1], repo: httpsMatch[2] }
   return null
 }
