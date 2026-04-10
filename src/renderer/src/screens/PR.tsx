@@ -89,6 +89,7 @@ export default function PR(): JSX.Element {
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = React.useState(false)
   const [integrations, setIntegrations] = React.useState<IntegrationStatus[]>([])
   const [notification, setNotification] = useState<string | null>(null)
+  const [githubInfo, setGithubInfo] = useState<{ owner: string; repo: string } | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [editingDescription, setEditingDescription] = useState(false)
@@ -151,6 +152,7 @@ export default function PR(): JSX.Element {
 
   React.useEffect(() => {
     window.api.getIntegrations().then(setIntegrations)
+    if (repo) window.api.getRemoteInfo(repo.path).then(setGithubInfo)
   }, [])
 
   React.useEffect(() => {
@@ -265,6 +267,54 @@ export default function PR(): JSX.Element {
     setPrDetail(updated as any)
     setCommits(null) // invalidate commits cache on refresh
     setRefreshing(false)
+  }
+
+  async function handleOpenWithGitHub(): Promise<void> {
+    if (!repo || !prDetail || !githubInfo) return
+    const { pr: currentPr, review: currentReview } = prDetail
+
+    // Step 1: warn if active review with unresolved comments
+    const hasBlockingReview =
+      currentReview !== null &&
+      (currentReview.status === 'in_progress' ||
+        (currentReview.status === 'submitted' &&
+          currentReview.comments.some((c) => !c.is_stale && c.status === 'open')))
+    if (hasBlockingReview) {
+      const proceed = window.confirm(
+        'This PR has an active review with unresolved comments.\n\nProceed anyway and open GitHub, or cancel to resolve them first?'
+      )
+      if (!proceed) return
+    }
+
+    // Step 2: working directory must be clean
+    const { clean } = await window.api.isWorkingDirClean(repo.path)
+    if (!clean) {
+      showNotification('Working directory has uncommitted changes. Commit or stash them first.')
+      return
+    }
+
+    // Step 3: branch must be pushed
+    const { pushed } = await window.api.isBranchPushed(repo.path, currentPr.compare_branch)
+    if (!pushed) {
+      const doPush = window.confirm("Branch hasn't been pushed to remote. Push it now?")
+      if (!doPush) {
+        showNotification('Push your branch first, then try again.')
+        return
+      }
+      const pushResult = await window.api.pushBranch(repo.path, currentPr.compare_branch)
+      if (pushResult.error) {
+        showNotification(`Push failed: ${pushResult.error}. Fix it manually and try again.`)
+        return
+      }
+    }
+
+    // Step 4: open GitHub compare URL
+    const encodedTitle = encodeURIComponent(currentPr.title)
+    const bodyParam = currentPr.description
+      ? `&body=${encodeURIComponent(currentPr.description)}`
+      : ''
+    const url = `https://github.com/${githubInfo.owner}/${githubInfo.repo}/compare/${currentPr.base_branch}...${currentPr.compare_branch}?expand=1&title=${encodedTitle}${bodyParam}`
+    window.open(url, '_blank')
   }
 
   async function handleSaveTitle(): Promise<void> {
@@ -630,6 +680,11 @@ export default function PR(): JSX.Element {
             <div className={styles.sidebarSection}>
               <div className={styles.sidebarLabel}>Actions</div>
               <div className={styles.sidebarActions}>
+                {githubInfo !== null && pr.status === 'open' && (
+                  <button className={styles.sidebarActionBtn} onClick={handleOpenWithGitHub}>
+                    Open PR with GitHub
+                  </button>
+                )}
                 {pr.status === 'open' ? (
                   <button className={styles.sidebarActionBtn} onClick={handleClosePr}>Close PR</button>
                 ) : (
