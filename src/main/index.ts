@@ -32,6 +32,7 @@ function writeErrorLog(err: unknown): void {
   }
 }
 
+
 process.on('uncaughtException', (err) => {
   writeErrorLog(err)
 })

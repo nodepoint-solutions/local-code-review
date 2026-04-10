@@ -52,6 +52,7 @@ export class McpManager {
   private spawnChild(): void {
     const env = {
       ...process.env,
+      ELECTRON_RUN_AS_NODE: '1',
       LOCAL_REVIEW_SOCKET: this.socketPath,
       LOCAL_REVIEW_IDENTITY: 'mcp',
     }
