@@ -64,7 +64,7 @@ function getAssigneeStatus(
 ): 'configured' | 'not-configured' | 'not-installed' {
   const tools = integrations.filter((i) => ids.includes(i.id))
   if (tools.some((i) => i.detected && i.installed && i.skillInstalled)) return 'configured'
-  if (tools.some((i) => i.detected && i.installed)) return 'not-configured'
+  if (tools.some((i) => i.detected)) return 'not-configured'
   return 'not-installed'
 }
 
@@ -169,6 +169,11 @@ export default function PR(): JSX.Element {
     return () => window.api.offPrUpdated()
   }, [prId, repo?.path])
 
+  function showNotification(msg: string): void {
+    setNotification(msg)
+    setTimeout(() => setNotification(null), 5000)
+  }
+
   async function handleAssign(tool: 'claude' | 'vscode'): Promise<void> {
     if (!repo || !prId) return
     setAssigneeDropdownOpen(false)
@@ -177,10 +182,7 @@ export default function PR(): JSX.Element {
     if (updated && !('error' in updated)) setPrDetail(updated as any)
     if (prDetail?.review) {
       const result = await window.api.launchFix(tool, repo.path, prId, prDetail.review.id)
-      if (result?.notification) {
-        setNotification(result.notification)
-        setTimeout(() => setNotification(null), 5000)
-      }
+      if (result?.notification) showNotification(result.notification)
     }
   }
 
@@ -192,10 +194,7 @@ export default function PR(): JSX.Element {
       prId,
       prDetail.review.id
     )
-    if (result?.notification) {
-      setNotification(result.notification)
-      setTimeout(() => setNotification(null), 5000)
-    }
+    if (result?.notification) showNotification(result.notification)
   }
 
   useEffect(() => {
@@ -507,7 +506,7 @@ export default function PR(): JSX.Element {
                               key={key}
                               className={styles.assigneeDropdownItem}
                               disabled={status !== 'configured'}
-                              onClick={status === 'configured' ? () => handleAssign(key) : undefined}
+                              onClick={() => handleAssign(key)}
                             >
                               <span className={styles.assigneeItemRow}>
                                 <span>{label}</span>

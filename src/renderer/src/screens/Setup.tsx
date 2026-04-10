@@ -11,7 +11,7 @@ function toolStatusLabel(i: IntegrationStatus): { text: string; ok: boolean } {
   if (i.installed && i.skillInstalled) return { text: '✓ Configured', ok: true }
   if (i.installed && !i.skillInstalled) return { text: 'MCP installed, skill missing', ok: false }
   if (i.detected) return { text: 'Not installed', ok: false }
-  return { text: 'Not installed', ok: false }
+  return { text: 'Not detected', ok: false }
 }
 
 export default function Setup({ onComplete }: SetupProps): JSX.Element {
@@ -31,10 +31,13 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
 
   async function handleInstall(): Promise<void> {
     setInstalling(true)
-    await window.api.installIntegrations()
-    const updated = await window.api.getIntegrations()
-    setIntegrations(updated)
-    setInstalling(false)
+    try {
+      await window.api.installIntegrations()
+      const updated = await window.api.getIntegrations()
+      setIntegrations(updated)
+    } finally {
+      setInstalling(false)
+    }
   }
 
   async function handleChangeScanDir(): Promise<void> {
