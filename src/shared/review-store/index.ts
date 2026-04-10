@@ -58,6 +58,7 @@ export class ReviewStore {
       status: 'open',
       assignee: null,
       assigned_at: null,
+      merged_at: null,
       created_at: now,
       updated_at: now,
     }

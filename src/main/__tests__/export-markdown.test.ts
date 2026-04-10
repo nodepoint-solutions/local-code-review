@@ -13,6 +13,7 @@ const pr: PRFile = {
   status: 'open',
   assignee: null,
   assigned_at: null,
+  merged_at: null,
   created_at: '2026-04-08T10:00:00Z',
   updated_at: '2026-04-08T10:00:00Z',
 }

@@ -4,7 +4,12 @@ import type Database from 'better-sqlite3'
 import { ReviewStore } from '../../shared/review-store'
 import { PRWorkflow } from '../../shared/pr-workflow'
 import { deleteRepo } from '../db/repos'
-import { listBranches, resolveSha } from '../git/branches'
+import {
+  listBranches, resolveSha,
+  getRemoteOriginUrl, parseGithubRemote,
+  isWorkingDirClean, isBranchPushed, pushBranch,
+  fetchOrigin, isMergedIntoRemote,
+} from '../git/branches'
 import { getDiff } from '../git/diff-parser'
 import { listCommits, getCommitDiff, countCommitsBetween } from '../git/commits'
 import type { CreatePrPayload, PrDetail } from '../../shared/types'
@@ -50,6 +55,15 @@ export function registerPrHandlers(db: Database.Database): void {
 
       const currentBaseSha = await resolveSha(repoPath, pr.base_branch)
       const currentCompareSha = await resolveSha(repoPath, pr.compare_branch)
+
+      // Auto-close if compare branch has been merged into the remote base
+      if (pr.status === 'open') {
+        await fetchOrigin(repoPath)
+        const merged = await isMergedIntoRemote(repoPath, currentCompareSha, pr.base_branch)
+        if (merged) {
+          pr = store.mergePR(repoPath, pr.id)
+        }
+      }
 
       const reviews = store.listReviews(repoPath, prId)
       // Use an in-progress or submitted review as the active review.
@@ -239,6 +253,41 @@ export function registerPrHandlers(db: Database.Database): void {
   ipcMain.handle('git:diff-at-shas', async (_e, repoPath: string, baseSha: string, compareSha: string) => {
     try {
       return await getDiff(repoPath, baseSha, compareSha)
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('git:remote-info', async (_e, repoPath: string) => {
+    try {
+      const url = await getRemoteOriginUrl(repoPath)
+      if (!url) return null
+      return parseGithubRemote(url)
+    } catch {
+      return null
+    }
+  })
+
+  ipcMain.handle('git:working-dir-clean', async (_e, repoPath: string) => {
+    try {
+      return { clean: await isWorkingDirClean(repoPath) }
+    } catch {
+      return { clean: false }
+    }
+  })
+
+  ipcMain.handle('git:branch-pushed', async (_e, repoPath: string, branch: string) => {
+    try {
+      return { pushed: await isBranchPushed(repoPath, branch) }
+    } catch {
+      return { pushed: false }
+    }
+  })
+
+  ipcMain.handle('git:push-branch', async (_e, repoPath: string, branch: string) => {
+    try {
+      await pushBranch(repoPath, branch)
+      return {}
     } catch (err) {
       return { error: (err as Error).message }
     }
