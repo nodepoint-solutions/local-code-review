@@ -198,16 +198,7 @@ app.whenReady().then(() => {
 
   // "Fix with" launcher — interactive, fire and forget
   ipcMain.handle('fix:launch', (_e, tool: string, repoPath: string, prId: string, reviewId: string) => {
-    const prompt = `You are implementing fixes from a local code review. Use the local-code-review MCP tools.
-
-repo_path: ${repoPath}
-pr_id: ${prId}
-review_id: ${reviewId}
-
-1. Call get_open_issues(repo_path, pr_id, review_id) to see all open issues
-2. For each open issue: implement the fix in the codebase, then call mark_resolved() or mark_wont_fix() with a clear explanation
-3. Never mark an issue without a resolution_comment
-4. When all issues are addressed, call complete_assignment(repo_path, pr_id) to unassign yourself and signal that you are done`
+    const prompt = `/local-code-review repo_path="${repoPath}" pr_id="${prId}" review_id="${reviewId}"`
 
     if (tool === 'claude') {
       const safeRepo = repoPath.replace(/'/g, "'\\''")
@@ -224,7 +215,7 @@ review_id: ${reviewId}
       clipboard.writeText(prompt)
       const { spawn } = require('child_process') as typeof import('child_process')
       spawn('open', ['-a', 'Visual Studio Code', repoPath], { detached: true, stdio: 'ignore' }).unref()
-      return {}
+      return { notification: 'Prompt copied — paste it into the Copilot agent window to start.' }
     }
 
     return { error: `Unknown tool: ${tool}` }
