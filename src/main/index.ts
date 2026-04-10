@@ -46,6 +46,8 @@ function resourcesPath(): string {
   return is.dev ? join(__dirname, '../../resources') : process.resourcesPath
 }
 
+let updateTrayMenu: (() => void) | null = null
+
 function createTray(db: ReturnType<typeof getDb>): void {
   const iconPath = join(resourcesPath(), 'iconTemplate.png')
   const icon = nativeImage.createFromPath(iconPath)
@@ -94,6 +96,7 @@ function createTray(db: ReturnType<typeof getDb>): void {
     tray!.setToolTip('Local Code Review')
   }
 
+  updateTrayMenu = updateMenu
   updateMenu()
 }
 
@@ -165,7 +168,9 @@ app.whenReady().then(() => {
   })
   mcpManager.onChildExit = () => {
     mainWindow?.webContents.send('mcp:status-changed', { running: false })
+    updateTrayMenu?.()
   }
+  mcpManager.onStderr = (line) => writeErrorLog(new Error(line))
 
   if (getSetting(db, 'mcp_enabled') !== 'false') {
     mcpManager.start()

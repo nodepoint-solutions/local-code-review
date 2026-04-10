@@ -17,6 +17,7 @@ export class McpManager {
   private socketServer: net.Server | null = null
   private socketPath: string
   onChildExit?: () => void
+  onStderr?: (line: string) => void
 
   constructor(private onEvent: (event: McpEvent) => void) {
     const suffix = process.platform === 'win32' ? `local-review-${process.pid}` : `local-review-${process.pid}.sock`
@@ -63,13 +64,14 @@ export class McpManager {
       stdio: ['pipe', 'pipe', 'pipe'],
     })
 
-    this.child.on('close', () => {
+    this.child.on('close', (code) => {
+      this.onStderr?.(`[mcp-server] exited with code ${code}`)
       this.child = null
       this.onChildExit?.()
     })
 
     this.child.stderr?.on('data', (data: Buffer) => {
-      process.stderr.write(`[mcp-server] ${data.toString()}`)
+      this.onStderr?.(`[mcp-server] ${data.toString().trim()}`)
     })
   }
 
