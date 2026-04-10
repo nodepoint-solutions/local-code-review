@@ -21,7 +21,9 @@ export default function App(): JSX.Element {
   const [setupComplete, setSetupComplete] = useState<boolean | null>(null)
 
   useEffect(() => {
-    window.api.getSetting('setup_complete').then((val) => setSetupComplete(val === 'true'))
+    window.api.getSetting('setup_complete')
+      .then((val) => setSetupComplete(val === 'true'))
+      .catch(() => setSetupComplete(false))
   }, [])
 
   if (setupComplete === null) return <></>
