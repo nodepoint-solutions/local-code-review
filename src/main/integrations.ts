@@ -5,6 +5,77 @@ import os from 'os'
 import { app } from 'electron'
 import type { IntegrationStatus } from '../shared/types'
 
+const SKILL_CONTENT = `---
+name: local-code-review
+description: Fix all open review comments for a Local Review PR assignment. Groups related comments, implements fixes with commits between groups, and marks issues resolved via the local-code-review MCP tools. Use when assigned to fix code review issues in Local Review.
+compatibility: Requires git and the local-code-review MCP server to be running.
+---
+
+You are implementing fixes for a code review assignment via Local Review.
+
+## Parameters
+
+Provided when this skill is invoked:
+- \`repo_path\` — absolute path to the git repository
+- \`pr_id\` — the PR identifier
+- \`review_id\` — the specific review to address
+
+## Workflow
+
+### Step 1 — Load open issues
+
+Call \`get_open_issues(repo_path, pr_id, review_id)\`.
+
+If the list is empty, call \`complete_assignment(repo_path, pr_id)\` and stop.
+
+### Step 2 — Plan your groups
+
+Before touching any code, organise the open comments into logical groups. Each group becomes one commit.
+
+Grouping rules:
+- Same file or closely related files (e.g. component + its test) → one group
+- Same concern across files (e.g. all error-handling fixes, all type-safety issues) → one group
+- Foundation first: types, interfaces, and shared utilities before feature code; feature code before tests
+- Atomic units: a group should be explainable in a single commit message; split if in doubt
+
+Output a short plan — list each group, the comment IDs it contains, and the proposed commit message — before writing any code.
+
+### Step 3 — Fix, commit, and resolve (repeat per group)
+
+For each group in order:
+
+1. Read and implement
+   - Read the relevant files and surrounding context
+   - Make the fix, keeping changes minimal and consistent with work already done in this session
+   - If a comment is already addressed by a previous group's changes, note it — do not re-fix
+
+2. Commit
+   \`\`\`bash
+   git add <files changed in this group>
+   git commit -m "<commit message>"
+   \`\`\`
+   Use a clear, lowercase imperative message (e.g. "fix: remove unused import in UserService").
+
+3. Mark every comment in the group
+   - For each resolved comment: call \`mark_resolved(repo_path, pr_id, comment_id, resolution_comment)\`
+   - For each skipped comment: call \`mark_wont_fix(repo_path, pr_id, comment_id, resolution_comment)\`
+   - \`resolution_comment\` must name the file and describe what changed (or why it was skipped)
+   - Never call mark_resolved or mark_wont_fix without a resolution_comment
+
+### Step 4 — Complete the assignment
+
+Once every open comment is marked, call \`complete_assignment(repo_path, pr_id)\`.
+
+This unassigns you from the PR and signals to the reviewer that the work is done.
+
+## Rules
+
+- Always commit before marking issues — the commit proves the fix exists in history
+- Never batch all fixes into one commit; each logical group gets its own commit
+- If you are unsure how to fix a comment, implement the most conservative interpretation and note the uncertainty in resolution_comment
+- Do not reopen closed comments or modify comments from previous reviews
+`
+
 const home = os.homedir()
 const appdata = process.env['APPDATA'] ?? home
 const platform = process.platform
@@ -106,6 +177,30 @@ function buildEntry(shape: 'claude' | 'vscode') {
   return { type: 'stdio', command, args }
 }
 
+function toolEcosystem(id: IntegrationStatus['id']): 'claude' | 'copilot' {
+  return id === 'claudeCode' || id === 'claudeDesktop' ? 'claude' : 'copilot'
+}
+
+function skillDir(ecosystem: 'claude' | 'copilot'): string {
+  const base = ecosystem === 'claude'
+    ? path.join(home, '.claude', 'skills')
+    : path.join(home, '.copilot', 'skills')
+  return path.join(base, 'local-code-review')
+}
+
+function isSkillInstalled(ecosystem: 'claude' | 'copilot'): boolean {
+  return fs.existsSync(path.join(skillDir(ecosystem), 'SKILL.md'))
+}
+
+function installSkill(ecosystem: 'claude' | 'copilot'): void {
+  const dir = skillDir(ecosystem)
+  fs.mkdirSync(dir, { recursive: true })
+  const dest = path.join(dir, 'SKILL.md')
+  const tmp = dest + '.tmp'
+  fs.writeFileSync(tmp, SKILL_CONTENT, 'utf8')
+  fs.renameSync(tmp, dest)
+}
+
 function readJson(filePath: string): Record<string, unknown> {
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf8')) as Record<string, unknown>
@@ -145,10 +240,13 @@ export function getIntegrations(): IntegrationStatus[] {
     name: config.name,
     detected: fs.existsSync(path.dirname(config.configPath)),
     installed: fs.existsSync(config.configPath) && isInstalled(config),
+    skillInstalled: isSkillInstalled(toolEcosystem(config.id)),
   }))
 }
 
 export function installIntegrations(): void {
+  const ecosystemsInstalled = new Set<'claude' | 'copilot'>()
+
   for (const config of resolveConfigs()) {
     const dir = path.dirname(config.configPath)
     if (!fs.existsSync(dir)) continue
@@ -162,5 +260,11 @@ export function installIntegrations(): void {
     const tmp = config.configPath + '.tmp'
     fs.writeFileSync(tmp, JSON.stringify(obj, null, 2), 'utf8')
     fs.renameSync(tmp, config.configPath)
+
+    ecosystemsInstalled.add(toolEcosystem(config.id))
+  }
+
+  for (const ecosystem of ecosystemsInstalled) {
+    installSkill(ecosystem)
   }
 }
