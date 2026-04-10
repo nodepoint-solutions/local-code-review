@@ -91,10 +91,19 @@ export default function ReviewPanel({ pr, review, reviews, comments, prId, repoP
       <div className={styles.list}>
         {nonStale.length === 0 ? (
           <div className={styles.empty}>
-            <p className={styles.emptyTitle}>No comments yet</p>
-            <p className={styles.emptyText}>
-              Click the <strong>+</strong> button on any diff line to add a comment.
-            </p>
+            {workflow.phase === 'awaiting_review' ? (
+              <>
+                <p className={styles.emptyTitle}>No review started</p>
+                <p className={styles.emptyText}>Start a review to add inline comments on the diff.</p>
+              </>
+            ) : (
+              <>
+                <p className={styles.emptyTitle}>No comments yet</p>
+                <p className={styles.emptyText}>
+                  Click the <strong>+</strong> button on any diff line to add a comment.
+                </p>
+              </>
+            )}
           </div>
         ) : (
           nonStale.map((comment) => (
@@ -138,7 +147,6 @@ export default function ReviewPanel({ pr, review, reviews, comments, prId, repoP
           </button>
         </div>
       )}
-
     </div>
   )
 }

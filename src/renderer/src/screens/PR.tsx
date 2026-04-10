@@ -264,9 +264,19 @@ export default function PR(): JSX.Element {
   }
 
   async function handleAddComment(payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>): Promise<void> {
-    if (!repo || !prId || !prDetail || !prDetail.review) return
-    if (prDetail.review.status !== 'in_progress') return
-    await window.api.addComment({ ...payload, prId, repoPath: repo.path, reviewId: prDetail.review.id })
+    if (!repo || !prId || !prDetail) return
+
+    // Auto-create a review on the first comment if none is in progress
+    let reviewId = prDetail.review?.status === 'in_progress' ? prDetail.review.id : undefined
+    if (!reviewId) {
+      const created = await window.api.newReview(repo.path, prId)
+      if ('error' in created) return
+      setPrDetail(created)
+      reviewId = created.review?.id
+      if (!reviewId) return
+    }
+
+    await window.api.addComment({ ...payload, prId, repoPath: repo.path, reviewId })
     const updated = await window.api.getPr(repo.path, prId)
     if (updated && !('error' in updated)) setPrDetail(updated)
   }
@@ -652,7 +662,7 @@ export default function PR(): JSX.Element {
                   comments={comments.filter((c) => c.file === file.newPath)}
                   view={diffView}
                   onAddComment={handleAddComment}
-                  readOnly={workflow.isReadOnly()}
+                  readOnly={workflow.phase === 'reviewed' || workflow.phase === 'in_fix' || workflow.phase === 'closed'}
                   allowDeleteComment={review?.status === 'in_progress'}
                   onDeleteComment={handleDeleteComment}
                   focusedCommentId={navComments[focusedCommentIndex]?.id}

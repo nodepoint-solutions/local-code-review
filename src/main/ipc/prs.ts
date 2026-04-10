@@ -53,14 +53,10 @@ export function registerPrHandlers(db: Database.Database): void {
 
       const reviews = store.listReviews(repoPath, prId)
       // Use an in-progress or submitted review as the active review.
-      // Auto-create a new review when there are none, or when all previous
-      // ones are complete (the prior fix cycle is done — start fresh).
       const review =
         store.getInProgressReview(repoPath, prId) ??
         reviews.find(r => r.status === 'submitted') ??
-        (reviews.length === 0 || reviews.every(r => r.status === 'complete')
-          ? store.createReview(repoPath, prId, { base_sha: currentBaseSha, compare_sha: currentCompareSha })
-          : null)
+        null
 
       // Always diff against current branch HEADs so the view shows latest code
       const diff = await getDiff(repoPath, currentBaseSha, currentCompareSha)
@@ -93,9 +89,7 @@ export function registerPrHandlers(db: Database.Database): void {
             if (pr.assignee !== null) {
               pr = store.assignPR(repoPath, prId, null)
             }
-            // Immediately start the next review round so Files changed is
-            // editable without requiring a manual "Start new review" click.
-            activeReview = store.createReview(repoPath, prId, { base_sha: currentBaseSha, compare_sha: currentCompareSha })
+            activeReview = null
           }
         }
       }
@@ -155,9 +149,7 @@ export function registerPrHandlers(db: Database.Database): void {
       const diff = await getDiff(repoPath, baseSha, compareSha)
       const latestReview =
         reviews.find(r => r.status === 'submitted') ??
-        (reviews.length > 0 && reviews.every(r => r.status === 'complete')
-          ? store.createReview(repoPath, prId, { base_sha: baseSha, compare_sha: compareSha })
-          : null)
+        null
       const allReviews2 = reviews.slice().reverse()
       const counts2: Record<string, number> = {}
       for (let i = 0; i < allReviews2.length; i++) {

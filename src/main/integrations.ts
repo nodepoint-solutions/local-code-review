@@ -118,11 +118,11 @@ function resolveConfigs(): ToolConfig[] {
       name: 'VS Code',
       configPath:
         platform === 'win32'
-          ? path.join(appdata, 'Code', 'User', 'settings.json')
+          ? path.join(appdata, 'Code', 'User', 'mcp.json')
           : platform === 'darwin'
-          ? path.join(home, 'Library', 'Application Support', 'Code', 'User', 'settings.json')
-          : path.join(xdgConfig(), 'Code', 'User', 'settings.json'),
-      keyPath: ['mcp', 'servers'],
+          ? path.join(home, 'Library', 'Application Support', 'Code', 'User', 'mcp.json')
+          : path.join(xdgConfig(), 'Code', 'User', 'mcp.json'),
+      keyPath: ['servers'],
       entryShape: 'vscode',
     },
     {
