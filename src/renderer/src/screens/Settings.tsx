@@ -23,9 +23,13 @@ export default function Settings(): JSX.Element {
   const [mcpLoading, setMcpLoading] = React.useState(false)
   const [integrations, setIntegrations] = React.useState<IntegrationStatus[]>([])
   const [installing, setInstalling] = React.useState(false)
+  const [gitignoreInstalled, setGitignoreInstalled] = React.useState<boolean | null>(null)
+  const [gitignoreInstalling, setGitignoreInstalling] = React.useState(false)
+  const [gitignoreError, setGitignoreError] = React.useState<string | null>(null)
 
   useEffect(() => {
     window.api.getSetting('scan_base_dir').then(setScanDir)
+    window.api.checkGlobalGitignore().then(({ installed }) => setGitignoreInstalled(installed))
   }, [])
 
   React.useEffect(() => {
@@ -56,6 +60,18 @@ export default function Settings(): JSX.Element {
     await window.api.setSetting('scan_base_dir', result)
     await window.api.setSetting('onboarding_complete', 'true')
     setScanDir(result)
+  }
+
+  async function handleInstallGitignore(): Promise<void> {
+    setGitignoreInstalling(true)
+    setGitignoreError(null)
+    const result = await window.api.installGlobalGitignore()
+    if (result.success) {
+      setGitignoreInstalled(true)
+    } else {
+      setGitignoreError(result.error ?? 'Unknown error')
+    }
+    setGitignoreInstalling(false)
   }
 
   async function handleReset(): Promise<void> {
@@ -137,6 +153,27 @@ export default function Settings(): JSX.Element {
           >
             {installing ? 'Installing…' : 'Install / Repair All'}
           </button>
+        </section>
+
+        {/* Global .gitignore */}
+        <section style={{ marginTop: 32 }}>
+          <h2>Global .gitignore</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+            Adds a <code>.reviews</code> rule to your global gitignore so review files are never accidentally committed in any repository.
+          </p>
+          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+            {gitignoreInstalled === true ? (
+              <span style={{ fontSize: 13, color: 'var(--green)' }}>✓ Installed</span>
+            ) : gitignoreInstalled === false ? (
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Not installed</span>
+            ) : null}
+            <button onClick={handleInstallGitignore} disabled={gitignoreInstalling}>
+              {gitignoreInstalling ? 'Installing…' : gitignoreInstalled ? 'Reinstall' : 'Install'}
+            </button>
+          </div>
+          {gitignoreError && (
+            <p style={{ fontSize: 12, color: 'var(--red)', marginTop: 8 }}>{gitignoreError}</p>
+          )}
         </section>
 
         <section className={`${styles.section} ${styles.dangerSection}`}>

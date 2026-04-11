@@ -152,6 +152,12 @@ function createWindow(): BrowserWindow {
   return win
 }
 
+// In dev, use a separate userData dir so the dev instance doesn't conflict
+// with the installed production app's single-instance lock and database
+if (is.dev) {
+  app.setPath('userData', `${app.getPath('userData')}-dev`)
+}
+
 // Enforce single instance — prevents second launch from spawning a ghost dock icon
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {

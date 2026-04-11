@@ -27,6 +27,10 @@ const api = {
     ipcRenderer.invoke('repos:open-scan-dir-picker'),
   resetDb: (): Promise<void> =>
     ipcRenderer.invoke('repos:reset'),
+  checkGlobalGitignore: (): Promise<{ installed: boolean; filePath: string }> =>
+    ipcRenderer.invoke('gitignore:check-global'),
+  installGlobalGitignore: (): Promise<{ success: boolean; filePath?: string; error?: string }> =>
+    ipcRenderer.invoke('gitignore:install-global'),
 
   // Branches
   listBranches: (repoPath: string): Promise<string[]> =>

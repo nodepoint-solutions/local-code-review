@@ -1,124 +1,609 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+/* ─── Page & Backdrop ─────────────────────────────────── */
 .page {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   height: 100%;
   background: var(--bg);
+  position: relative;
+  overflow: hidden;
 }
 
-.content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 48px 32px 32px;
-  max-width: 560px;
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 45% at 15% 15%, rgba(31, 111, 235, 0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 35% at 85% 85%, rgba(31, 111, 235, 0.045) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.backdrop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border-muted) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-muted) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.35;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 20%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 20%, transparent 80%);
+}
+
+/* ─── Container ────────────────────────────────────────── */
+.container {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  margin: 0 auto;
+  max-width: 460px;
+  padding: 0 20px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
 }
 
-.header {
+/* ─── Step Indicator ────────────────────────────────────── */
+.stepIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  animation: fadeInDown 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stepItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.stepDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-subtle);
+  transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease, box-shadow 0.35s ease;
+  flex-shrink: 0;
+}
+
+.stepDotActive {
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+  color: var(--accent-text);
+  box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.14);
+  animation: dotPulse 2.5s ease-in-out infinite;
+}
+
+.stepDotDone {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: none;
+}
+
+.stepLabel {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-subtle);
+  transition: color 0.3s ease;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.stepLabelActive {
+  color: var(--text-muted);
+}
+
+.stepLine {
+  width: 52px;
+  height: 1.5px;
+  background: var(--border);
+  margin: 0 4px;
+  margin-bottom: 16px; /* align with dot center (dot 28px + label ~14px + gap 5px ≈ center at 14px) */
+  flex-shrink: 0;
+  transition: background 0.45s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stepLineDone {
+  background: var(--accent);
+}
+
+.stepLineDone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 0.6s ease forwards;
+}
+
+/* ─── Step Content Card ───────────────────────────────── */
+.stepContent {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px 40px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 4px 24px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slideInRight {
+  animation: slideInRight 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.slideInLeft {
+  animation: slideInLeft 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ─── Welcome Step ────────────────────────────────────── */
+.welcomeStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 22px;
+}
+
+.logoMark {
+  animation: logoEntrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: 0.05s;
+}
+
+.welcomeText {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  animation: fadeInUp 0.5s ease both;
+  animation-delay: 0.12s;
 }
 
-.title {
-  font-size: 22px;
+.welcomeTitle {
+  font-family: 'Outfit', var(--font-sans);
+  font-size: 30px;
   font-weight: 700;
   color: var(--text);
   margin: 0;
+  letter-spacing: -0.6px;
+  line-height: 1.2;
 }
 
-.subtitle {
-  font-size: 14px;
+.welcomeSubtitle {
+  font-size: 13.5px;
   color: var(--text-muted);
+  line-height: 1.65;
   margin: 0;
-  line-height: 1.5;
 }
 
-.section {
+.featureList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  width: 100%;
+  animation: fadeInUp 0.5s ease both;
+  animation-delay: 0.2s;
 }
 
-.sectionTitle {
-  font-size: 13px;
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.featureIcon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+/* ─── Form Step ───────────────────────────────────────── */
+.formStep {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.stepHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stepTitle {
+  font-family: 'Outfit', var(--font-sans);
+  font-size: 21px;
   font-weight: 600;
   color: var(--text);
   margin: 0;
+  letter-spacing: -0.3px;
 }
 
-.toolTable {
-  width: 100%;
-  border-collapse: collapse;
+.stepDesc {
   font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.6;
 }
 
-.toolTable td {
-  padding: 6px 0;
+/* ─── Tool List ───────────────────────────────────────── */
+.toolList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.toolRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  background: var(--bg-surface-2);
+  animation: fadeInUp 0.4s ease both;
+  transition: border-color 0.18s ease;
+}
+
+.toolRow:hover {
+  border-color: var(--border);
+}
+
+.toolInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .toolName {
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text);
-  width: 160px;
 }
 
-.toolStatus {
+.statusOk {
+  font-size: 11px;
+  color: var(--added-text);
+}
+
+.statusNeutral {
+  font-size: 11px;
+  color: var(--text-subtle);
+}
+
+.toolIndicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.toolIndicatorOk {
+  background: var(--added-text);
+  box-shadow: 0 0 5px var(--added-text);
+}
+
+.toolIndicatorPending {
+  background: var(--warning-text);
+}
+
+.toolIndicatorOff {
+  background: var(--border);
+}
+
+/* ─── Notice ────────────────────────────────────────────── */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  background: rgba(210, 153, 34, 0.07);
+  border: 1px solid rgba(210, 153, 34, 0.22);
+  border-radius: 8px;
+  font-size: 12.5px;
   color: var(--text-muted);
-  font-size: 12px;
+  line-height: 1.55;
 }
 
-.toolStatusOk {
-  color: var(--green);
+.notice svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--warning-text);
+  opacity: 0.85;
 }
 
-.warning {
-  font-size: 13px;
-  color: var(--text-muted);
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 14px;
-  line-height: 1.5;
-}
-
-.finishWarning {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-top: 6px;
-}
-
-.actions {
+/* ─── Directory Picker ────────────────────────────────── */
+.dirPicker {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.scanRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.scanPath {
-  font-size: 13px;
-  font-family: var(--font-mono);
-  color: var(--text);
-  background: var(--bg-surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 6px 10px;
+.dirPath {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-family: var(--font-mono);
+  overflow: hidden;
+}
+
+.dirIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.dirText {
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.scanNone {
-  font-style: italic;
+.dirPlaceholder {
   color: var(--text-subtle);
+  font-style: italic;
+  font-family: var(--font-sans);
+}
+
+/* ─── Gitignore ──────────────────────────────────────── */
+.gitignoreActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.successState {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  background: rgba(46, 160, 67, 0.07);
+  border: 1px solid rgba(46, 160, 67, 0.22);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--added-text);
+  font-weight: 500;
+}
+
+.successIcon {
+  flex-shrink: 0;
+  animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.skippedState {
+  padding: 11px 14px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  background: var(--bg-surface-3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--text);
+}
+
+.errorText {
+  font-size: 11.5px;
+  color: var(--removed-text);
+  margin: 0;
+}
+
+/* ─── Step Actions ────────────────────────────────────── */
+.stepActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-muted);
+}
+
+/* ─── Buttons ─────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  line-height: 1.4;
+}
+
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(31, 111, 235, 0.32);
+}
+
+.btnPrimary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.btnSecondary {
+  background: var(--bg-surface-3);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: var(--bg-surface-2);
+  border-color: var(--text-subtle);
+}
+
+.btnGhost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: transparent;
+}
+
+.btnGhost:hover:not(:disabled) {
+  background: var(--bg-surface-2);
+  color: var(--text);
+  border-color: var(--border-muted);
+}
+
+.btnLarge {
+  padding: 11px 28px;
+  font-size: 14.5px;
+  font-weight: 600;
+  border-radius: 10px;
+  animation: fadeInUp 0.5s ease both;
+  animation-delay: 0.28s;
+}
+
+/* ─── Spinner ─────────────────────────────────────────── */
+.spinner {
+  width: 11px;
+  height: 11px;
+  border: 1.8px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.65s linear infinite;
+}
+
+/* ─── Keyframes ───────────────────────────────────────── */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes logoEntrance {
+  from {
+    opacity: 0;
+    transform: scale(0.75) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes dotPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.14);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(31, 111, 235, 0.07);
+  }
+}
+
+@keyframes successPop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(200%);
+  }
 }
