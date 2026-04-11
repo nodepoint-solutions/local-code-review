@@ -1,16 +1,16 @@
-# Local Review
+# Local Code Review
 
 A desktop app for reviewing AI-generated code before it reaches GitHub. Built for developers who use agent-driven workflows and want a quality gate that keeps premature code offline until it's genuinely ready.
 
-![Local Review — PR view showing a diff with inline review comments, a comment thread, and the review timeline](docs/screenshot.png)
+![Local Code Review — PR view showing a diff with inline review comments, a comment thread, and the review timeline](docs/screenshot.png)
 
 ---
 
 ## Why
 
-Agentic and spec-driven workflows have changed how developers build software — but the quality bar for what comes out the other end still needs a human eye. Local Review gives you that review step without the overhead of a real GitHub PR.
+Agentic and spec-driven workflows have changed how developers build software — but the quality bar for what comes out the other end still needs a human eye. Local Code Review gives you that review step without the overhead of a real GitHub PR.
 
-Opening a GitHub PR — even a draft — broadcasts unfinished work to your team and pulls their attention before it's warranted. Local Review keeps everything on your machine. You review the diff, leave comments, hand it back to the agent to fix, and only push to GitHub when the code is actually ready for the team.
+Opening a GitHub PR — even a draft — broadcasts unfinished work to your team and pulls their attention before it's warranted. Local Code Review keeps everything on your machine. You review the diff, leave comments, hand it back to the agent to fix, and only push to GitHub when the code is actually ready for the team.
 
 Less noise for your colleagues. No embarrassing early commits in the PR history. A cleaner review experience for everyone.
 
@@ -23,11 +23,11 @@ prompt → review code → fix code → repeat
 
 Lots of micro-adjustments. More context switching, reduced productivity.
 
-**Fully agentic + Local Review:**
+**Fully agentic + Local Code Review:**
 ```
 you: up-front design (most of your effort)
 agent: builds the feature (usually with build+test+review phases)
-you: one manual review pass in Local Review
+you: one manual review pass in Local Code Review
 agent: resolves your comments via MCP
 repeat if needed, then push to GitHub
 ```
@@ -49,11 +49,11 @@ Download the latest release for your platform from the [Releases](../../releases
 
 ### macOS
 
-Open the `.dmg`, drag **Local Review** to your Applications folder, and launch it. On first run macOS may show a security prompt — open **System Settings → Privacy & Security** and click **Open Anyway**.
+Open the `.dmg`, drag **Local Code Review** to your Applications folder, and launch it. On first run macOS may show a security prompt — open **System Settings → Privacy & Security** and click **Open Anyway**.
 
 ### Windows
 
-Run the installer and follow the prompts. Local Review will launch automatically when the installation completes.
+Run the installer and follow the prompts. Local Code Review will launch automatically when the installation completes.
 
 ### Linux
 
@@ -107,7 +107,7 @@ Once a review is submitted, you assign it to an agent. The agent resolves commen
 
 ### MCP server for agent integration
 
-Local Review runs an MCP server that AI agents connect to directly. Once connected, the agent can:
+Local Code Review runs an MCP server that AI agents connect to directly. Once connected, the agent can:
 
 | Tool | Description |
 |---|---|
@@ -123,7 +123,7 @@ The agent is expected to fix, commit, and mark issues — in that order, one log
 
 ### Agent skill auto-install
 
-When you install the MCP integration, Local Review also installs a skill into your AI tools. The skill tells the agent exactly how to work through a review assignment: load open issues, organise them into logical commits, fix and commit each group, mark issues resolved, and call `complete_assignment` when done.
+When you install the MCP integration, Local Code Review also installs a skill into your AI tools. The skill tells the agent exactly how to work through a review assignment: load open issues, organise them into logical commits, fix and commit each group, mark issues resolved, and call `complete_assignment` when done.
 
 Supported tools:
 
