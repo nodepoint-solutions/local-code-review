@@ -1,6 +1,7 @@
 import type { PRFile, ReviewFile } from '../../../shared/types'
 import CommentThread from './CommentThread'
 import { formatRelativeTime, formatAbsoluteDate } from '../utils/formatTime'
+import { AgentIcon } from './AgentAvatar'
 import styles from './ReviewTimeline.module.css'
 
 interface Props {
@@ -76,12 +77,29 @@ export default function ReviewTimeline({ pr, reviews, reviewCommitCounts }: Prop
         return (
           <div key={review.id}>
             {submittedEntry}
+            {pr.assignee && pr.assigned_at && (
+              <div className={styles.entry}>
+                <div className={styles.rail}>
+                  <div className={`${styles.dot} ${styles.dotActive}`} />
+                </div>
+                <div className={styles.content}>
+                  <div className={styles.entryHeader}>
+                    <AgentIcon assignee={pr.assignee} size={16} />
+                    <span className={styles.entryTitle}>
+                      Assigned to {pr.assignee === 'claude' ? 'Claude Code' : 'Copilot (VS Code)'}
+                    </span>
+                    <span className={styles.entryTime}>{formatRelativeTime(pr.assigned_at)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className={styles.entry}>
               <div className={styles.rail}>
                 <div className={`${styles.dot} ${styles.dotComplete}`} />
               </div>
               <div className={styles.content}>
                 <div className={styles.entryHeader}>
+                  {pr.assignee && <AgentIcon assignee={pr.assignee} size={16} />}
                   <span className={styles.entryTitle}>Review feedback implemented</span>
                 </div>
                 <div className={styles.commitCount}>{commitLabel}</div>

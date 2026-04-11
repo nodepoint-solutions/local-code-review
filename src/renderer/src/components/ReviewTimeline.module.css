@@ -56,9 +56,14 @@
 .entryHeader {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 10px;
   min-height: 16px;
+}
+
+.entryHeader svg {
+  flex-shrink: 0;
+  border-radius: 50%;
 }
 
 .entryTitle {

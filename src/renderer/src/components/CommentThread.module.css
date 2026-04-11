@@ -109,15 +109,27 @@
   margin-top: 10px;
   padding: 8px 12px;
   background: var(--bg-surface-2);
-  border-left: 3px solid var(--border);
+  border-left: 3px solid var(--added-text);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 .resolutionMeta {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
+}
+
+.resolutionAgentRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resolutionAgentRow svg {
+  flex-shrink: 0;
+  border-radius: 50%;
 }
 
 .resolutionAgent {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ClaudeAvatar } from '../components/AgentAvatar'
 import styles from './Demo.module.css'
 
 const AUTO_ADVANCE_MS = 7500
@@ -354,7 +355,7 @@ function MockupSubmit(): JSX.Element {
           <div className={styles.m5SidebarSection} style={{ animationDelay: '0.55s' }}>
             <div className={styles.m5SidebarLabel}>Assignees</div>
             <div className={styles.m3AssigneeChip}>
-              <span className={styles.m3AssigneeDot} />
+              <ClaudeAvatar size={16} />
               <span>Claude Code</span>
             </div>
           </div>

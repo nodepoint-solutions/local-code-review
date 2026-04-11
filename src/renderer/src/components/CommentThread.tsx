@@ -2,6 +2,7 @@ import type { ReviewComment } from '../../../shared/types'
 import styles from './CommentThread.module.css'
 import { formatRelativeTime } from '../utils/formatTime'
 import ReactMarkdown from 'react-markdown'
+import { AgentAvatar } from './AgentAvatar'
 
 interface Props {
   comment: ReviewComment
@@ -50,7 +51,10 @@ export default function CommentThread({ comment, allowDelete, onDelete, focused 
       {comment.resolution && (
         <div className={styles.resolution}>
           <div className={styles.resolutionMeta}>
-            <span className={styles.resolutionAgent}>{comment.resolution.resolved_by}</span>
+            <div className={styles.resolutionAgentRow}>
+              <AgentAvatar resolvedBy={comment.resolution.resolved_by} size={18} />
+              <span className={styles.resolutionAgent}>{comment.resolution.resolved_by}</span>
+            </div>
             <span className={styles.resolutionTime}>{formatRelativeTime(comment.resolution.resolved_at)}</span>
           </div>
           <div className={styles.resolutionComment}><ReactMarkdown>{comment.resolution.comment}</ReactMarkdown></div>

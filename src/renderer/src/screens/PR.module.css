@@ -476,6 +476,25 @@
   color: #dc2626;
 }
 
+.sidebarActionGitHub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 500;
+}
+.sidebarActionGitHub:hover {
+  background: var(--accent-hover);
+  border-color: transparent;
+  color: #fff;
+}
+.sidebarActionGitHub svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
 .branchStack {
   display: flex;
   flex-direction: column;
@@ -853,17 +872,25 @@
 .assigneeChip {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   font-size: 13px;
   color: var(--text);
 }
 
-.assigneeDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--green);
+.assigneeChip svg {
   flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.assigneeItemLabel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.assigneeItemLabel svg {
+  flex-shrink: 0;
+  border-radius: 50%;
 }
 
 .nudgeBtn {
