@@ -1,37 +1,59 @@
 # Local Review
 
-A desktop app for reviewing AI-generated code before it reaches GitHub. Built for developers who use agent-driven workflows and want a quality gate that keeps premature code off the team's radar.
+A desktop app for reviewing AI-generated code before it reaches GitHub. Built for developers who use agent-driven workflows and want a quality gate that keeps premature code offline until it's genuinely ready.
+
+![Local Review — PR view showing a diff with inline review comments, a comment thread, and the review timeline](docs/screenshot.png)
 
 ---
 
 ## Why
 
-Spec-driven and agentic workflows produce great functional results but imperfect code. The "agent reviews" built into tools like GSD and Superpowers handle most of the heavy lifting — but there's still value in a manual pass before publishing.
+Agentic and spec-driven workflows have changed how developers build software — but the quality bar for what comes out the other end still needs a human eye. Local Review gives you that review step without the overhead of a real GitHub PR.
 
-The alternative is reviewing in GitHub (or a draft PR), which steals focus, creates noise for your team, and makes "work in progress" feel more official than it is.
+Opening a GitHub PR — even a draft — broadcasts unfinished work to your team and pulls their attention before it's warranted. Local Review keeps everything on your machine. You review the diff, leave comments, hand it back to the agent to fix, and only push to GitHub when the code is actually ready for the team.
 
-Local Review keeps the entire process offline until you decide it's ready.
+Less noise for your colleagues. No embarrassing early commits in the PR history. A cleaner review experience for everyone.
 
-### Workflow comparison
+---
 
-**Traditional (Copilot in VS Code):**
+## Installation
+
+Download the latest release for your platform from the [Releases](../../releases/latest) page:
+
+| Platform | File |
+|---|---|
+| macOS | `Local.Review-mac.dmg` |
+| Windows | `Local.Review-win-setup.exe` |
+| Linux (Debian/Ubuntu) | `Local.Review-linux.deb` |
+| Linux (Fedora/RHEL) | `Local.Review-linux.rpm` |
+
+### macOS
+
+Open the `.dmg`, drag **Local Review** to your Applications folder, and launch it. On first run macOS may show a security prompt — open **System Settings → Privacy & Security** and click **Open Anyway**.
+
+### Windows
+
+Run the installer and follow the prompts. Local Review will launch automatically when the installation completes.
+
+### Linux
+
+**Debian/Ubuntu:**
+
+```bash
+sudo dpkg -i Local.Review-linux.deb
 ```
-prompt → review code → fix code → repeat
+
+**Fedora/RHEL:**
+
+```bash
+sudo rpm -i Local.Review-linux.rpm
 ```
 
-**Agentic + Local Review:**
-```
-you: up-front design (most of your effort)
-agent: builds the feature
-agent: internal reviews within the workflow
-you: one manual review pass in Local Review
-agent: resolves your comments via MCP
-repeat if needed, then push to GitHub
-```
 
-Bigger batches, less context switching, no premature GitHub noise.
+### Requirements
 
-![Local Review — PR view showing a diff with inline review comments, a comment thread, and the review timeline](docs/screenshot.png)
+- `git` must be installed and available on your `$PATH`
+- One or more of: Claude Code, Claude Desktop, VS Code, Cursor, or Windsurf (for MCP integration)
 
 ---
 
@@ -92,49 +114,31 @@ Supported tools:
 - Cursor
 - Windsurf
 
-### Export
-
-At any point you can export a review to Markdown and JSON for feeding to an LLM manually. Exports include:
-
-- PR metadata (title, branches, SHAs)
-- Each comment with surrounding context lines
-- Sequential issue IDs (`RVW-001`, `RVW-002`, ...) for easy LLM reference
-- Stale comments excluded automatically
-
 ### Push to GitHub
 
 Once you're happy with the code, a button transfers the PR to GitHub for team review. Everything stays local until you choose to publish.
 
 ---
 
-## Tech stack
+## Workflow comparison
 
-| Layer | Choice |
-|---|---|
-| Desktop shell | Electron |
-| Build tooling | electron-vite |
-| Renderer | React + Vite |
-| State management | Zustand |
-| Database | SQLite (better-sqlite3, stored in platform userData) |
-| Git | System `git` binary — no git libraries |
-
----
-
-## Requirements
-
-- macOS, Windows, or Linux
-- `git` installed and on `$PATH`
-- One or more of: Claude Code, Claude Desktop, VS Code, Cursor, or Windsurf (for MCP integration)
-
----
-
-## Getting started
-
-```bash
-npm install
-npm run dev
+**Traditional (Copilot in VS Code):**
+```
+prompt → review code → fix code → repeat
 ```
 
-On first launch, point Local Review at a directory to scan for git repositories. Open a repo, create a PR, and start reviewing.
+**Agentic + Local Review:**
+```
+you: up-front design (most of your effort)
+agent: builds the feature
+agent: internal reviews within the workflow
+you: one manual review pass in Local Review
+agent: resolves your comments via MCP
+repeat if needed, then push to GitHub
+```
 
-To connect your AI agent, go to **Settings → MCP Integrations** and click **Install / Repair All**. This writes the MCP server config and installs the agent skill into every detected tool.
+Bigger batches, less context switching, no premature GitHub noise.
+
+---
+
+For information on building and running from source, see [docs/contributing.md](docs/contributing.md).
