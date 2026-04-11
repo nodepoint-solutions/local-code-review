@@ -14,6 +14,26 @@ Opening a GitHub PR — even a draft — broadcasts unfinished work to your team
 
 Less noise for your colleagues. No embarrassing early commits in the PR history. A cleaner review experience for everyone.
 
+### Workflow comparison
+
+**Traditional (agent-assisted coding):**
+```
+prompt → review code → fix code → repeat
+```
+
+Lots of micro-adjustments. More context switching, reduced productivity.
+
+**Fully agentic + Local Review:**
+```
+you: up-front design (most of your effort)
+agent: builds the feature (usually with build+test+review phases)
+you: one manual review pass in Local Review
+agent: resolves your comments via MCP
+repeat if needed, then push to GitHub
+```
+
+Bigger batches, less context switching, no premature GitHub noise.
+
 ---
 
 ## Installation
@@ -71,7 +91,6 @@ sudo rpm -i Local.Review-linux.rpm
 - Unified and split diff views (toggle per PR)
 - File tree sidebar with jump-to-file navigation
 - Click a line (or drag across lines) to open a comment box
-- Comments are persisted in a local SQLite database
 - Staleness detection: if branches move after a review, affected comments are flagged
 
 ### Review rounds
@@ -84,7 +103,7 @@ awaiting review → reviewing → reviewed → in fix → fix complete
                             (start new review round)
 ```
 
-Once a review is submitted, you assign it to an agent. The agent resolves comments via MCP. When all comments are resolved, you can start another review round or close the PR.
+Once a review is submitted, you assign it to an agent. The agent resolves comments via MCP. When all comments are resolved, you can start another review round or submit/close the PR.
 
 ### MCP server for agent integration
 
@@ -117,27 +136,6 @@ Supported tools:
 ### Push to GitHub
 
 Once you're happy with the code, a button transfers the PR to GitHub for team review. Everything stays local until you choose to publish.
-
----
-
-## Workflow comparison
-
-**Traditional (Copilot in VS Code):**
-```
-prompt → review code → fix code → repeat
-```
-
-**Agentic + Local Review:**
-```
-you: up-front design (most of your effort)
-agent: builds the feature
-agent: internal reviews within the workflow
-you: one manual review pass in Local Review
-agent: resolves your comments via MCP
-repeat if needed, then push to GitHub
-```
-
-Bigger batches, less context switching, no premature GitHub noise.
 
 ---
 
