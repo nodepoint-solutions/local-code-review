@@ -33,12 +33,9 @@ export class McpManager {
 
   start(): void {
     if (this.running) return
-    if (!this.socketServer) {
-      this.startSocketServer()
-      this.socketServer!.once('listening', () => this.spawnChild())
-    } else {
-      this.spawnChild()
-    }
+    if (!this.socketServer) this.startSocketServer()
+    // Give the socket server a tick to bind before the child tries to connect
+    setTimeout(() => this.spawnChild(), 100)
   }
 
   stop(): void {
