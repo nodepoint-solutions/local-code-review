@@ -7,6 +7,7 @@ import OpenPR from './screens/OpenPR'
 import PR from './screens/PR'
 import Settings from './screens/Settings'
 import Setup from './screens/Setup'
+import Demo from './screens/Demo'
 import './App.css'
 
 function ThemeApplier(): null {
@@ -37,6 +38,7 @@ export default function App(): JSX.Element {
           <Route path="*" element={<Navigate to="/setup" replace />} />
         ) : (
           <>
+            <Route path="/demo" element={<Demo />} />
             <Route path="/" element={<Home />} />
             <Route path="/repo/:repoId" element={<Repo />} />
             <Route path="/repo/:repoId/open-pr" element={<OpenPR />} />

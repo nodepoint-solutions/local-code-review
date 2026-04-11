@@ -86,7 +86,7 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
   async function handleFinish(): Promise<void> {
     await window.api.setSetting('setup_complete', 'true')
     onComplete()
-    navigate('/')
+    navigate('/demo')
   }
 
   return (

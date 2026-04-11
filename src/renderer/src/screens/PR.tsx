@@ -687,7 +687,7 @@ export default function PR(): JSX.Element {
               <div className={styles.sidebarActions}>
                 {githubInfo !== null && pr.status === 'open' && (
                   <button className={styles.sidebarActionBtn} onClick={handleOpenWithGitHub}>
-                    Open PR with GitHub
+                    Transfer PR to GitHub
                   </button>
                 )}
                 {pr.status === 'open' ? (

@@ -1,8 +1,8 @@
-# Open PR with GitHub + Merge Auto-Detection Implementation Plan
+# Transfer PR to GitHub + Merge Auto-Detection Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add an "Open PR with GitHub" button to the PR screen Actions sidebar with a 4-step safety gate, and auto-close PRs silently when the compare branch has been merged into the remote base on `prs:get`.
+**Goal:** Add an "Transfer PR to GitHub" button to the PR screen Actions sidebar with a 4-step safety gate, and auto-close PRs silently when the compare branch has been merged into the remote base on `prs:get`.
 
 **Architecture:** New git utility functions (pure functions wrapping `execGit`) live in `branches.ts`. Four new IPC handlers + merge detection patch go in `prs.ts`. The renderer calls new preload API methods sequentially in `handleOpenWithGitHub`. The `PRFileSchema` gains a `merged_at` field and `ReviewStore` gains a `mergePR` method. Timeline renders a purple "Merged" entry when `merged_at` is set.
 
@@ -630,7 +630,7 @@ Replace with:
   <div className={styles.sidebarActions}>
     {githubInfo !== null && pr.status === 'open' && (
       <button className={styles.sidebarActionBtn} onClick={handleOpenWithGitHub}>
-        Open PR with GitHub
+        Transfer PR to GitHub
       </button>
     )}
     {pr.status === 'open' ? (
@@ -647,7 +647,7 @@ Replace with:
 
 ```bash
 git add src/renderer/src/screens/PR.tsx
-git commit -m "feat: add Open PR with GitHub button with 4-step safety gate"
+git commit -m "feat: add Transfer PR to GitHub button with 4-step safety gate"
 ```
 
 ---
@@ -655,7 +655,7 @@ git commit -m "feat: add Open PR with GitHub button with 4-step safety gate"
 ## Self-Review Checklist
 
 **Spec coverage:**
-- [x] "Open PR with GitHub" button — Task 7 step 3
+- [x] "Transfer PR to GitHub" button — Task 7 step 3
 - [x] Only shown when remote origin is GitHub — Task 7 step 1 (`githubInfo !== null`)
 - [x] Only shown when PR is open — Task 7 step 3 (`pr.status === 'open'`)
 - [x] Step 1: warn if in-progress or submitted with unresolved comments — Task 7 step 2

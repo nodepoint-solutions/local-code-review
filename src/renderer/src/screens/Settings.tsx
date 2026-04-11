@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useStore } from '../store'
 import NavBar from '../components/NavBar'
 import styles from './Settings.module.css'
 import type { IntegrationStatus } from '../../../shared/types'
@@ -14,9 +12,6 @@ function FolderIcon(): JSX.Element {
 }
 
 export default function Settings(): JSX.Element {
-  const navigate = useNavigate()
-  const { setRepos, setScanResults } = useStore()
-
   const [scanDir, setScanDir] = useState<string | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
   const [mcpRunning, setMcpRunning] = React.useState(false)
@@ -76,9 +71,7 @@ export default function Settings(): JSX.Element {
 
   async function handleReset(): Promise<void> {
     await window.api.resetDb()
-    setRepos([])
-    setScanResults([])
-    navigate('/')
+    window.location.reload()
   }
 
   return (
@@ -176,13 +169,13 @@ export default function Settings(): JSX.Element {
           )}
         </section>
 
-        <section className={`${styles.section} ${styles.dangerSection}`}>
+        <section className={`${styles.section} ${styles.dangerSection}`} style={{ marginTop: 48 }}>
           <h2 className={`${styles.sectionTitle} ${styles.dangerTitle}`}>Danger zone</h2>
           <div className={styles.dangerRow}>
             <div>
               <p className={styles.dangerLabel}>Reset to factory settings</p>
               <p className={styles.dangerDesc}>
-                Deletes all repositories, pull requests, reviews, comments, and settings. This cannot be undone.
+                Clears all app settings and removes repositories from the app. Runs you through setup and the tour again. Your <code>.reviews</code> files on disk are never touched.
               </p>
             </div>
             {!confirmReset ? (

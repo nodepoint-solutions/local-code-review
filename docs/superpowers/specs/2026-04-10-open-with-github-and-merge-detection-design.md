@@ -1,4 +1,4 @@
-# Design: Open PR with GitHub + Merge Auto-Detection
+# Design: Transfer PR to GitHub + Merge Auto-Detection
 
 **Date:** 2026-04-10
 
@@ -8,13 +8,13 @@
 
 Two related features:
 
-1. **"Open PR with GitHub" button** — appears in the Actions sidebar of the PR screen when the repo's remote origin is a GitHub URL. Walks through a 4-step safety gate before opening the GitHub compare URL in the browser.
+1. **"Transfer PR to GitHub" button** — appears in the Actions sidebar of the PR screen when the repo's remote origin is a GitHub URL. Walks through a 4-step safety gate before opening the GitHub compare URL in the browser.
 
 2. **Merge auto-detection** — on every `prs:get` load, fetch origin and check if the compare branch has been merged into the remote base. If so, silently close the PR and add a timeline entry.
 
 ---
 
-## Feature 1: Open PR with GitHub
+## Feature 1: Transfer PR to GitHub
 
 ### Button visibility
 
@@ -161,7 +161,7 @@ pushBranch: (repoPath: string, branch: string) => Promise<{ error?: string }>
 
 - Add `githubInfo` state (`{ owner: string; repo: string } | null`)
 - Load via `window.api.getRemoteInfo(repo.path)` on mount, parallel with `getIntegrations`
-- Actions section: render "Open PR with GitHub" button when `githubInfo !== null` and `pr.status === 'open'`
+- Actions section: render "Transfer PR to GitHub" button when `githubInfo !== null` and `pr.status === 'open'`
 - `handleOpenWithGitHub` implements the 4-step flow above
 
 ### `ReviewTimeline.tsx`
