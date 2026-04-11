@@ -1,0 +1,1584 @@
+/* ─── Keyframes ──────────────────────────────────────────── */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideForward {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideBack {
+  from { opacity: 0; transform: translateX(-28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes progressGrow {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes dotPulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent); }
+  50%       { box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.25); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(31, 111, 235, 0); }
+  50%       { box-shadow: 0 0 20px 4px rgba(31, 111, 235, 0.3); }
+}
+
+@keyframes hideOnResolve {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+
+/* ─── Page wrapper ───────────────────────────────────────── */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 55% 45% at 15% 15%, rgba(31, 111, 235, 0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 35% at 85% 85%, rgba(31, 111, 235, 0.045) 0%, transparent 65%);
+  padding: 24px;
+  position: relative;
+}
+
+.page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border-muted) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-muted) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.5;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 20%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 20%, transparent 80%);
+  pointer-events: none;
+}
+
+
+/* ─── Panel ──────────────────────────────────────────────── */
+
+.panel {
+  width: min(900px, calc(100vw - 48px));
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 24px 80px rgba(0, 0, 0, 0.45),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  position: relative;
+  z-index: 1;
+}
+
+
+/* ─── Window chrome ──────────────────────────────────────── */
+
+.chrome {
+  height: 40px;
+  background: var(--bg-surface-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.chromeDots {
+  display: flex;
+  gap: 7px;
+  -webkit-app-region: no-drag;
+}
+
+.chromeDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: block;
+}
+
+.chromeDotRed    { background: #ff5f56; }
+.chromeDotYellow { background: #ffbd2e; }
+.chromeDotGreen  { background: #27c93f; }
+
+.chromeTitle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--text-subtle);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+}
+
+.chromeSkip {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-subtle);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.15s ease, background 0.15s ease;
+  -webkit-app-region: no-drag;
+}
+
+.chromeSkip:hover {
+  color: var(--text-muted);
+  background: var(--bg-surface-3);
+}
+
+
+/* ─── Mockup area ────────────────────────────────────────── */
+
+.mockupArea {
+  height: 310px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-muted);
+  position: relative;
+  overflow: hidden;
+}
+
+.slideForward {
+  animation: slideForward 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  height: 100%;
+}
+
+.slideBack {
+  animation: slideBack 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  height: 100%;
+}
+
+
+/* ─── Progress bar ───────────────────────────────────────── */
+
+.progressTrack {
+  height: 2px;
+  background: var(--border-muted);
+  position: relative;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent);
+  width: 0;
+  animation: progressGrow linear both;
+}
+
+
+/* ─── Step body ──────────────────────────────────────────── */
+
+.stepBody {
+  padding: 28px 40px 20px;
+  min-height: 120px;
+}
+
+.stepTextForward {
+  animation: slideForward 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stepTextBack {
+  animation: slideBack 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hint {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.headline {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
+}
+
+.description {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0;
+  max-width: 600px;
+}
+
+
+/* ─── Navigation ─────────────────────────────────────────── */
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 40px 24px;
+  border-top: 1px solid var(--border-muted);
+}
+
+.dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.dot:hover {
+  background: var(--text-subtle);
+  transform: scale(1.3);
+}
+
+.dotActive {
+  background: var(--accent);
+  width: 20px;
+  border-radius: 3px;
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+.navButtons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btnPrev {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 7px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.btnPrev:hover {
+  background: var(--bg-surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btnNext {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btnNext:hover {
+  background: var(--bg-surface-3);
+}
+
+.btnFinish {
+  background: var(--accent);
+  border: 1px solid transparent;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  animation: glowPulse 2s ease-in-out infinite;
+  transition: background 0.15s ease;
+}
+
+.btnFinish:hover {
+  background: var(--accent-hover);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SHARED MOCK CHROME (navbar, pr header, tab bar)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Mini navbar that matches the real NavBar component */
+.mockNav {
+  height: 30px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 8px;
+  flex-shrink: 0;
+  opacity: 0;
+  animation: fadeIn 0.3s ease 0.05s both;
+}
+
+.mockNavLogo {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mockNavSep {
+  font-size: 11px;
+  color: var(--text-subtle);
+}
+
+.mockNavCrumb {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.mockNavCrumbActive {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.mockNavRight {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.mockNavBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.mockNavBtnActive {
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.mockNavBtnBadge {
+  min-width: 14px;
+  height: 14px;
+  padding: 0 4px;
+  border-radius: 7px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* PR header (title + badges + meta) */
+.mockPrHeader {
+  padding: 10px 16px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+  opacity: 0;
+  animation: fadeIn 0.3s ease 0.15s both;
+}
+
+.mockPrTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.mockPrTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+
+.mockStatusBadge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mockStatusOpen {
+  background: var(--status-open-bg, rgba(46, 160, 67, 0.15));
+  color: var(--status-open-text, #3fb950);
+  border-color: var(--status-open-border, rgba(46, 160, 67, 0.4));
+}
+
+.mockStatusSubmitted {
+  background: var(--status-submitted-bg, rgba(139, 148, 158, 0.15));
+  color: var(--status-submitted-text, #8b949e);
+  border-color: var(--status-submitted-border, rgba(139, 148, 158, 0.4));
+}
+
+.mockPrMeta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.mockBranch {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-text);
+  background: var(--accent-subtle);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+}
+
+.mockMetaDot {
+  color: var(--text-subtle);
+}
+
+/* Tab bar */
+.mockTabBar {
+  height: 32px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+  opacity: 0;
+  animation: fadeIn 0.3s ease 0.25s both;
+}
+
+.mockTabs {
+  display: flex;
+  height: 100%;
+}
+
+.mockTab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  cursor: default;
+  height: 100%;
+  margin-bottom: -1px;
+}
+
+.mockTabActive {
+  color: var(--text);
+  font-weight: 500;
+  border-bottom-color: var(--accent);
+}
+
+.mockTabCount {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mockViewToggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.mockToggleBtn {
+  width: 26px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-subtle);
+  cursor: default;
+  font-size: 10px;
+}
+
+.mockToggleBtn + .mockToggleBtn {
+  border-left: 1px solid var(--border);
+}
+
+.mockToggleActive {
+  background: var(--bg-surface-2);
+  color: var(--text);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   MOCKUP 1 — Open a PR (matches OpenPR.tsx)
+   ═══════════════════════════════════════════════════════════ */
+
+.m1Wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.m1Content {
+  flex: 1;
+  overflow: hidden;
+  padding: 20px 32px;
+  display: flex;
+  justify-content: center;
+}
+
+.m1Card {
+  width: 100%;
+  max-width: 540px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  opacity: 0;
+  animation: fadeUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+
+.m1CardHeader {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface-2);
+}
+
+.m1CardTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.m1CardSub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.m1CardSub strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.m1Form {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.m1BranchRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.m1BranchField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.m1Label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.m1Select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 9px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.m1FieldHint {
+  font-size: 10px;
+  color: var(--text-subtle);
+}
+
+.m1Arrow {
+  display: flex;
+  align-items: center;
+  padding-top: 20px;
+  color: var(--text-subtle);
+  flex-shrink: 0;
+}
+
+.m1Divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 -18px;
+}
+
+.m1TitleField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.m1TitleInput {
+  padding: 5px 9px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: inherit;
+  opacity: 0;
+  animation: fadeIn 0.3s ease 0.55s both;
+}
+
+.m1Actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  opacity: 0;
+  animation: fadeIn 0.3s ease 0.65s both;
+}
+
+.m1CancelBtn {
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.m1CreateBtn {
+  padding: 5px 14px;
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  color: #fff;
+  cursor: default;
+  box-shadow: 0 1px 4px rgba(31, 111, 235, 0.3);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   MOCKUP 2 — Review the diff (matches PR.tsx Files Changed tab)
+   ═══════════════════════════════════════════════════════════ */
+
+.m2Wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.m2Body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  opacity: 0;
+  animation: fadeIn 0.3s ease 0.3s both;
+}
+
+.m2Sidebar {
+  width: 150px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-muted);
+  padding: 8px 0;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.m2SidebarLabel {
+  font-size: 10px;
+  color: var(--text-subtle);
+  padding: 2px 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.m2SidebarFile {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  padding: 3px 12px 3px 20px;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  animation: fadeIn 0.25s ease both;
+}
+
+.m2SidebarFileActive {
+  color: var(--text);
+  background: var(--accent-subtle);
+  border-right: 2px solid var(--accent);
+  padding-right: 10px;
+}
+
+.m2Diff {
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.m2DiffFileHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: var(--bg-surface-2);
+  border-bottom: 1px solid var(--border-muted);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.m2DiffFileName { color: var(--text); }
+
+.m2Line {
+  display: flex;
+  align-items: baseline;
+  padding: 2px 12px;
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  white-space: pre;
+  opacity: 0;
+  animation: fadeIn 0.25s ease both;
+}
+
+.m2LineRemoved { background: var(--removed-bg); }
+.m2LineAdded   { background: var(--added-bg); }
+
+.m2LineGutter {
+  width: 14px;
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text-subtle);
+  user-select: none;
+}
+
+.m2LineRemoved .m2LineGutter { color: var(--removed-text); }
+.m2LineAdded   .m2LineGutter { color: var(--added-text); }
+
+.m2LineCode { color: var(--text); font-family: inherit; font-size: inherit; }
+.m2LineRemoved .m2LineCode { color: var(--removed-text); }
+.m2LineAdded   .m2LineCode { color: var(--added-text); }
+
+
+/* ═══════════════════════════════════════════════════════════
+   MOCKUP 3 — Submit review (matches ReviewPanel.tsx)
+   ═══════════════════════════════════════════════════════════ */
+
+.m3Wrap {
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
+.m3DiffSide {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.m3DiffBody {
+  flex: 1;
+  padding: 8px 0;
+  overflow: hidden;
+}
+
+.m3DiffLine {
+  display: flex;
+  align-items: baseline;
+  padding: 2px 12px;
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  white-space: pre;
+  color: var(--text);
+}
+
+.m3DiffLineRemoved { background: var(--removed-bg); }
+.m3DiffLineAdded   { background: var(--added-bg); }
+
+.m3DiffGutter {
+  width: 14px;
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text-subtle);
+}
+
+.m3DiffLineRemoved .m3DiffGutter { color: var(--removed-text); }
+.m3DiffLineAdded   .m3DiffGutter { color: var(--added-text); }
+
+.m3DiffCode { font-family: inherit; font-size: inherit; }
+.m3DiffLineRemoved .m3DiffCode { color: var(--removed-text); }
+.m3DiffLineAdded   .m3DiffCode { color: var(--added-text); }
+
+/* The ReviewPanel — matches ReviewPanel.module.css exactly */
+.m3Panel {
+  width: 260px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  animation: slideInFromRight 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+}
+
+.m3PanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface-2);
+  flex-shrink: 0;
+}
+
+.m3PanelHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.m3PanelBadge {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.m3CloseBtn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: default;
+}
+
+.m3CommentList {
+  flex: 1;
+  overflow: hidden;
+}
+
+.m3CommentItem {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-muted);
+  opacity: 0;
+  animation: fadeIn 0.3s ease both;
+}
+
+.m3CommentFile {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 3px;
+}
+
+.m3CommentFileName {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.m3CommentLines {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-subtle);
+}
+
+.m3CommentBody {
+  font-size: 11.5px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.m3PanelFooter {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface-2);
+  flex-shrink: 0;
+  opacity: 0;
+  animation: fadeIn 0.3s ease 0.85s both;
+}
+
+.m3SubmitBtn {
+  width: 100%;
+  padding: 7px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: default;
+  box-shadow: 0 1px 4px rgba(31, 111, 235, 0.3);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   MOCKUP 4 — Agent resolves (split: app left, terminal right)
+   ═══════════════════════════════════════════════════════════ */
+
+.m4Wrap {
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
+
+/* ─── Left: app pane ─────────────────────────────────────── */
+
+.m4AppPane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-muted);
+  overflow: hidden;
+  min-width: 0;
+  opacity: 0;
+  animation: fadeIn 0.3s ease 0.1s both;
+}
+
+.m4AppNav {
+  height: 30px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.m4AppNavCrumb {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.m4AppNavSep {
+  font-size: 11px;
+  color: var(--text-subtle);
+}
+
+.m4AppNavActive {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m4TlWrap {
+  flex: 1;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Timeline entries */
+.m4TlEntry {
+  display: flex;
+  gap: 12px;
+  opacity: 0;
+  animation: fadeIn 0.3s ease both;
+}
+
+.m4TlRail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 14px;
+}
+
+.m4TlDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  box-sizing: border-box;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.m4TlDotAccent {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.m4TlDotGreen {
+  border-color: var(--added-text);
+  background: var(--added-text);
+}
+
+/* Vertical connector between first and second entry */
+.m4TlLine {
+  width: 2px;
+  flex: 1;
+  background: var(--border);
+  margin-top: 3px;
+}
+
+.m4TlContent {
+  flex: 1;
+  padding-bottom: 14px;
+  min-width: 0;
+}
+
+.m4TlHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-height: 14px;
+}
+
+.m4TlTitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.m4TlMeta {
+  font-size: 11px;
+  color: var(--text-subtle);
+}
+
+.m4CommitCount {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Comment rows inside timeline */
+.m4CommentList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.m4CommentItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  animation: fadeIn 0.25s ease both;
+}
+
+.m4CommentIconWrap {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Open circle — fades out at resolvedDelay */
+.m4CommentCircle {
+  position: absolute;
+  inset: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  top: 2px;
+  left: 2px;
+  box-sizing: border-box;
+  animation: hideOnResolve 0.3s ease both;
+}
+
+/* Checkmark — fades in at resolvedDelay */
+.m4CommentCheck {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--added-text);
+  line-height: 1;
+  animation: fadeIn 0.3s ease both;
+  opacity: 0;
+}
+
+.m4CommentBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.m4CommentFile {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--accent-text);
+  background: var(--accent-subtle);
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.m4CommentText {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* ─── Right: terminal pane ───────────────────────────────── */
+
+.m4TermPane {
+  width: 370px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 16px;
+  background: var(--bg);
+}
+
+.m4Terminal {
+  width: 100%;
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  animation: fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.m4TermChrome {
+  height: 28px;
+  background: #161b22;
+  border-bottom: 1px solid #21262d;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 7px;
+}
+
+.m4ChromeDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: block;
+}
+
+.m4TermTitle {
+  margin: 0 auto;
+  font-size: 10px;
+  color: #656d76;
+  font-family: var(--font-mono);
+}
+
+.m4TermBody {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.m4Line {
+  display: flex;
+  gap: 8px;
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  color: #8b949e;
+  opacity: 0;
+  animation: fadeIn 0.2s ease both;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.m4LineCmd     { color: #e6edf3; }
+.m4LineSuccess { color: #3fb950; }
+
+.m4LinePrefix { color: #656d76; min-width: 12px; flex-shrink: 0; }
+.m4LineCmd     .m4LinePrefix { color: #79c0ff; }
+.m4LineSuccess .m4LinePrefix { color: #3fb950; }
+
+.m4Cursor {
+  display: inline-block;
+  width: 6px;
+  height: 11px;
+  background: #3fb950;
+  opacity: 0;
+  animation: blink 1s step-end infinite both;
+  margin-top: 2px;
+  border-radius: 1px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   MOCKUP 5 — Open on GitHub (matches PR.tsx Overview tab)
+   ═══════════════════════════════════════════════════════════ */
+
+.m5Wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.m5Overview {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  overflow: hidden;
+  opacity: 0;
+  animation: fadeIn 0.3s ease 0.3s both;
+}
+
+/* Main area (description + activity) */
+.m5Main {
+  flex: 1;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.m5Card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.m5CardHeader {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface-2);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.m5CardBody {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.m5ActivityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-muted);
+}
+
+.m5ActivityItem:last-child { border-bottom: none; }
+
+.m5ActivityDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bg-surface-3);
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.m5ActivityDotGreen {
+  border-color: var(--added-text);
+  background: rgba(46, 160, 67, 0.2);
+}
+
+/* Sidebar (matches .overviewSidebar from PR.module.css) */
+.m5Sidebar {
+  width: 210px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  padding: 12px 0;
+  overflow-y: auto;
+  background: var(--bg-surface);
+}
+
+.m5SidebarSection {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border-muted);
+  opacity: 0;
+  animation: fadeIn 0.3s ease both;
+}
+
+.m5SidebarSection:last-child { border-bottom: none; }
+
+.m5SidebarLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.m5BranchStack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.m5BranchRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.m5BranchLabel {
+  font-size: 10px;
+  color: var(--text-subtle);
+  width: 46px;
+  flex-shrink: 0;
+}
+
+.m5BranchCode {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-text);
+  background: var(--accent-subtle);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 110px;
+}
+
+.m5ReviewComplete {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--added-text);
+  background: rgba(46, 160, 67, 0.1);
+  border: 1px solid rgba(46, 160, 67, 0.3);
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+
+.m5SidebarActions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.m5ActionBtn {
+  padding: 5px 10px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--text);
+  cursor: default;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.m5ActionBtnGitHub {
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 500;
+  animation: glowPulse 2.5s ease-in-out 0.6s infinite;
+  box-shadow: 0 1px 6px rgba(31, 111, 235, 0.4);
+}
+
+/* ─── Step 3: Assignee chip ──────────────────────────────── */
+
+.m3ReviewSubmitted {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2px 8px;
+  display: inline-block;
+}
+
+.m3AssigneeChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text);
+  opacity: 0;
+  animation: fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.55s both;
+}
+
+.m3AssigneeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--added-text);
+  flex-shrink: 0;
+}
+
+/* ─── Step 5: Simplified ship card ──────────────────────── */
+
+.m5ShipWrap {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.m5ShipCard {
+  width: 360px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  animation: fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.m5ShipRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-muted);
+  opacity: 0;
+  animation: fadeIn 0.3s ease both;
+}
+
+.m5ShipLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.m5ShipBranches {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.m5ShipArrow {
+  font-size: 10px;
+  color: var(--text-subtle);
+}
+
+.m5ShipDivider {
+  height: 1px;
+  background: var(--border);
+  opacity: 0;
+  animation: fadeIn 0.2s ease both;
+}
+
+.m5ShipActions {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0;
+  animation: fadeIn 0.3s ease both;
+}
