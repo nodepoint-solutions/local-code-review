@@ -242,13 +242,16 @@
   overflow-y: auto;
   display: flex;
   gap: 24px;
-  padding: 24px;
+  padding: 24px 48px;
   align-items: flex-start;
 }
 
 .overviewMain {
   flex: 3;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .descriptionCard {
@@ -354,8 +357,47 @@
   font-size: 14px;
   color: var(--text);
   line-height: 1.7;
-  white-space: pre-wrap;
 }
+
+.descriptionBody p { margin: 0 0 12px; }
+.descriptionBody p:last-child { margin-bottom: 0; }
+.descriptionBody h1 { font-size: 16px; margin: 16px 0 8px; font-weight: 600; color: var(--text); }
+.descriptionBody h2 { font-size: 15px; margin: 14px 0 6px; font-weight: 600; color: var(--text); }
+.descriptionBody h3 { font-size: 14px; margin: 12px 0 6px; font-weight: 600; color: var(--text); }
+.descriptionBody h4, .descriptionBody h5, .descriptionBody h6 {
+  font-size: 13px; margin: 10px 0 4px; font-weight: 600; color: var(--text);
+}
+.descriptionBody ul, .descriptionBody ol {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+.descriptionBody li { margin-bottom: 4px; }
+.descriptionBody code {
+  font-family: monospace;
+  font-size: 13px;
+  background: var(--bg-surface-2);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+.descriptionBody pre {
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  overflow-x: auto;
+  margin: 0 0 12px;
+}
+.descriptionBody pre code {
+  background: none;
+  padding: 0;
+}
+.descriptionBody blockquote {
+  border-left: 3px solid var(--border);
+  margin: 0 0 12px;
+  padding: 4px 0 4px 12px;
+  color: var(--text-muted);
+}
+.descriptionBody a { color: var(--accent); text-decoration: none; }
+.descriptionBody a:hover { text-decoration: underline; }
 
 .descriptionEmpty {
   padding: 16px;

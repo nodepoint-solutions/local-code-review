@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import NavBar from '../components/NavBar'
@@ -534,7 +535,9 @@ export default function PR(): JSX.Element {
                   </div>
                 </div>
               ) : pr.description ? (
-                <div className={styles.descriptionBody}>{pr.description}</div>
+                <div className={styles.descriptionBody}>
+                  <ReactMarkdown>{pr.description}</ReactMarkdown>
+                </div>
               ) : (
                 <div className={styles.descriptionEmpty}>No description provided.</div>
               )}

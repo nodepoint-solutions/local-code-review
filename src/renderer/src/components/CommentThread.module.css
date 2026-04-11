@@ -49,8 +49,41 @@
   font-size: 13px;
   color: var(--text);
   line-height: 1.5;
-  white-space: pre-wrap;
 }
+
+.body p { margin: 0 0 8px; }
+.body p:last-child { margin-bottom: 0; }
+.body h1, .body h2, .body h3, .body h4, .body h5, .body h6 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 8px 0 4px;
+  color: var(--text);
+}
+.body ul, .body ol { margin: 0 0 8px; padding-left: 18px; }
+.body li { margin-bottom: 2px; }
+.body code {
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--bg-surface-2);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+.body pre {
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  overflow-x: auto;
+  margin: 0 0 8px;
+}
+.body pre code { background: none; padding: 0; }
+.body blockquote {
+  border-left: 3px solid var(--border);
+  margin: 0 0 8px;
+  padding: 2px 0 2px 10px;
+  color: var(--text-muted);
+}
+.body strong { font-weight: 600; }
+.body em { font-style: italic; }
 
 .badgeResolved {
   font-size: 11px;
@@ -102,8 +135,19 @@
   font-size: 13px;
   color: var(--text);
   line-height: 1.5;
-  white-space: pre-wrap;
 }
+
+.resolutionComment p { margin: 0 0 8px; }
+.resolutionComment p:last-child { margin-bottom: 0; }
+.resolutionComment code {
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--bg);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+.resolutionComment strong { font-weight: 600; }
+.resolutionComment em { font-style: italic; }
 
 .deleteBtn {
   background: none;

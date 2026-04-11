@@ -33,6 +33,7 @@
     "highlight.js": "^11.11.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^6.21.0",
     "uuid": "^9.0.1",
     "zod": "^4.3.6",
@@ -45,21 +46,48 @@
     "directories": {
       "output": "dist"
     },
-    "files": ["out/**/*"],
-    "asarUnpack": ["**/*.node", "node_modules/better-sqlite3/**/*"],
+    "files": [
+      "out/**/*"
+    ],
+    "asarUnpack": [
+      "**/*.node",
+      "node_modules/better-sqlite3/**/*"
+    ],
     "extraResources": [
-      { "from": "resources/iconTemplate.png", "to": "iconTemplate.png" },
-      { "from": "resources/iconTemplate@2x.png", "to": "iconTemplate@2x.png" },
-      { "from": "resources/icon-512.png", "to": "icon-512.png" },
-      { "from": "dist/mcp-server", "to": "mcp-server" }
+      {
+        "from": "resources/iconTemplate.png",
+        "to": "iconTemplate.png"
+      },
+      {
+        "from": "resources/iconTemplate@2x.png",
+        "to": "iconTemplate@2x.png"
+      },
+      {
+        "from": "resources/icon-512.png",
+        "to": "icon-512.png"
+      },
+      {
+        "from": "dist/mcp-server",
+        "to": "mcp-server"
+      }
     ],
     "mac": {
       "icon": "resources/icon.icns",
       "category": "public.app-category.developer-tools",
       "identity": null,
       "target": [
-        { "target": "dmg", "arch": ["arm64"] },
-        { "target": "zip", "arch": ["arm64"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
       ]
     },
     "dmg": {
@@ -69,8 +97,18 @@
     "win": {
       "icon": "resources/icon.ico",
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "zip", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "nsis": {
@@ -83,8 +121,19 @@
       "icon": "resources/icon-512.png",
       "category": "Development",
       "target": [
-        { "target": "AppImage", "arch": ["x64", "arm64"] },
-        { "target": "deb", "arch": ["x64"] }
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     }
   },

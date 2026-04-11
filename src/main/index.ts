@@ -118,6 +118,11 @@ function createWindow(): BrowserWindow {
 
   win.on('ready-to-show', () => win.show())
 
+  if (process.platform === 'darwin') {
+    win.on('show', () => app.dock.show())
+    win.on('hide', () => app.dock.hide())
+  }
+
   win.webContents.on('render-process-gone', (_event, details) => {
     writeErrorLog(new Error(`Renderer process gone: ${details.reason} (exit ${details.exitCode})`))
   })
@@ -145,6 +150,19 @@ function createWindow(): BrowserWindow {
   }
 
   return win
+}
+
+// Enforce single instance — prevents second launch from spawning a ghost dock icon
+const gotTheLock = app.requestSingleInstanceLock()
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (!mainWindow.isVisible()) mainWindow.show()
+      mainWindow.focus()
+    }
+  })
 }
 
 app.whenReady().then(() => {
