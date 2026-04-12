@@ -18,7 +18,7 @@ const STEPS: Step[] = [
     hint: '01 — Open',
     headline: 'Open a local PR in seconds',
     description:
-      'Pick any two branches from your repo. Local Review creates a full diff — no GitHub required, no premature commits, no noise for your team.',
+      'Pick any two branches from your repo. Local Code Review creates a full diff — no GitHub required, no premature commits, no noise for your team.',
   },
   {
     id: 'review',
@@ -61,7 +61,7 @@ function MockNav({
 }): JSX.Element {
   return (
     <div className={styles.mockNav}>
-      <span className={styles.mockNavLogo}>Local Review</span>
+      <span className={styles.mockNavLogo}>Local Code Review</span>
       {crumbs.map((crumb, i) => (
         <span key={i} className={styles.mockNavSep}>
           ›{' '}
@@ -604,7 +604,7 @@ export default function Demo(): JSX.Element {
             <span className={`${styles.chromeDot} ${styles.chromeDotYellow}`} />
             <span className={`${styles.chromeDot} ${styles.chromeDotGreen}`} />
           </div>
-          <span className={styles.chromeTitle}>Local Review — Quick tour</span>
+          <span className={styles.chromeTitle}>Local Code Review — Quick tour</span>
           <button className={styles.chromeSkip} onClick={handleFinish}>
             Skip tour
           </button>

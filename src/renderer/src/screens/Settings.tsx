@@ -101,7 +101,7 @@ export default function Settings(): JSX.Element {
         <section style={{ marginTop: 32 }}>
           <h2>Scan directory</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-            Local Review scans this directory to auto-discover git repositories.
+            Local Code Review scans this directory to auto-discover git repositories.
           </p>
           <div className={styles.row} style={{ marginTop: 12 }}>
             <span className={styles.dirPath}>{scanDir ?? <em className={styles.none}>Not configured</em>}</span>

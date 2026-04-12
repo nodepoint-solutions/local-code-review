@@ -20,7 +20,7 @@ npm install
 npm run dev
 ```
 
-On first launch, point Local Review at a directory to scan for git repositories. Open a repo, create a PR, and start reviewing.
+On first launch, point Local Code Review at a directory to scan for git repositories. Open a repo, create a PR, and start reviewing.
 
 To connect your AI agent, go to **Settings → MCP Integrations** and click **Install / Repair All**. This writes the MCP server config and installs the agent skill into every detected tool.
 

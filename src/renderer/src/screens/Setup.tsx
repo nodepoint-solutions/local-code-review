@@ -168,7 +168,7 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
               </div>
 
               <div className={styles.welcomeText}>
-                <h1 className={styles.welcomeTitle}>Local Review</h1>
+                <h1 className={styles.welcomeTitle}>Local Code Review</h1>
                 <p className={styles.welcomeSubtitle}>
                   AI-powered code review, running entirely on your machine. Let&apos;s get you
                   set up in a few quick steps.
@@ -211,7 +211,7 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
               <div className={styles.stepHeader}>
                 <h2 className={styles.stepTitle}>AI Tools</h2>
                 <p className={styles.stepDesc}>
-                  Local Review connects to AI coding tools you already have installed.
+                  Local Code Review connects to AI coding tools you already have installed.
                 </p>
               </div>
 
@@ -297,7 +297,7 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
               <div className={styles.stepHeader}>
                 <h2 className={styles.stepTitle}>Scan Directory</h2>
                 <p className={styles.stepDesc}>
-                  Choose a base directory for Local Review to scan and auto-discover git
+                  Choose a base directory for Local Code Review to scan and auto-discover git
                   repositories.
                 </p>
               </div>
@@ -371,7 +371,7 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
               <div className={styles.stepHeader}>
                 <h2 className={styles.stepTitle}>Global .gitignore</h2>
                 <p className={styles.stepDesc}>
-                  Local Review stores data in{' '}
+                  Local Code Review stores data in{' '}
                   <code className={styles.code}>.reviews</code> folders inside each repo. A
                   global gitignore rule prevents these from being accidentally committed across
                   all your projects.

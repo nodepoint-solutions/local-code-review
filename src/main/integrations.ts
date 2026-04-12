@@ -7,11 +7,11 @@ import type { IntegrationStatus } from '../shared/types'
 
 const SKILL_CONTENT = `---
 name: local-code-review
-description: Fix all open review comments for a Local Review PR assignment. Groups related comments, implements fixes with commits between groups, and marks issues resolved via the local-code-review MCP tools. Use when assigned to fix code review issues in Local Review.
+description: Fix all open review comments for a Local Code Review PR assignment. Groups related comments, implements fixes with commits between groups, and marks issues resolved via the local-code-review MCP tools. Use when assigned to fix code review issues in Local Code Review.
 compatibility: Requires git and the local-code-review MCP server to be running.
 ---
 
-You are implementing fixes for a code review assignment via Local Review.
+You are implementing fixes for a code review assignment via Local Code Review.
 
 ## Parameters
 

@@ -65,7 +65,7 @@ export default function NavBar({ crumbs = [], right }: Props): JSX.Element {
       <div className={styles.left}>
         <button className={styles.logoBtn} onClick={() => navigate('/')}>
           <GitBranchIcon />
-          <span className={styles.logoText}>Local Review</span>
+          <span className={styles.logoText}>Local Code Review</span>
         </button>
 
         {crumbs.length > 0 && (
