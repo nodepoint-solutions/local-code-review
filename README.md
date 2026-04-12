@@ -63,11 +63,20 @@ Download the latest release for your platform from the [Releases](../../releases
 | macOS | `Local.Review-mac.dmg` |
 | Windows | `Local.Review-win-setup.exe` |
 | Linux (Debian/Ubuntu) | `Local.Review-linux.deb` |
-| Linux (Fedora/RHEL) | `Local.Review-linux.rpm` |
 
 ### macOS
 
-Open the `.dmg`, drag **Local Code Review** to your Applications folder, and launch it. On first run macOS may show a security prompt — open **System Settings → Privacy & Security** and click **Open Anyway**.
+Open the `.dmg`, drag **Local Code Review** to your Applications folder, and launch it.
+
+On first run macOS may block the app. If you see an **"Open Anyway"** prompt, go to **System Settings → Privacy & Security** and click **Open Anyway**.
+
+If macOS says the app is **damaged**, run this in Terminal:
+
+```bash
+xattr -cr /Applications/Local\ Code\ Review.app
+```
+
+Then try launching again.
 
 ### Windows
 
@@ -80,13 +89,6 @@ Run the installer and follow the prompts. Local Code Review will launch automati
 ```bash
 sudo dpkg -i Local.Review-linux.deb
 ```
-
-**Fedora/RHEL:**
-
-```bash
-sudo rpm -i Local.Review-linux.rpm
-```
-
 
 ### Requirements
 
