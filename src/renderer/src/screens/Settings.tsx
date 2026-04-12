@@ -83,7 +83,7 @@ export default function Settings(): JSX.Element {
 
         <section className={`${styles.section} ${styles.aboutSection}`}>
           <div className={styles.aboutHeader}>
-            <span className={styles.aboutName}>{pkg.productName ?? pkg.name}</span>
+            <span className={styles.aboutName}>{(pkg as { productName?: string }).productName ?? pkg.name}</span>
             <span className={styles.aboutVersion}>v{pkg.version}</span>
           </div>
           <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>
