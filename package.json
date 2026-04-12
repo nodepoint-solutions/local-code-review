@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Local Electron PR review app",
   "main": "./out/main/index.js",
-  "author": "",
+  "author": "Nodepoint Solutions Limited <hello@nodepoint.co.uk>",
   "homepage": "./",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
