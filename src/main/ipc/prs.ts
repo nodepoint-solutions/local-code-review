@@ -11,8 +11,9 @@ import {
   fetchOrigin, isMergedIntoRemote,
 } from '../git/branches'
 import { getDiff } from '../git/diff-parser'
-import { listCommits, getCommitDiff, countCommitsBetween } from '../git/commits'
+import { listCommits, getCommitDiff, buildReviewCommitCounts } from '../git/commits'
 import type { CreatePrPayload, PrDetail } from '../../shared/types'
+import { assertKnownRepo } from './_guard'
 
 const store = new ReviewStore()
 
@@ -22,6 +23,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:list', (_e, repoPath: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       return store.listPRs(repoPath)
     } catch {
       return []
@@ -30,6 +32,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('branches:list', async (_e, repoPath: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       return await listBranches(repoPath)
     } catch {
       return []
@@ -38,6 +41,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:create', async (_e, payload: CreatePrPayload) => {
     try {
+      assertKnownRepo(db, payload.repoPath)
       await resolveSha(payload.repoPath, payload.baseBranch)
       await resolveSha(payload.repoPath, payload.compareBranch)
       return store.createPR(payload.repoPath, {
@@ -54,6 +58,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:get', async (_e, repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> => {
     try {
+      assertKnownRepo(db, repoPath)
       let pr = store.getPR(repoPath, prId)
 
       // Fetch origin for open PRs so remote refs are available for merge detection
@@ -127,14 +132,7 @@ export function registerPrHandlers(db: Database.Database): void {
       }
 
       const allReviews = store.listReviews(repoPath, prId).slice().reverse()
-      const reviewCommitCounts: Record<string, number> = {}
-      for (let i = 0; i < allReviews.length; i++) {
-        const r = allReviews[i]
-        if (r.status === 'complete') {
-          const toSha = allReviews[i + 1]?.compare_sha ?? currentCompareSha
-          reviewCommitCounts[r.id] = await countCommitsBetween(repoPath, r.compare_sha, toSha)
-        }
-      }
+      const reviewCommitCounts = await buildReviewCommitCounts(repoPath, allReviews, currentCompareSha)
       return { pr, diff, review: activeReview, reviews: allReviews, reviewCommitCounts, isStale: false }
     } catch (err) {
       return { error: (err as Error).message }
@@ -143,6 +141,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:refresh', async (_e, repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> => {
     try {
+      assertKnownRepo(db, repoPath)
       const pr = store.getPR(repoPath, prId)
       const baseSha = await resolveSha(repoPath, pr.base_branch)
       const compareSha = await resolveSha(repoPath, pr.compare_branch)
@@ -165,32 +164,16 @@ export function registerPrHandlers(db: Database.Database): void {
 
         const freshReview = store.getReview(repoPath, prId, inProgress.id)
         const allReviews1 = store.listReviews(repoPath, prId).slice().reverse()
-        const counts1: Record<string, number> = {}
-        for (let i = 0; i < allReviews1.length; i++) {
-          const r = allReviews1[i]
-          if (r.status === 'complete') {
-            const toSha = allReviews1[i + 1]?.compare_sha ?? compareSha
-            counts1[r.id] = await countCommitsBetween(repoPath, r.compare_sha, toSha)
-          }
-        }
+        const counts1 = await buildReviewCommitCounts(repoPath, allReviews1, compareSha)
         return { pr, diff, review: freshReview, reviews: allReviews1, reviewCommitCounts: counts1, isStale: false }
       }
 
       // No in-progress review — use submitted review if present, or auto-create
       // a new in-progress one if all existing reviews are complete.
       const diff = await getDiff(repoPath, baseSha, compareSha)
-      const latestReview =
-        reviews.find(r => r.status === 'submitted') ??
-        null
+      const latestReview = reviews.find(r => r.status === 'submitted') ?? null
       const allReviews2 = reviews.slice().reverse()
-      const counts2: Record<string, number> = {}
-      for (let i = 0; i < allReviews2.length; i++) {
-        const r = allReviews2[i]
-        if (r.status === 'complete') {
-          const toSha = allReviews2[i + 1]?.compare_sha ?? compareSha
-          counts2[r.id] = await countCommitsBetween(repoPath, r.compare_sha, toSha)
-        }
-      }
+      const counts2 = await buildReviewCommitCounts(repoPath, allReviews2, compareSha)
       return { pr, diff, review: latestReview, reviews: allReviews2, reviewCommitCounts: counts2, isStale: false }
     } catch (err) {
       return { error: (err as Error).message }
@@ -199,6 +182,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('commits:list', async (_e, prId: string, repoPath: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       const reviews = store.listReviews(repoPath, prId)
       const latest = reviews[0]
       if (!latest) return []
@@ -210,6 +194,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:update', (_e, repoPath: string, prId: string, changes: { title?: string; description?: string | null }) => {
     try {
+      assertKnownRepo(db, repoPath)
       return store.updatePR(repoPath, prId, changes)
     } catch (err) {
       return { error: (err as Error).message }
@@ -218,6 +203,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:close', (_e, repoPath: string, prId: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       return store.updatePRStatus(repoPath, prId, 'closed')
     } catch (err) {
       return { error: (err as Error).message }
@@ -226,6 +212,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:reopen', (_e, repoPath: string, prId: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       return store.updatePRStatus(repoPath, prId, 'open')
     } catch (err) {
       return { error: (err as Error).message }
@@ -234,6 +221,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:delete', (_e, repoPath: string, prId: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       store.deletePR(repoPath, prId)
       const openRemaining = store.listPRs(repoPath).filter((pr) => pr.status === 'open')
       if (openRemaining.length === 0) {
@@ -247,6 +235,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('commits:show', async (_e, repoPath: string, hash: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       return { diff: await getCommitDiff(repoPath, hash) }
     } catch (err) {
       return { error: (err as Error).message }
@@ -255,6 +244,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('prs:assign', (_e, repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null) => {
     try {
+      assertKnownRepo(db, repoPath)
       if (assignee !== null) {
         const pr = store.getPR(repoPath, prId)
         const workflow = new PRWorkflow(pr, store.getActiveReview(repoPath, prId))
@@ -270,6 +260,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('git:diff-at-shas', async (_e, repoPath: string, baseSha: string, compareSha: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       return await getDiff(repoPath, baseSha, compareSha)
     } catch (err) {
       return { error: (err as Error).message }
@@ -278,6 +269,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('git:remote-info', async (_e, repoPath: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       const url = await getRemoteOriginUrl(repoPath)
       if (!url) return null
       return parseGithubRemote(url)
@@ -288,6 +280,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('git:working-dir-clean', async (_e, repoPath: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       return { clean: await isWorkingDirClean(repoPath) }
     } catch {
       return { clean: false }
@@ -296,6 +289,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('git:branch-pushed', async (_e, repoPath: string, branch: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       return { pushed: await isBranchPushed(repoPath, branch) }
     } catch {
       return { pushed: false }
@@ -304,6 +298,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle('git:push-branch', async (_e, repoPath: string, branch: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       await pushBranch(repoPath, branch)
       return {}
     } catch (err) {

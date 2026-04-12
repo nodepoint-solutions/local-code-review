@@ -5,14 +5,16 @@ import { ReviewStore } from '../../shared/review-store'
 import { PRWorkflow } from '../../shared/pr-workflow'
 import { resolveSha } from '../git/branches'
 import { getDiff } from '../git/diff-parser'
-import { countCommitsBetween } from '../git/commits'
+import { buildReviewCommitCounts } from '../git/commits'
 import type { AddCommentPayload, PrDetail } from '../../shared/types'
+import { assertKnownRepo } from './_guard'
 
 const store = new ReviewStore()
 
-export function registerReviewHandlers(_db: Database.Database): void {
+export function registerReviewHandlers(db: Database.Database): void {
   ipcMain.handle('comments:add', async (_e, payload: AddCommentPayload) => {
     try {
+      assertKnownRepo(db, payload.repoPath)
       const pr = store.getPR(payload.repoPath, payload.prId)
       const activeReview = store.getActiveReview(payload.repoPath, payload.prId)
       const workflow = new PRWorkflow(pr, activeReview)
@@ -35,6 +37,7 @@ export function registerReviewHandlers(_db: Database.Database): void {
 
   ipcMain.handle('comments:delete', (_e, repoPath: string, prId: string, reviewId: string, commentId: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       const review = store.getReview(repoPath, prId, reviewId)
       if (review.status !== 'in_progress') {
         return { error: 'Comments can only be deleted from in-progress reviews' }
@@ -47,6 +50,7 @@ export function registerReviewHandlers(_db: Database.Database): void {
 
   ipcMain.handle('reviews:submit', async (_e, repoPath: string, prId: string, reviewId: string) => {
     try {
+      assertKnownRepo(db, repoPath)
       return store.submitReview(repoPath, prId, reviewId)
     } catch (err) {
       return { error: 'store-failed', message: (err as Error).message }
@@ -55,6 +59,7 @@ export function registerReviewHandlers(_db: Database.Database): void {
 
   ipcMain.handle('reviews:new', async (_e, repoPath: string, prId: string): Promise<PrDetail | { error: string }> => {
     try {
+      assertKnownRepo(db, repoPath)
       const pr = store.getPR(repoPath, prId)
       const activeReview = store.getActiveReview(repoPath, prId)
       const workflow = new PRWorkflow(pr, activeReview)
@@ -70,14 +75,7 @@ export function registerReviewHandlers(_db: Database.Database): void {
       // Return the in_progress review if one already exists rather than creating a duplicate
       if (activeReview?.status === 'in_progress') {
         const allReviewsA = store.listReviews(repoPath, prId).slice().reverse()
-        const countsA: Record<string, number> = {}
-        for (let i = 0; i < allReviewsA.length; i++) {
-          const r = allReviewsA[i]
-          if (r.status === 'complete') {
-            const toSha = allReviewsA[i + 1]?.compare_sha ?? compareSha
-            countsA[r.id] = await countCommitsBetween(repoPath, r.compare_sha, toSha)
-          }
-        }
+        const countsA = await buildReviewCommitCounts(repoPath, allReviewsA, compareSha)
         return { pr, diff, review: activeReview, reviews: allReviewsA, reviewCommitCounts: countsA, isStale: false }
       }
 

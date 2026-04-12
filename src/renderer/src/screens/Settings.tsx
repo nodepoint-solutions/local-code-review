@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import NavBar from '../components/NavBar'
 import styles from './Settings.module.css'
 import type { IntegrationStatus } from '../../../shared/types'
@@ -15,24 +15,24 @@ function FolderIcon(): JSX.Element {
 export default function Settings(): JSX.Element {
   const [scanDir, setScanDir] = useState<string | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
-  const [mcpRunning, setMcpRunning] = React.useState(false)
-  const [mcpLoading, setMcpLoading] = React.useState(false)
-  const [integrations, setIntegrations] = React.useState<IntegrationStatus[]>([])
-  const [installing, setInstalling] = React.useState(false)
-  const [gitignoreInstalled, setGitignoreInstalled] = React.useState<boolean | null>(null)
-  const [gitignoreInstalling, setGitignoreInstalling] = React.useState(false)
-  const [gitignoreError, setGitignoreError] = React.useState<string | null>(null)
+  const [mcpRunning, setMcpRunning] = useState(false)
+  const [mcpLoading, setMcpLoading] = useState(false)
+  const [integrations, setIntegrations] = useState<IntegrationStatus[]>([])
+  const [installing, setInstalling] = useState(false)
+  const [gitignoreInstalled, setGitignoreInstalled] = useState<boolean | null>(null)
+  const [gitignoreInstalling, setGitignoreInstalling] = useState(false)
+  const [gitignoreError, setGitignoreError] = useState<string | null>(null)
 
   useEffect(() => {
     window.api.getSetting('scan_base_dir').then(setScanDir)
     window.api.checkGlobalGitignore().then(({ installed }) => setGitignoreInstalled(installed))
   }, [])
 
-  React.useEffect(() => {
+  useEffect(() => {
     window.api.getMcpStatus().then(({ running }) => setMcpRunning(running))
     window.api.getIntegrations().then(setIntegrations)
-    window.api.onMcpStatusChanged(({ running }) => setMcpRunning(running))
-    return () => window.api.offMcpStatusChanged()
+    const cleanup = window.api.onMcpStatusChanged(({ running }) => setMcpRunning(running))
+    return cleanup
   }, [])
 
   async function handleToggleMcp() {

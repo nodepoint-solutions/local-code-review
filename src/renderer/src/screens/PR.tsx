@@ -20,6 +20,10 @@ import styles from './PR.module.css'
 
 type Tab = 'overview' | 'commits' | 'files' | 'previous-reviews'
 
+function isPrDetail(val: PrDetail | { error: string } | null): val is PrDetail {
+  return val !== null && !('error' in val)
+}
+
 function UnifiedIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -88,8 +92,8 @@ export default function PR(): JSX.Element {
   const [commitDiff, setCommitDiff] = useState<ParsedFile[] | null>(null)
   const [commitDiffLoading, setCommitDiffLoading] = useState(false)
   const [focusedCommentIndex, setFocusedCommentIndex] = useState(-1)
-  const [assigneeDropdownOpen, setAssigneeDropdownOpen] = React.useState(false)
-  const [integrations, setIntegrations] = React.useState<IntegrationStatus[]>([])
+  const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false)
+  const [integrations, setIntegrations] = useState<IntegrationStatus[]>([])
   const [notification, setNotification] = useState<string | null>(null)
   const [githubInfo, setGithubInfo] = useState<{ owner: string; repo: string } | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
@@ -152,29 +156,27 @@ export default function PR(): JSX.Element {
     e.preventDefault()
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     window.api.getIntegrations().then(setIntegrations)
     if (repo) window.api.getRemoteInfo(repo.path).then(setGithubInfo)
   }, [repo?.path])
 
-  React.useEffect(() => {
-    window.api.onReviewUpdated(async ({ repoPath, prId: updatedPrId }) => {
+  useEffect(() => {
+    return window.api.onReviewUpdated(async ({ repoPath, prId: updatedPrId }) => {
       if (!repo || !prDetail?.pr) return
       if (repoPath !== repo.path) return
       if (updatedPrId && updatedPrId !== prDetail.pr.id) return
       const fresh = await window.api.getPr(repo.path, prDetail.pr.id)
-      if (fresh && !('error' in fresh)) setPrDetail(fresh)
+      if (isPrDetail(fresh)) setPrDetail(fresh)
     })
-    return () => window.api.offReviewUpdated()
   }, [repo?.path, prDetail?.pr?.id])
 
   useEffect(() => {
-    window.api.onPrUpdated(async ({ prId: updatedPrId }) => {
+    return window.api.onPrUpdated(async ({ prId: updatedPrId }) => {
       if (updatedPrId !== prId || !repo) return
       const updated = await window.api.getPr(repo.path, prId)
-      if (updated && !('error' in updated)) setPrDetail(updated as any)
+      if (isPrDetail(updated)) setPrDetail(updated)
     })
-    return () => window.api.offPrUpdated()
   }, [prId, repo?.path])
 
   function showNotification(msg: string): void {
@@ -187,7 +189,7 @@ export default function PR(): JSX.Element {
     setAssigneeDropdownOpen(false)
     await window.api.assignPr(repo.path, prId, tool)
     const updated = await window.api.getPr(repo.path, prId)
-    if (updated && !('error' in updated)) setPrDetail(updated as any)
+    if (isPrDetail(updated)) setPrDetail(updated)
     if (prDetail?.review) {
       const result = await window.api.launchFix(tool, repo.path, prId, prDetail.review.id)
       if (result?.notification) showNotification(result.notification)
@@ -209,7 +211,7 @@ export default function PR(): JSX.Element {
     if (repo && prId) {
       window.api.getPr(repo.path, prId).then((result) => {
         if (result && 'error' in result) return
-        setPrDetail(result as any)
+        setPrDetail(result)
       })
     }
     return () => setPrDetail(null)
@@ -265,8 +267,8 @@ export default function PR(): JSX.Element {
     if (!repo || !prId) return
     setRefreshing(true)
     const updated = await window.api.refreshPr(repo.path, prId)
-    if (updated && 'error' in updated) { setRefreshing(false); return }
-    setPrDetail(updated as any)
+    if (!isPrDetail(updated)) { setRefreshing(false); return }
+    setPrDetail(updated)
     setCommits(null) // invalidate commits cache on refresh
     setRefreshing(false)
   }

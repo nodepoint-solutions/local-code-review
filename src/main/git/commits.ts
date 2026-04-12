@@ -1,6 +1,7 @@
 import { execGit } from './runner'
 import { parseDiff } from './diff-parser'
 import type { Commit, ParsedFile } from '../../shared/types'
+import type { ReviewFile } from '../../shared/review-store'
 
 /** Returns commits reachable from compareSha but not baseSha. */
 export async function listCommits(repoPath: string, baseSha: string, compareSha: string): Promise<Commit[]> {
@@ -28,6 +29,28 @@ export async function countCommitsBetween(repoPath: string, fromSha: string, toS
   } catch {
     return 0
   }
+}
+
+/**
+ * Builds a map of review ID → commit count for all complete reviews.
+ * @param reviews - already in reverse-chronological order (newest first)
+ * @param headCompareSha - the current HEAD of the compare branch, used as the
+ *   upper bound for the most-recent complete review
+ */
+export async function buildReviewCommitCounts(
+  repoPath: string,
+  reviews: ReviewFile[],
+  headCompareSha: string,
+): Promise<Record<string, number>> {
+  const counts: Record<string, number> = {}
+  for (let i = 0; i < reviews.length; i++) {
+    const r = reviews[i]
+    if (r.status === 'complete') {
+      const toSha = reviews[i + 1]?.compare_sha ?? headCompareSha
+      counts[r.id] = await countCommitsBetween(repoPath, r.compare_sha, toSha)
+    }
+  }
+  return counts
 }
 
 /** Returns the file diffs introduced by a single commit. */

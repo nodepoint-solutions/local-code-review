@@ -1,7 +1,10 @@
 // src/main/index.ts
+// better-sqlite3 uses __non_webpack_require__ to load its native .node binding;
+// without this, electron-vite's bundled require would intercept the call and
+// the native module would fail to load at runtime.
 ;(globalThis as any).__non_webpack_require__ = require
 
-import { app, BrowserWindow, Tray, Menu, nativeImage, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, shell } from 'electron'
 import { join } from 'path'
 import { writeFileSync, mkdirSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -10,11 +13,11 @@ import { registerRepoHandlers } from './ipc/repos'
 import { registerPrHandlers } from './ipc/prs'
 import { registerReviewHandlers } from './ipc/reviews'
 import { registerExportHandlers } from './ipc/export'
+import { registerMcpHandlers } from './ipc/mcp'
 import { McpManager } from './mcp-manager'
 import { ReviewWatcher } from './review-watcher'
 import { getSetting, setSetting } from './db/settings'
 import { listRepos } from './db/repos'
-import { getIntegrations, installIntegrations } from './integrations'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -112,8 +115,7 @@ function createWindow(): BrowserWindow {
     icon: join(resourcesPath(), 'icon-512.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
-    },
+      },
   })
 
   win.on('ready-to-show', () => win.show())
@@ -210,50 +212,7 @@ app.whenReady().then(() => {
   registerPrHandlers(db)
   registerReviewHandlers(db)
   registerExportHandlers(db)
-
-  ipcMain.handle('mcp:get-status', () => ({ running: mcpManager?.running ?? false }))
-  ipcMain.handle('mcp:toggle', () => {
-    if (mcpManager!.running) {
-      mcpManager!.stop()
-      setSetting(db, 'mcp_enabled', 'false')
-    } else {
-      mcpManager!.start()
-      setSetting(db, 'mcp_enabled', 'true')
-    }
-    const running = mcpManager!.running
-    mainWindow?.webContents.send('mcp:status-changed', { running })
-    updateTrayMenu?.()
-    return { running }
-  })
-
-  // Integrations
-  ipcMain.handle('integrations:get', () => getIntegrations())
-  ipcMain.handle('integrations:install', () => installIntegrations())
-
-  // "Fix with" launcher — interactive, fire and forget
-  ipcMain.handle('fix:launch', (_e, tool: string, repoPath: string, prId: string, reviewId: string) => {
-    const prompt = `/local-code-review repo_path="${repoPath}" pr_id="${prId}" review_id="${reviewId}"`
-
-    if (tool === 'claude') {
-      const safeRepo = repoPath.replace(/'/g, "'\\''")
-      const safePrompt = prompt.replace(/'/g, "'\\''")
-      const shellCmd = `cd '${safeRepo}' && claude '${safePrompt}'`
-      const appleScript = `tell application "Terminal" to do script "${shellCmd.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
-      const { spawn } = require('child_process') as typeof import('child_process')
-      spawn('osascript', ['-e', appleScript], { detached: true, stdio: 'ignore' }).unref()
-      return {}
-    }
-
-    if (tool === 'vscode') {
-      const { clipboard } = require('electron') as typeof import('electron')
-      clipboard.writeText(prompt)
-      const { spawn } = require('child_process') as typeof import('child_process')
-      spawn('open', ['-a', 'Visual Studio Code', repoPath], { detached: true, stdio: 'ignore' }).unref()
-      return { notification: 'Prompt copied — paste it into the Copilot agent window to start.' }
-    }
-
-    return { error: `Unknown tool: ${tool}` }
-  })
+  registerMcpHandlers(db, mcpManager, () => mainWindow, () => updateTrayMenu?.())
 
   // Hide the dock icon — the tray owns the app lifecycle
   if (process.platform === 'darwin') {

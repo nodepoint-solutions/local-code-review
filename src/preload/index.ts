@@ -1,5 +1,5 @@
 // src/preload/index.ts
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type {
   Repository, RepositoryWithMeta, DiscoveredRepo,
   PRFile, ReviewFile,
@@ -104,26 +104,25 @@ const api = {
   pushBranch: (repoPath: string, branch: string): Promise<{ error?: string }> =>
     ipcRenderer.invoke('git:push-branch', repoPath, branch),
 
-  onMcpStatusChanged: (callback: (data: { running: boolean }) => void) => {
-    ipcRenderer.on('mcp:status-changed', (_e, data) => callback(data))
-  },
-  offMcpStatusChanged: () => {
-    ipcRenderer.removeAllListeners('mcp:status-changed')
-  },
-
-  onPrUpdated: (callback: (data: { repoPath: string; prId: string }) => void) => {
-    ipcRenderer.on('pr:updated', (_e, data) => callback(data))
-  },
-  offPrUpdated: () => {
-    ipcRenderer.removeAllListeners('pr:updated')
+  // Push events from main to renderer.
+  // Each `on*` returns a cleanup function that removes only this listener,
+  // so multiple components can subscribe to the same channel independently.
+  onMcpStatusChanged: (callback: (data: { running: boolean }) => void): (() => void) => {
+    const listener = (_e: IpcRendererEvent, data: { running: boolean }) => callback(data)
+    ipcRenderer.on('mcp:status-changed', listener)
+    return () => ipcRenderer.removeListener('mcp:status-changed', listener)
   },
 
-  // Push events from main to renderer
-  onReviewUpdated: (callback: (data: { repoPath: string; prId: string; reviewId: string }) => void) => {
-    ipcRenderer.on('review:updated', (_e, data) => callback(data))
+  onPrUpdated: (callback: (data: { repoPath: string; prId: string }) => void): (() => void) => {
+    const listener = (_e: IpcRendererEvent, data: { repoPath: string; prId: string }) => callback(data)
+    ipcRenderer.on('pr:updated', listener)
+    return () => ipcRenderer.removeListener('pr:updated', listener)
   },
-  offReviewUpdated: () => {
-    ipcRenderer.removeAllListeners('review:updated')
+
+  onReviewUpdated: (callback: (data: { repoPath: string; prId: string; reviewId: string }) => void): (() => void) => {
+    const listener = (_e: IpcRendererEvent, data: { repoPath: string; prId: string; reviewId: string }) => callback(data)
+    ipcRenderer.on('review:updated', listener)
+    return () => ipcRenderer.removeListener('review:updated', listener)
   },
 }
 
