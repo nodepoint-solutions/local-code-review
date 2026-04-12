@@ -3,6 +3,8 @@ node_modules/
 dist/
 out/
 
+.claude/
+
 # Electron
 *.log
 .DS_Store
