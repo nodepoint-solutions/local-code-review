@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import NavBar from '../components/NavBar'
 import styles from './Settings.module.css'
 import type { IntegrationStatus } from '../../../shared/types'
+import pkg from '../../../../package.json'
 
 function FolderIcon(): JSX.Element {
   return (
@@ -80,12 +81,29 @@ export default function Settings(): JSX.Element {
       <div className={styles.content}>
         <h1 className={styles.heading}>Settings</h1>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Scan directory</h2>
-          <p className={styles.sectionDesc}>
+        <section className={`${styles.section} ${styles.aboutSection}`}>
+          <div className={styles.aboutHeader}>
+            <span className={styles.aboutName}>{pkg.productName ?? pkg.name}</span>
+            <span className={styles.aboutVersion}>v{pkg.version}</span>
+          </div>
+          <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>
+            By{' '}
+            <a href="https://nodepoint.co.uk" target="_blank" rel="noreferrer" className={styles.aboutLink}>
+              Nodepoint Solutions Limited
+            </a>
+            {' · '}
+            <a href="https://github.com/nodepoint-solutions/local-code-review" target="_blank" rel="noreferrer" className={styles.aboutLink}>
+              GitHub
+            </a>
+          </p>
+        </section>
+
+        <section style={{ marginTop: 32 }}>
+          <h2>Scan directory</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
             Local Review scans this directory to auto-discover git repositories.
           </p>
-          <div className={styles.row}>
+          <div className={styles.row} style={{ marginTop: 12 }}>
             <span className={styles.dirPath}>{scanDir ?? <em className={styles.none}>Not configured</em>}</span>
             <button onClick={handleChangeScanDir}>
               <FolderIcon />

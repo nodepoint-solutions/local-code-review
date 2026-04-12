@@ -76,6 +76,41 @@
   color: var(--text-subtle);
 }
 
+/* About section */
+
+.aboutSection {
+  margin-bottom: 32px;
+}
+
+.aboutHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.aboutName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.aboutVersion {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.aboutLink {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.aboutLink:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 /* Danger zone */
 
 .dangerSection {
