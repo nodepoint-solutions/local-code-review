@@ -6,6 +6,24 @@ A desktop app for reviewing AI-generated code before it reaches GitHub. Built fo
 
 ---
 
+## Contents
+
+- [Why](#why)
+- [Installation](#installation)
+  - [macOS](#macos)
+  - [Windows](#windows)
+  - [Linux](#linux)
+  - [Requirements](#requirements)
+- [Features](#features)
+  - [Local PR workflow](#local-pr-workflow)
+  - [Diff viewer](#diff-viewer)
+  - [Review rounds](#review-rounds)
+  - [MCP server for agent integration](#mcp-server-for-agent-integration)
+  - [Agent skill auto-install](#agent-skill-auto-install)
+  - [Push to GitHub](#push-to-github)
+
+---
+
 ## Why
 
 Agentic and spec-driven workflows have changed how developers build software — but the quality bar for what comes out the other end still needs a human eye. Local Code Review gives you that review step without the overhead of a real GitHub PR.
