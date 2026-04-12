@@ -192,6 +192,10 @@ app.whenReady().then(() => {
       })
     }
   })
+  mcpManager.onChildStart = () => {
+    mainWindow?.webContents.send('mcp:status-changed', { running: true })
+    updateTrayMenu?.()
+  }
   mcpManager.onChildExit = () => {
     mainWindow?.webContents.send('mcp:status-changed', { running: false })
     updateTrayMenu?.()

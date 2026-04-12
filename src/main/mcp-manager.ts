@@ -16,6 +16,7 @@ export class McpManager {
   private child: ChildProcess | null = null
   private socketServer: net.Server | null = null
   private socketPath: string
+  onChildStart?: () => void
   onChildExit?: () => void
   onStderr?: (line: string) => void
 
@@ -33,9 +34,12 @@ export class McpManager {
 
   start(): void {
     if (this.running) return
-    if (!this.socketServer) this.startSocketServer()
-    // Give the socket server a tick to bind before the child tries to connect
-    setTimeout(() => this.spawnChild(), 100)
+    if (!this.socketServer) {
+      this.startSocketServer()
+      this.socketServer!.once('listening', () => this.spawnChild())
+    } else {
+      this.spawnChild()
+    }
   }
 
   stop(): void {
@@ -67,6 +71,8 @@ export class McpManager {
       env,
       stdio: ['ignore', 'ignore', 'pipe'],
     })
+
+    this.onChildStart?.()
 
     this.child.on('close', (code) => {
       // null = killed by signal (normal stop), 0 = clean exit — only log unexpected exits
