@@ -629,7 +629,7 @@ export default function PR(): JSX.Element {
                       className={styles.assigneeUnset}
                       onClick={() => setAssigneeDropdownOpen((o) => !o)}
                     >
-                      No one — assign…
+                      Click to assign
                     </button>
                     {assigneeDropdownOpen && (
                       <div className={styles.assigneeDropdownMenu}>

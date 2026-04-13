@@ -875,11 +875,34 @@
   gap: 7px;
   font-size: 13px;
   color: var(--text);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.assigneeChip:hover {
+  color: var(--text);
+  opacity: 0.8;
 }
 
 .assigneeChip svg {
   flex-shrink: 0;
   border-radius: 50%;
+}
+
+.assigneeChipCaret {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.assigneeDropdownDivider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
 }
 
 .assigneeItemLabel {
@@ -935,4 +958,74 @@
   color: var(--text);
   z-index: 1000;
   white-space: nowrap;
+}
+
+.vscodePopupOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.vscodePopup {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 8px);
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
+  width: 360px;
+  max-width: calc(100vw - 48px);
+}
+
+.vscodePopupTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.vscodePopupBody {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.vscodePopupActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.vscodePopupCancel {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.vscodePopupCancel:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.vscodePopupConfirm {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: var(--radius);
+  border: none;
+  background: var(--accent, #0066cc);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.vscodePopupConfirm:hover {
+  opacity: 0.9;
 }
