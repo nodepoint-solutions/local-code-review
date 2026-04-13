@@ -95,6 +95,7 @@ export default function PR(): JSX.Element {
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false)
   const [integrations, setIntegrations] = useState<IntegrationStatus[]>([])
   const [notification, setNotification] = useState<string | null>(null)
+  const [vscodePrompt, setVscodePrompt] = useState<string | null>(null)
   const [githubInfo, setGithubInfo] = useState<{ owner: string; repo: string } | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
@@ -192,8 +193,17 @@ export default function PR(): JSX.Element {
     if (isPrDetail(updated)) setPrDetail(updated)
     if (prDetail?.review) {
       const result = await window.api.launchFix(tool, repo.path, prId, prDetail.review.id)
-      if (result?.notification) showNotification(result.notification)
+      if (result?.prompt) setVscodePrompt(result.prompt)
+      else if (result?.notification) showNotification(result.notification)
     }
+  }
+
+  async function handleUnassign(): Promise<void> {
+    if (!repo || !prId) return
+    setAssigneeDropdownOpen(false)
+    await window.api.assignPr(repo.path, prId, null)
+    const updated = await window.api.getPr(repo.path, prId)
+    if (isPrDetail(updated)) setPrDetail(updated)
   }
 
   async function handleNudge(): Promise<void> {
@@ -204,7 +214,8 @@ export default function PR(): JSX.Element {
       prId,
       prDetail.review.id
     )
-    if (result?.notification) showNotification(result.notification)
+    if (result?.prompt) setVscodePrompt(result.prompt)
+    else if (result?.notification) showNotification(result.notification)
   }
 
   useEffect(() => {
@@ -661,14 +672,53 @@ export default function PR(): JSX.Element {
                     )}
                   </div>
                 ) : (
-                  <div>
-                    <div className={styles.assigneeChip}>
+                  <div className={styles.assigneeDropdownWrap}>
+                    <button
+                      className={styles.assigneeChip}
+                      onClick={() => setAssigneeDropdownOpen((o) => !o)}
+                    >
                       <AgentIcon assignee={pr.assignee!} size={18} />
                       <span>{pr.assignee === 'claude' ? 'Claude Code' : 'Copilot (VS Code)'}</span>
-                    </div>
+                      <span className={styles.assigneeChipCaret}>▾</span>
+                    </button>
                     <button className={styles.nudgeBtn} onClick={handleNudge}>
                       Nudge
                     </button>
+                    {assigneeDropdownOpen && (
+                      <div className={styles.assigneeDropdownMenu}>
+                        <button className={styles.assigneeDropdownItem} onClick={handleUnassign}>
+                          Unassign
+                        </button>
+                        <div className={styles.assigneeDropdownDivider} />
+                        {ASSIGNEE_OPTIONS.map(({ key, label, ids }) => {
+                          const status = getAssigneeStatus(integrations, ids)
+                          return (
+                            <button
+                              key={key}
+                              className={styles.assigneeDropdownItem}
+                              disabled={status !== 'configured' || pr.assignee === key}
+                              onClick={() => handleAssign(key)}
+                            >
+                              <span className={styles.assigneeItemRow}>
+                                <span className={styles.assigneeItemLabel}>
+                                  <AgentIcon assignee={key} size={16} />
+                                  <span>{label}</span>
+                                </span>
+                                {pr.assignee === key && (
+                                  <span className={styles.assigneeStatusLabel}>current</span>
+                                )}
+                                {pr.assignee !== key && status === 'not-installed' && (
+                                  <span className={styles.assigneeStatusLabel}>Not installed</span>
+                                )}
+                                {pr.assignee !== key && status === 'not-configured' && (
+                                  <span className={styles.assigneeStatusLabel}>Not configured</span>
+                                )}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -838,6 +888,28 @@ export default function PR(): JSX.Element {
 
       {notification && (
         <div className={styles.notification}>{notification}</div>
+      )}
+
+      {vscodePrompt && (
+        <div className={styles.vscodePopupOverlay} onClick={() => setVscodePrompt(null)}>
+          <div className={styles.vscodePopup} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.vscodePopupTitle}>Prompt copied to clipboard</div>
+            <p className={styles.vscodePopupBody}>
+              VS Code is opening. Switch to the Copilot agent tab and paste the prompt to start the review fix.
+            </p>
+            <div className={styles.vscodePopupActions}>
+              <button
+                className={styles.vscodePopupCopy}
+                onClick={() => navigator.clipboard.writeText(vscodePrompt)}
+              >
+                Copy again
+              </button>
+              <button className={styles.vscodePopupConfirm} onClick={() => setVscodePrompt(null)}>
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

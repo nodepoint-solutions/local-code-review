@@ -1015,6 +1015,21 @@
   color: var(--text);
 }
 
+.vscodePopupCopy {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.vscodePopupCopy:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
 .vscodePopupConfirm {
   padding: 6px 14px;
   font-size: 13px;

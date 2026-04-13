@@ -89,7 +89,7 @@ const api = {
     ipcRenderer.invoke('integrations:install'),
 
   // "Fix with" launcher
-  launchFix: (tool: 'claude' | 'vscode', repoPath: string, prId: string, reviewId: string): Promise<{ error?: string; notification?: string }> =>
+  launchFix: (tool: 'claude' | 'vscode', repoPath: string, prId: string, reviewId: string): Promise<{ error?: string; notification?: string; prompt?: string }> =>
     ipcRenderer.invoke('fix:launch', tool, repoPath, prId, reviewId),
 
   assignPr: (repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null): Promise<import('../shared/types').PRFile | { error: string }> =>

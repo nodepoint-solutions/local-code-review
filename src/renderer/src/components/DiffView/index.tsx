@@ -4,7 +4,6 @@ import { extractContext } from '../../../../shared/diff-utils'
 import { getLanguageForFile } from '../../utils/syntax'
 import UnifiedDiff from './UnifiedDiff'
 import SplitDiff from './SplitDiff'
-import CommentBox from '../CommentBox'
 import styles from './DiffView.module.css'
 
 interface Props {
@@ -161,6 +160,11 @@ export default function DiffView({
               allowDeleteComment={allowDeleteComment}
               onDeleteComment={onDeleteComment}
               focusedCommentId={focusedCommentId}
+              showCommentBox={showCommentBox}
+              commentBoxEndLine={selectionStart !== null && selectionEnd !== null ? Math.max(selectionStart, selectionEnd) : null}
+              commentBoxStartLine={selectionStart !== null && selectionEnd !== null ? Math.min(selectionStart, selectionEnd) : null}
+              onCommentBoxSubmit={handleSubmitComment}
+              onCommentBoxCancel={handleCancelComment}
             />
           ) : (
             <SplitDiff
@@ -177,14 +181,11 @@ export default function DiffView({
               allowDeleteComment={allowDeleteComment}
               onDeleteComment={onDeleteComment}
               focusedCommentId={focusedCommentId}
-            />
-          )}
-          {showCommentBox && (
-            <CommentBox
-              onSubmit={handleSubmitComment}
-              onCancel={handleCancelComment}
-              startLine={Math.min(selectionStart ?? 0, selectionEnd ?? 0)}
-              endLine={Math.max(selectionStart ?? 0, selectionEnd ?? 0)}
+              showCommentBox={showCommentBox}
+              commentBoxEndLine={selectionStart !== null && selectionEnd !== null ? Math.max(selectionStart, selectionEnd) : null}
+              commentBoxStartLine={selectionStart !== null && selectionEnd !== null ? Math.min(selectionStart, selectionEnd) : null}
+              onCommentBoxSubmit={handleSubmitComment}
+              onCommentBoxCancel={handleCancelComment}
             />
           )}
         </div>

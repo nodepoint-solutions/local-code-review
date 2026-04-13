@@ -1,6 +1,7 @@
 import type { ReviewComment, ParsedFile, ParsedLine } from '../../../../shared/types'
 import DiffLine from './DiffLine'
 import CommentThread from '../CommentThread'
+import CommentBox from '../CommentBox'
 import styles from './SplitDiff.module.css'
 
 interface Props {
@@ -17,6 +18,11 @@ interface Props {
   allowDeleteComment?: boolean
   onDeleteComment?: (commentId: string) => void
   focusedCommentId?: string
+  showCommentBox?: boolean
+  commentBoxEndLine?: number | null
+  commentBoxStartLine?: number | null
+  onCommentBoxSubmit?: (body: string) => Promise<void>
+  onCommentBoxCancel?: () => void
 }
 
 function pairLines(lines: ParsedLine[]): Array<{ left: ParsedLine | null; right: ParsedLine | null }> {
@@ -51,6 +57,8 @@ export default function SplitDiff({
   onStartComment, onExtendComment, onHoverLine,
   isSelecting, selectionStart, selectionEnd, hoverLine,
   allowDeleteComment, onDeleteComment, focusedCommentId,
+  showCommentBox, commentBoxEndLine, commentBoxStartLine,
+  onCommentBoxSubmit, onCommentBoxCancel,
 }: Props): JSX.Element {
   const pairs = pairLines(file.lines)
 
@@ -81,7 +89,7 @@ export default function SplitDiff({
 
           return (
             <>
-              <tr key={`pair-${idx}`}>
+              <tr key={`pair-${idx}`} className={styles.pairRow}>
                 <td className={styles.side}>
                   {pair.left ? (
                     <table className={styles.innerTable}><tbody>
@@ -133,6 +141,19 @@ export default function SplitDiff({
                   </td>
                 </tr>
               ))}
+              {showCommentBox && onCommentBoxSubmit && onCommentBoxCancel && commentBoxEndLine !== null && commentBoxEndLine !== undefined &&
+                (pair.right?.diffLineNumber === commentBoxEndLine || pair.left?.diffLineNumber === commentBoxEndLine) && (
+                <tr key="comment-box">
+                  <td colSpan={2}>
+                    <CommentBox
+                      startLine={commentBoxStartLine ?? commentBoxEndLine}
+                      endLine={commentBoxEndLine}
+                      onSubmit={onCommentBoxSubmit}
+                      onCancel={onCommentBoxCancel}
+                    />
+                  </td>
+                </tr>
+              )}
             </>
           )
         })}

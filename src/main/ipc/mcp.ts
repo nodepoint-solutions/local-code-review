@@ -65,8 +65,11 @@ export function registerMcpHandlers(
 
     if (tool === 'vscode') {
       clipboard.writeText(prompt)
-      spawn('open', ['-a', 'Visual Studio Code', repoPath], { detached: true, stdio: 'ignore' }).unref()
-      return { notification: 'Prompt copied — paste it into the Copilot agent window to start.' }
+      // Delay opening VS Code by 10 s so the user has time to read the modal
+      setTimeout(() => {
+        spawn('open', ['-a', 'Visual Studio Code', repoPath], { detached: true, stdio: 'ignore' }).unref()
+      }, 5_000)
+      return { prompt }
     }
 
     return { error: `Unknown tool: ${tool}` }
