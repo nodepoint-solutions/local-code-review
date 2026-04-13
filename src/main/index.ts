@@ -4,7 +4,7 @@
 // the native module would fail to load at runtime.
 ;(globalThis as any).__non_webpack_require__ = require
 
-import { app, BrowserWindow, Tray, Menu, nativeImage, shell } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, shell, ipcMain } from 'electron'
 import { join } from 'path'
 import { writeFileSync, mkdirSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -18,6 +18,7 @@ import { McpManager } from './mcp-manager'
 import { ReviewWatcher } from './review-watcher'
 import { getSetting, setSetting } from './db/settings'
 import { listRepos } from './db/repos'
+import { checkForUpdate } from './update-check'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -237,6 +238,9 @@ app.whenReady().then(() => {
   registerReviewHandlers(db)
   registerExportHandlers(db)
   registerMcpHandlers(db, mcpManager, () => mainWindow, () => updateTrayMenu?.())
+
+  // Only check for updates in production builds — never interrupt local dev
+  ipcMain.handle('update:check', () => (is.dev ? null : checkForUpdate()))
 
   // Hide the dock icon — the tray owns the app lifecycle
   if (process.platform === 'darwin') {

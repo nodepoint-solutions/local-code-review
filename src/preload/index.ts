@@ -124,6 +124,9 @@ const api = {
     ipcRenderer.on('review:updated', listener)
     return () => ipcRenderer.removeListener('review:updated', listener)
   },
+
+  checkUpdate: (): Promise<{ version: string; url: string } | null> =>
+    ipcRenderer.invoke('update:check'),
 }
 
 const fullApi = { ...api, platform: process.platform as NodeJS.Platform }
