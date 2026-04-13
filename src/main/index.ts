@@ -23,6 +23,14 @@ let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let mcpManager: McpManager | null = null
 let reviewWatcher: ReviewWatcher | null = null
+// True only when the window has been deliberately hidden to the tray (close button).
+// Distinct from minimise (which keeps a dock presence) and fullscreen transitions.
+let windowHiddenToTray = false
+
+function syncDock(): void {
+  if (process.platform !== 'darwin') return
+  windowHiddenToTray ? app.dock.hide() : app.dock.show()
+}
 
 function writeErrorLog(err: unknown): void {
   try {
@@ -65,6 +73,8 @@ function createTray(db: ReturnType<typeof getDb>): void {
         click: () => {
           if (!mainWindow || mainWindow.isDestroyed()) {
             mainWindow = createWindow()
+          } else if (mainWindow.isMinimized()) {
+            mainWindow.restore()
           } else {
             mainWindow.show()
           }
@@ -111,6 +121,10 @@ function createWindow(): BrowserWindow {
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
+    // Fold traffic lights into the custom nav bar on macOS
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    // Vertically centre traffic lights within the 48px nav bar (buttons are ~12px tall)
+    trafficLightPosition: process.platform === 'darwin' ? { x: 12, y: 16 } : undefined,
     // Window icon for Windows / Linux taskbar (macOS uses the bundle icon)
     icon: join(resourcesPath(), 'icon-512.png'),
     webPreferences: {
@@ -121,8 +135,11 @@ function createWindow(): BrowserWindow {
   win.on('ready-to-show', () => win.show())
 
   if (process.platform === 'darwin') {
-    win.on('show', () => app.dock.show())
-    win.on('hide', () => app.dock.hide())
+    // Show dock whenever window becomes visible or is restored from minimise.
+    // We do NOT hook 'hide' here — fullscreen transitions also emit hide/show and would
+    // incorrectly toggle the dock. Dock visibility is driven solely by windowHiddenToTray.
+    win.on('show', () => { windowHiddenToTray = false; syncDock() })
+    win.on('restore', () => { windowHiddenToTray = false; syncDock() })
   }
 
   win.webContents.on('render-process-gone', (_event, details) => {
@@ -133,10 +150,13 @@ function createWindow(): BrowserWindow {
     writeErrorLog(new Error(`Renderer failed to load ${url}: [${code}] ${desc}`))
   })
 
+  // Close → hide to tray so MCP server keeps running. Minimise uses native behaviour (→ dock).
   win.on('close', (e) => {
     if (mcpManager?.running) {
       e.preventDefault()
+      windowHiddenToTray = true
       win.hide()
+      syncDock()
     }
   })
 
@@ -237,7 +257,11 @@ app.whenReady().then(() => {
 
     if (!mainWindow || mainWindow.isDestroyed()) {
       mainWindow = createWindow()
-    } else if (!mainWindow.isVisible()) {
+    } else if (mainWindow.isMinimized()) {
+      mainWindow.restore()
+    } else if (!mainWindow.isVisible() && !mainWindow.isFullScreen()) {
+      // Guard isFullScreen(): during the macOS fullscreen Space transition the window is
+      // briefly not-visible; calling show() here would abort the animation and hide it.
       mainWindow.show()
     }
     // Do NOT call focus() — triggers re-entrant activate on dock-hidden macOS apps

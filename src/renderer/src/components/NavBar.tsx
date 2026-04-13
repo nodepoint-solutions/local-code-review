@@ -59,9 +59,10 @@ function SettingsIcon(): JSX.Element {
 export default function NavBar({ crumbs = [], right }: Props): JSX.Element {
   const { theme, setTheme } = useStore()
   const navigate = useNavigate()
+  const isMac = window.api.platform === 'darwin'
 
   return (
-    <nav className={styles.nav}>
+    <nav className={isMac ? `${styles.nav} ${styles.navMac}` : styles.nav}>
       <div className={styles.left}>
         <button className={styles.logoBtn} onClick={() => navigate('/')}>
           <GitBranchIcon />

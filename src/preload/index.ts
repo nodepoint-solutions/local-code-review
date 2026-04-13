@@ -126,6 +126,7 @@ const api = {
   },
 }
 
-contextBridge.exposeInMainWorld('api', api)
+const fullApi = { ...api, platform: process.platform as NodeJS.Platform }
+contextBridge.exposeInMainWorld('api', fullApi)
 
-export type Api = typeof api
+export type Api = typeof fullApi

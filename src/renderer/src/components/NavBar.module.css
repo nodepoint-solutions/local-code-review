@@ -10,6 +10,11 @@
   -webkit-app-region: drag;
 }
 
+/* Leave room for macOS traffic lights (close/minimise/maximise) */
+.navMac {
+  padding-left: 80px;
+}
+
 .left,
 .right {
   display: flex;
