@@ -89,7 +89,6 @@ interface ToolConfig {
   name: string
   configPath: string
   keyPath: string[]
-  entryShape: 'claude' | 'vscode'
 }
 
 function resolveConfigs(): ToolConfig[] {
@@ -99,7 +98,6 @@ function resolveConfigs(): ToolConfig[] {
       name: 'Claude Code',
       configPath: path.join(home, '.claude.json'),
       keyPath: ['mcpServers'],
-      entryShape: 'claude',
     },
     {
       id: 'claudeDesktop',
@@ -111,7 +109,6 @@ function resolveConfigs(): ToolConfig[] {
           ? path.join(home, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')
           : path.join(xdgConfig(), 'Claude', 'claude_desktop_config.json'),
       keyPath: ['mcpServers'],
-      entryShape: 'claude',
     },
     {
       id: 'vscode',
@@ -123,7 +120,6 @@ function resolveConfigs(): ToolConfig[] {
           ? path.join(home, 'Library', 'Application Support', 'Code', 'User', 'mcp.json')
           : path.join(xdgConfig(), 'Code', 'User', 'mcp.json'),
       keyPath: ['servers'],
-      entryShape: 'vscode',
     },
     {
       id: 'cursor',
@@ -135,7 +131,6 @@ function resolveConfigs(): ToolConfig[] {
           ? path.join(home, 'Library', 'Application Support', 'Cursor', 'User', 'settings.json')
           : path.join(xdgConfig(), 'Cursor', 'User', 'settings.json'),
       keyPath: ['mcp', 'servers'],
-      entryShape: 'vscode',
     },
     {
       id: 'windsurf',
@@ -147,7 +142,6 @@ function resolveConfigs(): ToolConfig[] {
           ? path.join(home, 'Library', 'Application Support', 'Windsurf', 'User', 'settings.json')
           : path.join(xdgConfig(), 'Windsurf', 'User', 'settings.json'),
       keyPath: ['mcp', 'servers'],
-      entryShape: 'vscode',
     },
   ]
 }
@@ -168,13 +162,19 @@ function resolveNodePath(): string {
   }
 }
 
-function buildEntry(shape: 'claude' | 'vscode') {
+const TOOL_IDENTITY: Record<IntegrationStatus['id'], string> = {
+  claudeCode: 'Claude Code',
+  claudeDesktop: 'Claude Desktop',
+  vscode: 'Copilot',
+  cursor: 'Cursor',
+  windsurf: 'Windsurf',
+}
+
+function buildEntry(id: IntegrationStatus['id']) {
   const command = resolveNodePath()
   const args = [mcpBinaryPath()]
-  if (shape === 'claude') {
-    return { type: 'stdio', command, args, env: {} }
-  }
-  return { type: 'stdio', command, args }
+  const env = { LOCAL_REVIEW_IDENTITY: TOOL_IDENTITY[id] }
+  return { type: 'stdio', command, args, env }
 }
 
 function toolEcosystem(id: IntegrationStatus['id']): 'claude' | 'copilot' {
@@ -254,7 +254,7 @@ export function installIntegrations(): void {
 
     const obj = readJson(config.configPath)
     const servers = deepGet(obj, config.keyPath)
-    servers['local-code-review'] = buildEntry(config.entryShape)
+    servers['local-code-review'] = buildEntry(config.id)
     deepSet(obj, config.keyPath, servers)
 
     fs.mkdirSync(dir, { recursive: true })
