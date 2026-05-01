@@ -14,6 +14,8 @@ interface Props {
   selectionEnd?: number | null
   hoverLine?: number | null
   side?: 'left' | 'right'
+  isSearchMatch?: boolean
+  isActiveSearchMatch?: boolean
 }
 
 export default function DiffLine({
@@ -28,6 +30,8 @@ export default function DiffLine({
   selectionEnd = null,
   hoverLine = null,
   side = 'right',
+  isSearchMatch = false,
+  isActiveSearchMatch = false,
 }: Props): JSX.Element | null {
   if (line.type === 'hunk-header') {
     return (
@@ -62,6 +66,7 @@ export default function DiffLine({
     styles[line.type],
     isInSelection ? styles.inSelection : '',
     hasReviewComments ? styles.hasReviewComment : '',
+    isActiveSearchMatch ? styles.activeSearchMatch : isSearchMatch ? styles.searchMatch : '',
   ].filter(Boolean).join(' ')
 
   // Strip prefix char from content for syntax highlighting
@@ -71,6 +76,7 @@ export default function DiffLine({
 
   return (
     <tr
+      data-diff-line-number={line.diffLineNumber}
       className={lineClass}
       onMouseEnter={handleMouseEnter}
       onMouseDown={handleMouseDown}
