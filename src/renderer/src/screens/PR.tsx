@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
@@ -6,6 +6,7 @@ import NavBar from '../components/NavBar'
 import StaleBanner from '../components/StaleBanner'
 import FileTree from '../components/FileTree'
 import DiffView from '../components/DiffView'
+import DiffSearchBar from '../components/DiffView/DiffSearchBar'
 import ReviewPanel from '../components/ReviewPanel'
 import ReviewTimeline from '../components/ReviewTimeline'
 import PreviousReviews from '../components/PreviousReviews'
@@ -44,6 +45,14 @@ function ReviewIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+function SearchIcon(): JSX.Element {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   )
 }
@@ -111,6 +120,40 @@ export default function PR(): JSX.Element {
   const dragging = useRef(false)
   const dragStartX = useRef(0)
   const dragStartWidth = useRef(0)
+
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchMatchIndex, setSearchMatchIndex] = useState(0)
+
+  const searchMatches = useMemo(() => {
+    if (!searchQuery || !prDetail) return []
+    const q = searchQuery.toLowerCase()
+    const matches: Array<{ diffLineNumber: number }> = []
+    for (const file of prDetail.diff) {
+      for (const line of file.lines) {
+        if (line.type !== 'hunk-header' && line.content.toLowerCase().includes(q)) {
+          matches.push({ diffLineNumber: line.diffLineNumber })
+        }
+      }
+    }
+    return matches
+  }, [searchQuery, prDetail])
+
+  const matchedLineNumbers = useMemo(
+    () => new Set(searchMatches.map((m) => m.diffLineNumber)),
+    [searchMatches]
+  )
+  const activeMatchLineNumber = searchMatches[searchMatchIndex]?.diffLineNumber ?? null
+
+  useEffect(() => {
+    setSearchMatchIndex(0)
+  }, [searchQuery])
+
+  useEffect(() => {
+    if (activeMatchLineNumber === null) return
+    const el = document.querySelector(`tr[data-diff-line-number="${activeMatchLineNumber}"]`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [activeMatchLineNumber])
 
   useEffect(() => {
     function onMouseMove(e: MouseEvent): void {
@@ -382,6 +425,11 @@ export default function PR(): JSX.Element {
     fileRefs.current[filePath]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  function handleSearchClose(): void {
+    setSearchOpen(false)
+    setSearchQuery('')
+  }
+
   if (!prDetail) {
     return (
       <div className={styles.loadingPage}>
@@ -510,6 +558,11 @@ export default function PR(): JSX.Element {
               onClick={() => setDiffView('split')}
               title="Split diff"
             ><SplitIcon /></button>
+            <button
+              className={`${styles.toggleBtn} ${searchOpen ? styles.toggleActive : ''}`}
+              onClick={() => setSearchOpen((o) => !o)}
+              title="Search in diff"
+            ><SearchIcon /></button>
           </div>
         )}
       </div>
@@ -840,20 +893,35 @@ export default function PR(): JSX.Element {
           </div>
           <div className={styles.resizeHandle} onMouseDown={handleResizeStart} />
           <div ref={diffPaneRef} className={styles.diffPane}>
-            {diff.map((file) => (
-              <div key={file.newPath} ref={(el) => { fileRefs.current[file.newPath] = el }}>
-                <DiffView
-                  file={file}
-                  comments={comments.filter((c) => c.file === file.newPath)}
-                  view={diffView}
-                  onAddComment={handleAddComment}
-                  readOnly={workflow.phase === 'reviewed' || workflow.phase === 'in_fix' || workflow.phase === 'closed'}
-                  allowDeleteComment={review?.status === 'in_progress'}
-                  onDeleteComment={handleDeleteComment}
-                  focusedCommentId={navComments[focusedCommentIndex]?.id}
-                />
-              </div>
-            ))}
+            {searchOpen && (
+              <DiffSearchBar
+                query={searchQuery}
+                onQueryChange={(q) => setSearchQuery(q)}
+                matchCount={searchMatches.length}
+                activeIndex={searchMatchIndex}
+                onPrev={() => setSearchMatchIndex((i) => (i - 1 + Math.max(1, searchMatches.length)) % Math.max(1, searchMatches.length))}
+                onNext={() => setSearchMatchIndex((i) => (i + 1) % Math.max(1, searchMatches.length))}
+                onClose={handleSearchClose}
+              />
+            )}
+            <div className={styles.diffScrollContent}>
+              {diff.map((file) => (
+                <div key={file.newPath} ref={(el) => { fileRefs.current[file.newPath] = el }}>
+                  <DiffView
+                    file={file}
+                    comments={comments.filter((c) => c.file === file.newPath)}
+                    view={diffView}
+                    onAddComment={handleAddComment}
+                    readOnly={workflow.phase === 'reviewed' || workflow.phase === 'in_fix' || workflow.phase === 'closed'}
+                    allowDeleteComment={review?.status === 'in_progress'}
+                    onDeleteComment={handleDeleteComment}
+                    focusedCommentId={navComments[focusedCommentIndex]?.id}
+                    matchedLineNumbers={matchedLineNumbers}
+                    activeMatchLineNumber={activeMatchLineNumber}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
           {!reviewPanelOpen && (
             <CommentOutline
