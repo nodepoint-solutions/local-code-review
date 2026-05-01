@@ -23,6 +23,8 @@ interface Props {
   commentBoxStartLine?: number | null
   onCommentBoxSubmit?: (body: string) => Promise<void>
   onCommentBoxCancel?: () => void
+  matchedLineNumbers?: Set<number>
+  activeMatchLineNumber?: number | null
 }
 
 function pairLines(lines: ParsedLine[]): Array<{ left: ParsedLine | null; right: ParsedLine | null }> {
@@ -59,6 +61,7 @@ export default function SplitDiff({
   allowDeleteComment, onDeleteComment, focusedCommentId,
   showCommentBox, commentBoxEndLine, commentBoxStartLine,
   onCommentBoxSubmit, onCommentBoxCancel,
+  matchedLineNumbers, activeMatchLineNumber,
 }: Props): JSX.Element {
   const pairs = pairLines(file.lines)
 
@@ -105,6 +108,8 @@ export default function SplitDiff({
                         selectionEnd={selectionEnd}
                         hoverLine={hoverLine}
                         side="left"
+                        isSearchMatch={matchedLineNumbers?.has(pair.left.diffLineNumber) ?? false}
+                        isActiveSearchMatch={activeMatchLineNumber === pair.left.diffLineNumber}
                       />
                     </tbody></table>
                   ) : <div className={styles.emptyCell} />}
@@ -124,6 +129,8 @@ export default function SplitDiff({
                         selectionEnd={selectionEnd}
                         hoverLine={hoverLine}
                         side="right"
+                        isSearchMatch={matchedLineNumbers?.has(pair.right.diffLineNumber) ?? false}
+                        isActiveSearchMatch={activeMatchLineNumber === pair.right.diffLineNumber}
                       />
                     </tbody></table>
                   ) : <div className={styles.emptyCell} />}
