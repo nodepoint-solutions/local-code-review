@@ -15,6 +15,8 @@ interface Props {
   allowDeleteComment?: boolean
   onDeleteComment?: (commentId: string) => void
   focusedCommentId?: string
+  matchedLineNumbers?: Set<number>
+  activeMatchLineNumber?: number | null
 }
 
 function ChevronDownIcon(): JSX.Element {
@@ -36,6 +38,7 @@ function ChevronRightIcon(): JSX.Element {
 export default function DiffView({
   file, comments, view, onAddComment, readOnly = false,
   allowDeleteComment, onDeleteComment, focusedCommentId,
+  matchedLineNumbers, activeMatchLineNumber,
 }: Props): JSX.Element {
   const [expanded, setExpanded] = useState(true)
   const [isSelecting, setIsSelecting] = useState(false)
@@ -165,6 +168,8 @@ export default function DiffView({
               commentBoxStartLine={selectionStart !== null && selectionEnd !== null ? Math.min(selectionStart, selectionEnd) : null}
               onCommentBoxSubmit={handleSubmitComment}
               onCommentBoxCancel={handleCancelComment}
+              matchedLineNumbers={matchedLineNumbers}
+              activeMatchLineNumber={activeMatchLineNumber}
             />
           ) : (
             <SplitDiff
@@ -186,6 +191,8 @@ export default function DiffView({
               commentBoxStartLine={selectionStart !== null && selectionEnd !== null ? Math.min(selectionStart, selectionEnd) : null}
               onCommentBoxSubmit={handleSubmitComment}
               onCommentBoxCancel={handleCancelComment}
+              matchedLineNumbers={matchedLineNumbers}
+              activeMatchLineNumber={activeMatchLineNumber}
             />
           )}
         </div>
