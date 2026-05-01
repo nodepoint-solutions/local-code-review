@@ -50,9 +50,7 @@ export async function checkForUpdate(): Promise<UpdateInfo | null> {
 
     // Prefer arch-specific DMG, fall back to any DMG
     const arch = process.arch
-    const dmgAsset =
-      release.assets.find((a) => a.name.endsWith(`${arch}.dmg`)) ??
-      release.assets.find((a) => a.name.endsWith('.dmg'))
+    const dmgAsset = release.assets.find((a) => a.name.endsWith(`${arch}.dmg`))
 
     return {
       version: release.tag_name,
