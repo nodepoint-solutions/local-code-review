@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import styles from './DiffSearchBar.module.css'
 
 interface Props {
@@ -23,16 +23,25 @@ export default function DiffSearchBar({
   query, onQueryChange, matchCount, activeIndex, onPrev, onNext, onClose,
 }: Props): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
+  const [inputValue, setInputValue] = useState(query)
 
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
 
+  // Sync input when parent resets query (e.g. on close)
+  useEffect(() => {
+    setInputValue(query)
+  }, [query])
+
+  function commitSearch(): void {
+    onQueryChange(inputValue)
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
     if (e.key === 'Enter') {
       e.preventDefault()
-      if (e.shiftKey) onPrev()
-      else onNext()
+      commitSearch()
     } else if (e.key === 'Escape') {
       onClose()
     }
@@ -50,18 +59,19 @@ export default function DiffSearchBar({
         ref={inputRef}
         className={styles.input}
         type="text"
-        value={query}
-        onChange={(e) => onQueryChange(e.target.value)}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Search in diff…"
       />
+      <button className={styles.commitBtn} onClick={commitSearch} title="Search (Enter)" aria-label="Search">↵</button>
       {matchLabel && (
         <span className={`${styles.count} ${matchCount === 0 ? styles.noResults : ''}`}>
           {matchLabel}
         </span>
       )}
-      <button className={styles.navBtn} onClick={onPrev} disabled={matchCount === 0} title="Previous match (Shift+Enter)" aria-label="Previous match (Shift+Enter)">↑</button>
-      <button className={styles.navBtn} onClick={onNext} disabled={matchCount === 0} title="Next match (Enter)" aria-label="Next match (Enter)">↓</button>
+      <button className={styles.navBtn} onClick={onPrev} disabled={matchCount === 0} title="Previous match" aria-label="Previous match">↑</button>
+      <button className={styles.navBtn} onClick={onNext} disabled={matchCount === 0} title="Next match" aria-label="Next match">↓</button>
       <button className={styles.closeBtn} onClick={onClose} title="Close search" aria-label="Close search">✕</button>
     </div>
   )

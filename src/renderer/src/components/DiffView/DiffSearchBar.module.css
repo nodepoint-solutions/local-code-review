@@ -43,6 +43,25 @@
   color: var(--removed-text);
 }
 
+.commitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  padding: 0 8px;
+  font-size: 13px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+.commitBtn:hover {
+  background: var(--accent-hover);
+}
+
 .navBtn {
   display: flex;
   align-items: center;
