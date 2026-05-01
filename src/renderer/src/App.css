@@ -42,7 +42,7 @@
   --hunk-text: #79c0ff;
   --selection-bg: rgba(31, 111, 235, 0.15);
   --selection-border: #1f6feb;
-  --search-match-bg: rgba(255, 200, 0, 0.12);
+  --search-match-bg: rgba(255, 200, 0, 0.18);
   --search-match-active-bg: rgba(255, 185, 0, 0.32);
   --search-match-active-border: #c99700;
 
@@ -129,7 +129,7 @@
   --hunk-text: #0550ae;
   --selection-bg: rgba(9, 105, 218, 0.08);
   --selection-border: #0969da;
-  --search-match-bg: rgba(200, 150, 0, 0.12);
+  --search-match-bg: rgba(200, 150, 0, 0.18);
   --search-match-active-bg: rgba(200, 140, 0, 0.28);
   --search-match-active-border: #8a6200;
 

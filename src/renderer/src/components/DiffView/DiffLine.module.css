@@ -127,10 +127,10 @@
 }
 
 /* ─── Search highlight ────────────────────── */
-.searchMatch .code {
+.searchMatch {
   background: var(--search-match-bg);
 }
-.activeSearchMatch .code {
+.activeSearchMatch {
   background: var(--search-match-active-bg);
   box-shadow: inset 3px 0 0 var(--search-match-active-border);
 }
