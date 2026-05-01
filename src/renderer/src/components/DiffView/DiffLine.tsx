@@ -65,7 +65,7 @@ export default function DiffLine({
     styles.line,
     styles[line.type],
     isInSelection ? styles.inSelection : '',
-    hasReviewComments ? styles.hasReviewComment : '',
+    hasReviewComments ? styles.hasComment : '',
     isActiveSearchMatch ? styles.activeSearchMatch : isSearchMatch ? styles.searchMatch : '',
   ].filter(Boolean).join(' ')
 
