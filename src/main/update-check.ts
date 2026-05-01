@@ -1,6 +1,12 @@
 import https from 'https'
 import { app } from 'electron'
 
+export interface UpdateInfo {
+  version: string
+  url: string
+  dmgUrl: string | null
+}
+
 function parseSemver(tag: string): [number, number, number] | null {
   const match = tag.match(/^v?(\d+)\.(\d+)\.(\d+)$/)
   if (!match) return null
@@ -15,48 +21,45 @@ function isNewer(candidate: [number, number, number], current: [number, number, 
   return false
 }
 
-export async function checkForUpdate(): Promise<{ version: string; url: string } | null> {
+function fetchJson(url: string): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, { headers: { 'User-Agent': 'local-code-review-app' } }, (res) => {
+      let data = ''
+      res.on('data', (chunk: Buffer) => { data += chunk })
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)) } catch (e) { reject(e) }
+      })
+    })
+    req.on('error', reject)
+    req.setTimeout(10_000, () => { req.destroy(); reject(new Error('timeout')) })
+  })
+}
+
+export async function checkForUpdate(): Promise<UpdateInfo | null> {
   const currentVersion = app.getVersion()
   const current = parseSemver(currentVersion)
   if (!current) return null
 
-  return new Promise((resolve) => {
-    const req = https.get(
-      'https://api.github.com/repos/nodepoint-solutions/local-code-review/tags',
-      { headers: { 'User-Agent': 'local-code-review-app' } },
-      (res) => {
-        let data = ''
-        res.on('data', (chunk: Buffer) => { data += chunk })
-        res.on('end', () => {
-          try {
-            const tags: { name: string }[] = JSON.parse(data)
-            let latestVersion: [number, number, number] | null = null
-            let latestTag = ''
+  try {
+    const release = await fetchJson(
+      'https://api.github.com/repos/nodepoint-solutions/local-code-review/releases/latest'
+    ) as { tag_name: string; html_url: string; assets: { name: string; browser_download_url: string }[] }
 
-            for (const { name } of tags) {
-              const parsed = parseSemver(name)
-              if (!parsed) continue
-              if (!latestVersion || isNewer(parsed, latestVersion)) {
-                latestVersion = parsed
-                latestTag = name
-              }
-            }
+    const latest = parseSemver(release.tag_name)
+    if (!latest || !isNewer(latest, current)) return null
 
-            if (latestVersion && isNewer(latestVersion, current)) {
-              resolve({
-                version: latestTag,
-                url: `https://github.com/nodepoint-solutions/local-code-review/releases/tag/${latestTag}`,
-              })
-            } else {
-              resolve(null)
-            }
-          } catch {
-            resolve(null)
-          }
-        })
-      }
-    )
-    req.on('error', () => resolve(null))
-    req.setTimeout(10_000, () => { req.destroy(); resolve(null) })
-  })
+    // Prefer arch-specific DMG, fall back to any DMG
+    const arch = process.arch
+    const dmgAsset =
+      release.assets.find((a) => a.name.endsWith(`${arch}.dmg`)) ??
+      release.assets.find((a) => a.name.endsWith('.dmg'))
+
+    return {
+      version: release.tag_name,
+      url: release.html_url,
+      dmgUrl: dmgAsset?.browser_download_url ?? null,
+    }
+  } catch {
+    return null
+  }
 }

@@ -242,6 +242,18 @@ app.whenReady().then(() => {
   // Only check for updates in production builds — never interrupt local dev
   ipcMain.handle('update:check', () => (is.dev ? null : checkForUpdate()))
 
+  ipcMain.handle('update:install', async (_event, dmgUrl: string) => {
+    const { installUpdate } = await import('./update-installer')
+    try {
+      await installUpdate(dmgUrl, (stage, pct) => {
+        mainWindow?.webContents.send('update:progress', { stage, pct })
+      })
+      return { success: true }
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
+
   // Hide the dock icon — the tray owns the app lifecycle
   if (process.platform === 'darwin') {
     app.dock.hide()

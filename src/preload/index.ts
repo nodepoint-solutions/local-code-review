@@ -125,8 +125,17 @@ const api = {
     return () => ipcRenderer.removeListener('review:updated', listener)
   },
 
-  checkUpdate: (): Promise<{ version: string; url: string } | null> =>
+  checkUpdate: (): Promise<{ version: string; url: string; dmgUrl: string | null } | null> =>
     ipcRenderer.invoke('update:check'),
+
+  installUpdate: (dmgUrl: string): Promise<{ success: boolean } | { error: string }> =>
+    ipcRenderer.invoke('update:install', dmgUrl),
+
+  onUpdateProgress: (callback: (data: { stage: string; pct: number }) => void): (() => void) => {
+    const listener = (_e: IpcRendererEvent, data: { stage: string; pct: number }) => callback(data)
+    ipcRenderer.on('update:progress', listener)
+    return () => ipcRenderer.removeListener('update:progress', listener)
+  },
 }
 
 const fullApi = { ...api, platform: process.platform as NodeJS.Platform }
