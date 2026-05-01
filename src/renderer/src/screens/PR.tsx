@@ -128,32 +128,40 @@ export default function PR(): JSX.Element {
   const searchMatches = useMemo(() => {
     if (!searchQuery || !prDetail) return []
     const q = searchQuery.toLowerCase()
-    const matches: Array<{ diffLineNumber: number }> = []
+    const matches: Array<{ filePath: string; diffLineNumber: number }> = []
     for (const file of prDetail.diff) {
       for (const line of file.lines) {
         if (line.type !== 'hunk-header' && line.content.toLowerCase().includes(q)) {
-          matches.push({ diffLineNumber: line.diffLineNumber })
+          matches.push({ filePath: file.newPath, diffLineNumber: line.diffLineNumber })
         }
       }
     }
     return matches
   }, [searchQuery, prDetail])
 
-  const matchedLineNumbers = useMemo(
-    () => new Set(searchMatches.map((m) => m.diffLineNumber)),
-    [searchMatches]
-  )
-  const activeMatchLineNumber = searchMatches[searchMatchIndex]?.diffLineNumber ?? null
+  // Per-file Sets so each DiffView only highlights its own lines
+  const matchedLineNumbersByFile = useMemo(() => {
+    const map = new Map<string, Set<number>>()
+    for (const match of searchMatches) {
+      let set = map.get(match.filePath)
+      if (!set) { set = new Set(); map.set(match.filePath, set) }
+      set.add(match.diffLineNumber)
+    }
+    return map
+  }, [searchMatches])
+
+  const activeMatch = searchMatches[searchMatchIndex] ?? null
 
   useEffect(() => {
     setSearchMatchIndex(0)
   }, [searchQuery])
 
   useEffect(() => {
-    if (activeMatchLineNumber === null) return
-    const el = diffPaneRef.current?.querySelector(`tr[data-diff-line-number="${activeMatchLineNumber}"]`)
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [activeMatchLineNumber])
+    if (!activeMatch) return
+    const fileEl = diffPaneRef.current?.querySelector(`[data-diff-file="${CSS.escape(activeMatch.filePath)}"]`)
+    const lineEl = fileEl?.querySelector(`tr[data-diff-line-number="${activeMatch.diffLineNumber}"]`)
+    lineEl?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [activeMatch])
 
   useEffect(() => {
     if (tab !== 'files') {
@@ -914,7 +922,7 @@ export default function PR(): JSX.Element {
             )}
             <div className={styles.diffScrollContent}>
               {diff.map((file) => (
-                <div key={file.newPath} ref={(el) => { fileRefs.current[file.newPath] = el }}>
+                <div key={file.newPath} ref={(el) => { fileRefs.current[file.newPath] = el }} data-diff-file={file.newPath}>
                   <DiffView
                     file={file}
                     comments={comments.filter((c) => c.file === file.newPath)}
@@ -924,8 +932,8 @@ export default function PR(): JSX.Element {
                     allowDeleteComment={review?.status === 'in_progress'}
                     onDeleteComment={handleDeleteComment}
                     focusedCommentId={navComments[focusedCommentIndex]?.id}
-                    matchedLineNumbers={matchedLineNumbers}
-                    activeMatchLineNumber={activeMatchLineNumber}
+                    matchedLineNumbers={matchedLineNumbersByFile.get(file.newPath)}
+                    activeMatchLineNumber={activeMatch?.filePath === file.newPath ? activeMatch.diffLineNumber : null}
                   />
                 </div>
               ))}
