@@ -151,9 +151,16 @@ export default function PR(): JSX.Element {
 
   useEffect(() => {
     if (activeMatchLineNumber === null) return
-    const el = document.querySelector(`tr[data-diff-line-number="${activeMatchLineNumber}"]`)
+    const el = diffPaneRef.current?.querySelector(`tr[data-diff-line-number="${activeMatchLineNumber}"]`)
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [activeMatchLineNumber])
+
+  useEffect(() => {
+    if (tab !== 'files') {
+      setSearchOpen(false)
+      setSearchQuery('')
+    }
+  }, [tab])
 
   useEffect(() => {
     function onMouseMove(e: MouseEvent): void {
@@ -899,8 +906,8 @@ export default function PR(): JSX.Element {
                 onQueryChange={(q) => setSearchQuery(q)}
                 matchCount={searchMatches.length}
                 activeIndex={searchMatchIndex}
-                onPrev={() => setSearchMatchIndex((i) => (i - 1 + Math.max(1, searchMatches.length)) % Math.max(1, searchMatches.length))}
-                onNext={() => setSearchMatchIndex((i) => (i + 1) % Math.max(1, searchMatches.length))}
+                onPrev={() => setSearchMatchIndex((i) => (i - 1 + searchMatches.length) % searchMatches.length)}
+                onNext={() => setSearchMatchIndex((i) => (i + 1) % searchMatches.length)}
                 onClose={handleSearchClose}
               />
             )}
