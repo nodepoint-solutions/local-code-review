@@ -30,6 +30,7 @@ export default function DiffSearchBar({
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
     if (e.key === 'Enter') {
+      e.preventDefault()
       if (e.shiftKey) onPrev()
       else onNext()
     } else if (e.key === 'Escape') {
@@ -43,7 +44,7 @@ export default function DiffSearchBar({
     `${activeIndex + 1} of ${matchCount}`
 
   return (
-    <div className={styles.bar}>
+    <div className={styles.bar} role="search">
       <span className={styles.icon}><SearchIcon /></span>
       <input
         ref={inputRef}
@@ -59,9 +60,9 @@ export default function DiffSearchBar({
           {matchLabel}
         </span>
       )}
-      <button className={styles.navBtn} onClick={onPrev} disabled={matchCount === 0} title="Previous match (Shift+Enter)">↑</button>
-      <button className={styles.navBtn} onClick={onNext} disabled={matchCount === 0} title="Next match (Enter)">↓</button>
-      <button className={styles.closeBtn} onClick={onClose} title="Close search">✕</button>
+      <button className={styles.navBtn} onClick={onPrev} disabled={matchCount === 0} title="Previous match (Shift+Enter)" aria-label="Previous match (Shift+Enter)">↑</button>
+      <button className={styles.navBtn} onClick={onNext} disabled={matchCount === 0} title="Next match (Enter)" aria-label="Next match (Enter)">↓</button>
+      <button className={styles.closeBtn} onClick={onClose} title="Close search" aria-label="Close search">✕</button>
     </div>
   )
 }
