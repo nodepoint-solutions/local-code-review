@@ -41,7 +41,12 @@ export default function DiffSearchBar({
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
     if (e.key === 'Enter') {
       e.preventDefault()
-      commitSearch()
+      if (inputValue === query && matchCount > 0) {
+        if (e.shiftKey) onPrev()
+        else onNext()
+      } else {
+        commitSearch()
+      }
     } else if (e.key === 'Escape') {
       onClose()
     }
