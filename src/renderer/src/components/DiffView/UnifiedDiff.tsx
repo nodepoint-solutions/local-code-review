@@ -23,6 +23,8 @@ interface Props {
   commentBoxStartLine?: number | null
   onCommentBoxSubmit?: (body: string) => Promise<void>
   onCommentBoxCancel?: () => void
+  matchedLineNumbers?: Set<number>
+  activeMatchLineNumber?: number | null
 }
 
 export default function UnifiedDiff({
@@ -32,6 +34,7 @@ export default function UnifiedDiff({
   allowDeleteComment, onDeleteComment, focusedCommentId,
   showCommentBox, commentBoxEndLine, commentBoxStartLine,
   onCommentBoxSubmit, onCommentBoxCancel,
+  matchedLineNumbers, activeMatchLineNumber,
 }: Props): JSX.Element {
   const commentsByEndLine = new Map<number, ReviewComment[]>()
   for (const comment of comments) {
@@ -60,6 +63,8 @@ export default function UnifiedDiff({
               selectionEnd={selectionEnd}
               hoverLine={hoverLine}
               side="right"
+              isSearchMatch={matchedLineNumbers?.has(line.diffLineNumber) ?? false}
+              isActiveSearchMatch={activeMatchLineNumber === line.diffLineNumber}
             />
             {(commentsByEndLine.get(line.diffLineNumber) ?? []).map((comment) => (
               <tr key={`comment-${comment.id}`}>
