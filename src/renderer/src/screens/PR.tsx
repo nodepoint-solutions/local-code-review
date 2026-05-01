@@ -569,6 +569,7 @@ export default function PR(): JSX.Element {
               className={`${styles.toggleBtn} ${searchOpen ? styles.toggleActive : ''}`}
               onClick={() => setSearchOpen((o) => !o)}
               title="Search in diff"
+              aria-label="Search in diff"
             ><SearchIcon /></button>
           </div>
         )}
@@ -906,8 +907,8 @@ export default function PR(): JSX.Element {
                 onQueryChange={(q) => setSearchQuery(q)}
                 matchCount={searchMatches.length}
                 activeIndex={searchMatchIndex}
-                onPrev={() => setSearchMatchIndex((i) => (i - 1 + searchMatches.length) % searchMatches.length)}
-                onNext={() => setSearchMatchIndex((i) => (i + 1) % searchMatches.length)}
+                onPrev={() => setSearchMatchIndex((i) => (i - 1 + Math.max(1, searchMatches.length)) % Math.max(1, searchMatches.length))}
+                onNext={() => setSearchMatchIndex((i) => (i + 1) % Math.max(1, searchMatches.length))}
                 onClose={handleSearchClose}
               />
             )}
