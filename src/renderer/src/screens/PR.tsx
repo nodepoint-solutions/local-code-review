@@ -408,22 +408,30 @@ export default function PR(): JSX.Element {
     setEditingDescription(false)
   }
 
-  async function handleAddComment(payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>): Promise<void> {
-    if (!repo || !prId || !prDetail) return
+  async function handleAddComment(payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>): Promise<boolean> {
+    if (!repo || !prId || !prDetail) return false
 
     // Auto-create a review on the first comment if none is in progress
     let reviewId = prDetail.review?.status === 'in_progress' ? prDetail.review.id : undefined
     if (!reviewId) {
       const created = await window.api.newReview(repo.path, prId)
-      if ('error' in created) return
+      if ('error' in created) {
+        showNotification(`Could not start a review: ${created.error}`)
+        return false
+      }
       setPrDetail(created)
       reviewId = created.review?.id
-      if (!reviewId) return
+      if (!reviewId) return false
     }
 
-    await window.api.addComment({ ...payload, prId, repoPath: repo.path, reviewId })
+    const result = await window.api.addComment({ ...payload, prId, repoPath: repo.path, reviewId })
+    if ('error' in result) {
+      showNotification(`Comment not saved: ${result.error}`)
+      return false
+    }
     const updated = await window.api.getPr(repo.path, prId)
     if (updated && !('error' in updated)) setPrDetail(updated)
+    return true
   }
 
   async function handleDeleteComment(commentId: string): Promise<void> {
@@ -891,7 +899,7 @@ export default function PR(): JSX.Element {
                       file={file}
                       comments={[]}
                       view="unified"
-                      onAddComment={async () => {}}
+                      onAddComment={async () => false}
                     />
                   ))
                 )}

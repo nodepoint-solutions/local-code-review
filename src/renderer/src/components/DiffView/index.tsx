@@ -10,7 +10,8 @@ interface Props {
   file: ParsedFile
   comments: ReviewComment[]
   view: 'unified' | 'split'
-  onAddComment: (payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>) => Promise<void>
+  /** Resolves true when the comment was persisted; false keeps the box open with its draft. */
+  onAddComment: (payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>) => Promise<boolean>
   readOnly?: boolean
   allowDeleteComment?: boolean
   onDeleteComment?: (commentId: string) => void
@@ -84,7 +85,7 @@ export default function DiffView({
       type: l.type as 'added' | 'removed' | 'context',
       content: l.content,
     }))
-    await onAddComment({
+    const saved = await onAddComment({
       file: file.newPath,
       startLine: start,
       endLine: end,
@@ -92,6 +93,7 @@ export default function DiffView({
       body,
       context,
     })
+    if (!saved) return
     setShowCommentBox(false)
     setSelectionStart(null)
     setSelectionEnd(null)

@@ -96,7 +96,7 @@ export default function PreviousReviews({ reviews, repoPath }: Props): JSX.Eleme
                   file={file}
                   comments={selectedReview.comments.filter((c) => c.file === file.newPath && !c.is_stale)}
                   view="unified"
-                  onAddComment={async () => {}}
+                  onAddComment={async () => false}
                   readOnly
                 />
               ))
