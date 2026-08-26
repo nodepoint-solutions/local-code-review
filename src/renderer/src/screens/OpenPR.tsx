@@ -52,6 +52,7 @@ export default function OpenPR(): JSX.Element {
     }
   }
 
+  if (!repo && repos.length === 0) return <div style={{ padding: 32 }}>Loading…</div>
   if (!repo) return <div style={{ padding: 32 }}>Repository not found.</div>
 
   return (

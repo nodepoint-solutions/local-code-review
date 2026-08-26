@@ -104,11 +104,18 @@ function ThemeApplier(): null {
 export default function App(): JSX.Element {
   const [setupComplete, setSetupComplete] = useState<boolean | null>(null)
   const [update, setUpdate] = useState<UpdateInfo | null>(null)
+  const { setRepos } = useStore()
 
   useEffect(() => {
     window.api.getSetting('setup_complete')
       .then((val) => setSetupComplete(val === 'true'))
       .catch(() => setSetupComplete(false))
+  }, [])
+
+  // Load repositories up front so every route can resolve its repo — a reload
+  // or deep link straight into a repo/PR screen renders without visiting Home.
+  useEffect(() => {
+    window.api.listRepos().then(setRepos).catch(() => {})
   }, [])
 
   useEffect(() => {

@@ -76,6 +76,9 @@ export default function Repo(): JSX.Element {
     setPrs(await window.api.listPrs(repo.path))
   }
 
+  // repos load asynchronously at app start — an empty list means "still loading",
+  // not "unknown repo", so a reload deep in the app doesn't flash an error
+  if (!repo && repos.length === 0) return <div style={{ padding: 32, color: 'var(--text-muted)' }}>Loading…</div>
   if (!repo) return <div style={{ padding: 32, color: 'var(--text-muted)' }}>Repository not found.</div>
 
   return (
