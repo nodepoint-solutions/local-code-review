@@ -77,6 +77,24 @@ function ChevronRightIcon(): JSX.Element {
   )
 }
 
+function XIcon(): JSX.Element {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+}
+
 function SearchIcon(): JSX.Element {
   return (
     <svg
@@ -203,6 +221,19 @@ export default function Home(): JSX.Element {
     navigate(`/repo/${repo.id}`)
   }
 
+  async function handleRemoveRepo(repo: RepositoryWithMeta): Promise<void> {
+    const confirmed = window.confirm(
+      `Remove "${repo.name}" from Local Code Review?\n\nReview data in ${repo.path}/.reviews stays on disk, and you can add the repository again at any time.`
+    )
+    if (!confirmed) return
+    const result = await window.api.removeRepo(repo.path)
+    if (result.error) {
+      alert(`Could not remove repository: ${result.error}`)
+      return
+    }
+    setRepos(await window.api.listRepos())
+  }
+
   return (
     <div className={styles.page}>
       <NavBar />
@@ -284,23 +315,29 @@ export default function Home(): JSX.Element {
             </div>
             <div className={styles.repoList}>
               {myRepos.map((repo) => (
-                <button
-                  key={repo.id}
-                  className={styles.repoItem}
-                  onClick={() => handleSelectRepo(repo)}
-                >
-                  <div className={styles.repoIcon}>
-                    <RepoIcon />
-                  </div>
-                  <div className={styles.repoInfo}>
-                    <span className={styles.repoName}>{repo.name}</span>
-                    <span className={styles.repoPath}>{repo.path}</span>
-                  </div>
-                  <span className={styles.repoBadge}>
-                    {repo.pr_count} PR{repo.pr_count !== 1 ? 's' : ''}
-                  </span>
-                  <ChevronRightIcon />
-                </button>
+                <div key={repo.id} className={styles.repoItem}>
+                  <button className={styles.repoItemMain} onClick={() => handleSelectRepo(repo)}>
+                    <div className={styles.repoIcon}>
+                      <RepoIcon />
+                    </div>
+                    <div className={styles.repoInfo}>
+                      <span className={styles.repoName}>{repo.name}</span>
+                      <span className={styles.repoPath}>{repo.path}</span>
+                    </div>
+                    <span className={styles.repoBadge}>
+                      {repo.pr_count} PR{repo.pr_count !== 1 ? 's' : ''}
+                    </span>
+                    <ChevronRightIcon />
+                  </button>
+                  <button
+                    className={styles.repoRemoveBtn}
+                    title="Remove from list"
+                    aria-label={`Remove ${repo.name} from list`}
+                    onClick={() => handleRemoveRepo(repo)}
+                  >
+                    <XIcon />
+                  </button>
+                </div>
               ))}
             </div>
           </div>
@@ -313,20 +350,26 @@ export default function Home(): JSX.Element {
             </div>
             <div className={styles.repoList}>
               {recentRepos.map((repo) => (
-                <button
-                  key={repo.id}
-                  className={styles.repoItem}
-                  onClick={() => handleSelectRepo(repo)}
-                >
-                  <div className={styles.repoIcon}>
-                    <RepoIcon />
-                  </div>
-                  <div className={styles.repoInfo}>
-                    <span className={styles.repoName}>{repo.name}</span>
-                    <span className={styles.repoPath}>{repo.path}</span>
-                  </div>
-                  <ChevronRightIcon />
-                </button>
+                <div key={repo.id} className={styles.repoItem}>
+                  <button className={styles.repoItemMain} onClick={() => handleSelectRepo(repo)}>
+                    <div className={styles.repoIcon}>
+                      <RepoIcon />
+                    </div>
+                    <div className={styles.repoInfo}>
+                      <span className={styles.repoName}>{repo.name}</span>
+                      <span className={styles.repoPath}>{repo.path}</span>
+                    </div>
+                    <ChevronRightIcon />
+                  </button>
+                  <button
+                    className={styles.repoRemoveBtn}
+                    title="Remove from list"
+                    aria-label={`Remove ${repo.name} from list`}
+                    onClick={() => handleRemoveRepo(repo)}
+                  >
+                    <XIcon />
+                  </button>
+                </div>
               ))}
             </div>
           </div>

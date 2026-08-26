@@ -1,7 +1,14 @@
 import { ipcMain, dialog } from 'electron'
 import path from 'path'
 import type Database from 'better-sqlite3'
-import { insertRepo, listRepos, touchRepo } from '../db/repos'
+import {
+  insertRepo,
+  listRepos,
+  touchRepo,
+  removeRepo,
+  isRepoRemoved,
+  clearRemovedRepo,
+} from '../db/repos'
 import { getSetting, setSetting } from '../db/settings'
 import { isGitRepo } from '../git/branches'
 import { scanForRepos, scanForReviewRepos } from '../git/scanner'
@@ -11,7 +18,8 @@ const store = new ReviewStore()
 
 export function registerRepoHandlers(
   db: Database.Database,
-  onRepoAdded?: (repoPath: string) => void
+  onRepoAdded?: (repoPath: string) => void,
+  onRepoRemoved?: (repoPath: string) => void
 ): void {
   ipcMain.handle('repos:list', async () => {
     try {
@@ -19,6 +27,8 @@ export function registerRepoHandlers(
       if (baseDir) {
         const discovered = await scanForReviewRepos(baseDir)
         for (const { path: repoPath, name } of discovered) {
+          // A repo the user removed stays removed until they add it back
+          if (isRepoRemoved(db, repoPath)) continue
           insertRepo(db, repoPath, name)
           onRepoAdded?.(repoPath)
         }
@@ -46,6 +56,7 @@ export function registerRepoHandlers(
       if (!valid) return { error: 'not-a-git-repo' }
 
       const name = path.basename(repoPath)
+      clearRemovedRepo(db, repoPath)
       const repo = insertRepo(db, repoPath, name)
       touchRepo(db, repo.id)
       onRepoAdded?.(repoPath)
@@ -61,12 +72,23 @@ export function registerRepoHandlers(
       if (!valid) return { error: 'not-a-git-repo' }
 
       const name = path.basename(repoPath)
+      clearRemovedRepo(db, repoPath)
       const repo = insertRepo(db, repoPath, name)
       touchRepo(db, repo.id)
       onRepoAdded?.(repoPath)
       return { repo }
     } catch (err) {
       return { error: 'unexpected', message: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('repos:remove', (_event, repoPath: string) => {
+    try {
+      removeRepo(db, repoPath)
+      onRepoRemoved?.(repoPath)
+      return {}
+    } catch (err) {
+      return { error: (err as Error).message }
     }
   })
 

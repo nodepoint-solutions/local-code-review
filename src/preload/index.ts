@@ -22,6 +22,8 @@ const api = {
   addRepoByPath: (repoPath: string): Promise<{ repo?: Repository; error?: string }> =>
     ipcRenderer.invoke('repos:add-by-path', repoPath),
   touchRepo: (repoId: string): Promise<void> => ipcRenderer.invoke('repos:touch', repoId),
+  removeRepo: (repoPath: string): Promise<{ error?: string }> =>
+    ipcRenderer.invoke('repos:remove', repoPath),
   getSetting: (key: string): Promise<string | null> => ipcRenderer.invoke('repos:get-setting', key),
   setSetting: (key: string, value: string): Promise<void> =>
     ipcRenderer.invoke('repos:set-setting', key, value),

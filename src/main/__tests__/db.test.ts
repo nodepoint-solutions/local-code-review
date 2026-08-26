@@ -2,7 +2,15 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { applySchema } from '../db/schema'
-import { insertRepo, listRepos, findRepoByPath, touchRepo } from '../db/repos'
+import {
+  insertRepo,
+  listRepos,
+  findRepoByPath,
+  touchRepo,
+  removeRepo,
+  isRepoRemoved,
+  clearRemovedRepo,
+} from '../db/repos'
 import { getSetting, setSetting } from '../db/settings'
 
 describe('database schema', () => {
@@ -58,6 +66,35 @@ describe('repos', () => {
     expect(listRepos(db)[0].last_visited_at).toBeNull()
     touchRepo(db, repo.id)
     expect(listRepos(db)[0].last_visited_at).not.toBeNull()
+  })
+})
+
+describe('repo removal', () => {
+  let db: Database.Database
+
+  beforeEach(() => {
+    db = new Database(':memory:')
+    applySchema(db)
+  })
+
+  it('removeRepo drops the row and records a tombstone', () => {
+    insertRepo(db, '/tmp/repo-a', 'repo-a')
+    removeRepo(db, '/tmp/repo-a')
+    expect(findRepoByPath(db, '/tmp/repo-a')).toBeNull()
+    expect(isRepoRemoved(db, '/tmp/repo-a')).toBe(true)
+  })
+
+  it('clearRemovedRepo lifts the tombstone so the repo can return', () => {
+    insertRepo(db, '/tmp/repo-a', 'repo-a')
+    removeRepo(db, '/tmp/repo-a')
+    clearRemovedRepo(db, '/tmp/repo-a')
+    expect(isRepoRemoved(db, '/tmp/repo-a')).toBe(false)
+    insertRepo(db, '/tmp/repo-a', 'repo-a')
+    expect(findRepoByPath(db, '/tmp/repo-a')).not.toBeNull()
+  })
+
+  it('paths never removed are not tombstoned', () => {
+    expect(isRepoRemoved(db, '/tmp/never-seen')).toBe(false)
   })
 })
 

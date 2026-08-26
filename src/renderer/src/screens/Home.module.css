@@ -290,3 +290,47 @@
   font-size: 14px;
   color: var(--text-muted);
 }
+
+/* Row = main click target + remove action; the row itself is no longer a button */
+.repoItemMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  text-align: left;
+  color: var(--text);
+}
+.repoItemMain > svg:last-child {
+  margin-left: auto;
+  color: var(--text-subtle);
+  flex-shrink: 0;
+}
+.repoItem:hover .repoItemMain .repoName {
+  color: var(--accent-hover);
+}
+.repoRemoveBtn {
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-subtle);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity var(--transition);
+  flex-shrink: 0;
+}
+.repoItem:hover .repoRemoveBtn,
+.repoRemoveBtn:focus-visible {
+  opacity: 1;
+}
+.repoRemoveBtn:hover {
+  color: var(--removed-text, #e05c5c);
+  background: var(--bg-surface-2);
+}

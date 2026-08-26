@@ -41,3 +41,24 @@ export function touchRepo(db: Database.Database, repoId: string): void {
 export function deleteRepo(db: Database.Database, repoPath: string): void {
   db.prepare('DELETE FROM repositories WHERE path = ?').run(repoPath)
 }
+
+/**
+ * Removes a repo from the list and records a tombstone, so scan discovery
+ * does not silently re-add it. Review data on disk is left untouched.
+ */
+export function removeRepo(db: Database.Database, repoPath: string): void {
+  deleteRepo(db, repoPath)
+  db.prepare('INSERT OR REPLACE INTO removed_repositories (path, removed_at) VALUES (?, ?)').run(
+    repoPath,
+    new Date().toISOString()
+  )
+}
+
+export function isRepoRemoved(db: Database.Database, repoPath: string): boolean {
+  return db.prepare('SELECT 1 FROM removed_repositories WHERE path = ?').get(repoPath) !== undefined
+}
+
+/** Explicitly adding a repo again lifts its tombstone. */
+export function clearRemovedRepo(db: Database.Database, repoPath: string): void {
+  db.prepare('DELETE FROM removed_repositories WHERE path = ?').run(repoPath)
+}
