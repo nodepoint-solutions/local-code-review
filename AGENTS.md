@@ -6,8 +6,7 @@ Guidance for AI agents working in this repository.
 
 A local Electron desktop app for reviewing git diffs in a simulated GitHub-style PR workflow. Branch vs branch diff, inline comments, staged review submission, LLM-friendly export (Markdown + JSON).
 
-Design spec: `docs/superpowers/specs/2026-04-08-pr-reviewer-design.md`
-Implementation plan: `docs/superpowers/plans/2026-04-08-local-code-review.md`
+Design specs live in `docs/superpowers/specs/`, implementation plans in `docs/superpowers/plans/`.
 
 ## Architecture
 
