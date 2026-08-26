@@ -9,7 +9,7 @@ interface Props {
 export default function StaleBanner({ onRefresh, loading, midReview }: Props): JSX.Element {
   const message = midReview
     ? 'The code has changed since you started this review. Your existing comments may be mispositioned — review them and delete any that no longer apply.'
-    : 'This PR is out of sync — branches may have changed since last refresh.'
+    : 'The branches have moved since this review was submitted. Comments that no longer match the diff are flagged as stale.'
 
   return (
     <div className={styles.banner}>

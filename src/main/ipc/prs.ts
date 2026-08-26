@@ -12,6 +12,7 @@ import {
 } from '../git/branches'
 import { getDiff } from '../git/diff-parser'
 import { listCommits, getCommitDiff, buildReviewCommitCounts } from '../git/commits'
+import { collectStaleRanges } from '../git/stale'
 import type { CreatePrPayload, PrDetail } from '../../shared/types'
 import { assertKnownRepo } from './_guard'
 
@@ -99,21 +100,21 @@ export function registerPrHandlers(db: Database.Database): void {
       const diff = await getDiff(repoPath, currentBaseSha, currentCompareSha)
 
       // When the branch has advanced since the review was started, detect newly
-      // stale comments and persist the updated SHAs so the next load is cheaper.
+      // stale comments. In-progress reviews also get their SHAs re-pinned so the
+      // next load is cheaper; submitted reviews keep their original SHAs — those
+      // record what was reviewed, and commit counts are derived from them.
       let activeReview = review
+      let isStale = false
       if (review !== null) {
         const shasChanged = currentBaseSha !== review.base_sha || currentCompareSha !== review.compare_sha
-        if (shasChanged && review.status === 'in_progress') {
-          for (const file of diff) {
-            const validLineNums = new Set(file.lines.map((l) => l.diffLineNumber))
-            const staleRanges = review.comments
-              .filter((c) => c.file === file.newPath && !c.is_stale && (!validLineNums.has(c.start_line) || !validLineNums.has(c.end_line)))
-              .map((c) => ({ startLine: c.start_line, endLine: c.end_line }))
-            if (staleRanges.length > 0) {
-              store.markStale(repoPath, prId, review.id, file.newPath, staleRanges)
-            }
+        if (shasChanged) {
+          isStale = true
+          for (const [file, ranges] of collectStaleRanges(diff, review.comments)) {
+            store.markStale(repoPath, prId, review.id, file, ranges)
           }
-          store.updateReviewShas(repoPath, prId, review.id, currentBaseSha, currentCompareSha)
+          if (review.status === 'in_progress') {
+            store.updateReviewShas(repoPath, prId, review.id, currentBaseSha, currentCompareSha)
+          }
           activeReview = store.getReview(repoPath, prId, review.id)
         }
 
@@ -133,7 +134,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
       const allReviews = store.listReviews(repoPath, prId).slice().reverse()
       const reviewCommitCounts = await buildReviewCommitCounts(repoPath, allReviews, currentCompareSha)
-      return { pr, diff, review: activeReview, reviews: allReviews, reviewCommitCounts, isStale: false }
+      return { pr, diff, review: activeReview, reviews: allReviews, reviewCommitCounts, isStale }
     } catch (err) {
       return { error: (err as Error).message }
     }
@@ -149,32 +150,26 @@ export function registerPrHandlers(db: Database.Database): void {
       const reviews = store.listReviews(repoPath, prId)
       const inProgress = store.getInProgressReview(repoPath, prId)
 
-      if (inProgress) {
-        const diff = await getDiff(repoPath, baseSha, compareSha)
+      const diff = await getDiff(repoPath, baseSha, compareSha)
+      const activeReview = inProgress ?? reviews.find(r => r.status === 'submitted') ?? null
 
-        for (const file of diff) {
-          const validLineNums = new Set(file.lines.map((l) => l.diffLineNumber))
-          const staleRanges = inProgress.comments
-            .filter((c) => c.file === file.newPath && (!validLineNums.has(c.start_line) || !validLineNums.has(c.end_line)))
-            .map((c) => ({ startLine: c.start_line, endLine: c.end_line }))
-          if (staleRanges.length > 0) {
-            store.markStale(repoPath, prId, inProgress.id, file.newPath, staleRanges)
-          }
+      if (activeReview) {
+        for (const [file, ranges] of collectStaleRanges(diff, activeReview.comments)) {
+          store.markStale(repoPath, prId, activeReview.id, file, ranges)
         }
-
-        const freshReview = store.getReview(repoPath, prId, inProgress.id)
-        const allReviews1 = store.listReviews(repoPath, prId).slice().reverse()
-        const counts1 = await buildReviewCommitCounts(repoPath, allReviews1, compareSha)
-        return { pr, diff, review: freshReview, reviews: allReviews1, reviewCommitCounts: counts1, isStale: false }
+        if (inProgress) {
+          store.updateReviewShas(repoPath, prId, inProgress.id, baseSha, compareSha)
+        }
       }
 
-      // No in-progress review — use submitted review if present, or auto-create
-      // a new in-progress one if all existing reviews are complete.
-      const diff = await getDiff(repoPath, baseSha, compareSha)
-      const latestReview = reviews.find(r => r.status === 'submitted') ?? null
-      const allReviews2 = reviews.slice().reverse()
-      const counts2 = await buildReviewCommitCounts(repoPath, allReviews2, compareSha)
-      return { pr, diff, review: latestReview, reviews: allReviews2, reviewCommitCounts: counts2, isStale: false }
+      const freshReview = activeReview ? store.getReview(repoPath, prId, activeReview.id) : null
+      const allReviews = store.listReviews(repoPath, prId).slice().reverse()
+      const counts = await buildReviewCommitCounts(repoPath, allReviews, compareSha)
+      const isStale =
+        freshReview !== null &&
+        freshReview.status !== 'in_progress' &&
+        (baseSha !== freshReview.base_sha || compareSha !== freshReview.compare_sha)
+      return { pr, diff, review: freshReview, reviews: allReviews, reviewCommitCounts: counts, isStale }
     } catch (err) {
       return { error: (err as Error).message }
     }
@@ -183,10 +178,15 @@ export function registerPrHandlers(db: Database.Database): void {
   ipcMain.handle('commits:list', async (_e, prId: string, repoPath: string) => {
     try {
       assertKnownRepo(db, repoPath)
-      const reviews = store.listReviews(repoPath, prId)
-      const latest = reviews[0]
-      if (!latest) return []
-      return await listCommits(repoPath, latest.base_sha, latest.compare_sha)
+      // Branch refs rather than review SHAs, so the tab works before any
+      // review exists and keeps showing fix commits pushed after submission.
+      const pr = store.getPR(repoPath, prId)
+      try {
+        return await listCommits(repoPath, pr.base_branch, pr.compare_branch)
+      } catch {
+        // Compare branch deleted post-merge — fall back to the remote ref
+        return await listCommits(repoPath, pr.base_branch, `origin/${pr.compare_branch}`)
+      }
     } catch (err) {
       return { error: (err as Error).message }
     }
