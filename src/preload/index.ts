@@ -1,6 +1,7 @@
 // src/preload/index.ts
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type {
+  PRListItem,
   Repository,
   RepositoryWithMeta,
   DiscoveredRepo,
@@ -37,7 +38,7 @@ const api = {
     ipcRenderer.invoke('branches:list', repoPath),
 
   // PRs (repoPath replaces repoId)
-  listPrs: (repoPath: string): Promise<PRFile[]> => ipcRenderer.invoke('prs:list', repoPath),
+  listPrs: (repoPath: string): Promise<PRListItem[]> => ipcRenderer.invoke('prs:list', repoPath),
   createPr: (payload: CreatePrPayload): Promise<PRFile | { error: string }> =>
     ipcRenderer.invoke('prs:create', payload),
   getPr: (repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> =>

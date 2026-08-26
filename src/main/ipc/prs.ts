@@ -30,7 +30,20 @@ export function registerPrHandlers(db: Database.Database): void {
   ipcMain.handle('prs:list', (_e, repoPath: string) => {
     try {
       assertKnownRepo(db, repoPath)
-      return store.listPRs(repoPath)
+      // Same active-review selection as prs:get, so the list chip and the PR
+      // screen always describe the same phase
+      return store.listPRs(repoPath).map((pr) => {
+        const reviews = store.listReviews(repoPath, pr.id)
+        const active =
+          reviews.find((r) => r.status === 'in_progress') ??
+          reviews.find((r) => r.status === 'submitted') ??
+          null
+        const workflow = new PRWorkflow(pr, active, reviews)
+        const openComments = active
+          ? active.comments.filter((c) => !c.is_stale && c.status === 'open').length
+          : 0
+        return { ...pr, workflowPhase: workflow.phase, openComments }
+      })
     } catch {
       return []
     }

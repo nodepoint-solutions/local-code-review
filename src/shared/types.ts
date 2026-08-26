@@ -74,6 +74,7 @@ export interface AddCommentPayload {
 // ── Composite view types ──────────────────────────────────────────────────────
 
 import type { PRFile, ReviewFile } from './review-store'
+import type { WorkflowPhase } from './pr-workflow'
 
 export interface PrDetail {
   pr: PRFile
@@ -82,6 +83,12 @@ export interface PrDetail {
   reviews: ReviewFile[]
   reviewCommitCounts: Record<string, number>
   isStale: boolean
+}
+
+/** PR list row: the PR plus the review state the list surfaces at a glance. */
+export type PRListItem = PRFile & {
+  workflowPhase: WorkflowPhase
+  openComments: number
 }
 
 // ── Commits ───────────────────────────────────────────────────────────────────

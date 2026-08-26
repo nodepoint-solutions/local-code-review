@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import NavBar from '../components/NavBar'
-import type { PRFile } from '../../../shared/types'
+import type { PRFile, PRListItem } from '../../../shared/types'
+import type { WorkflowPhase } from '../../../shared/pr-workflow'
+import { formatRelativeTime } from '../utils/formatTime'
 import styles from './Repo.module.css'
 
 function TrashIcon(): JSX.Element {
@@ -69,11 +71,20 @@ function statusLabel(status: PRFile['status']): string {
   return status
 }
 
+// Phase chip: shown for open PRs whose review has started, so the list answers
+// "where does this PR sit in the cycle" without opening it
+const PHASE_CHIPS: Partial<Record<WorkflowPhase, { label: string; className: string }>> = {
+  reviewing: { label: 'Review in progress', className: 'phaseReviewing' },
+  reviewed: { label: 'Review submitted', className: 'phaseReviewed' },
+  in_fix: { label: 'Agent fixing', className: 'phaseReviewed' },
+  fix_complete: { label: 'Comments addressed', className: 'phaseComplete' },
+}
+
 export default function Repo(): JSX.Element {
   const { repoId } = useParams<{ repoId: string }>()
   const navigate = useNavigate()
   const { repos, setSelectedRepo } = useStore()
-  const [prs, setPrs] = useState<PRFile[]>([])
+  const [prs, setPrs] = useState<PRListItem[]>([])
 
   const repo = repos.find((r) => r.id === repoId)
 
@@ -171,10 +182,23 @@ export default function Repo(): JSX.Element {
                       <code className={styles.branch}>{pr.compare_branch}</code>
                       <span className={styles.arrow}>→</span>
                       <code className={styles.branch}>{pr.base_branch}</code>
+                      <span className={styles.prTime}>
+                        · opened {formatRelativeTime(pr.created_at)}
+                      </span>
                     </div>
                   </div>
                 </button>
                 <div className={styles.prActions}>
+                  {pr.status === 'open' && PHASE_CHIPS[pr.workflowPhase] && (
+                    <span
+                      className={`${styles.phaseChip} ${styles[PHASE_CHIPS[pr.workflowPhase]!.className]}`}
+                    >
+                      {PHASE_CHIPS[pr.workflowPhase]!.label}
+                      {pr.openComments > 0 && (
+                        <span className={styles.phaseCount}>{pr.openComments}</span>
+                      )}
+                    </span>
+                  )}
                   <span
                     className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}
                   >
