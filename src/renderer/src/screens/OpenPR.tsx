@@ -40,12 +40,13 @@ export default function OpenPR(): JSX.Element {
         compareBranch,
       })
       if ('error' in pr) {
-        setError((pr as any).message ?? 'Failed to create pull request.')
+        const failure = pr as { error: string; message?: string }
+        setError(failure.message ?? 'Failed to create pull request.')
         return
       }
       navigate(`/repo/${repo.id}/pr/${pr.id}`)
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to create pull request.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create pull request.')
     } finally {
       setLoading(false)
     }

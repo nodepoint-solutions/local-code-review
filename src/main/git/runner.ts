@@ -21,11 +21,12 @@ export async function execGit(repoPath: string, args: string[]): Promise<string>
       maxBuffer: 50 * 1024 * 1024,
     })
     return stdout
-  } catch (err: any) {
+  } catch (err) {
+    const e = err as Partial<{ message: string; stderr: string; code: number | null }>
     throw new GitError(
-      `git ${args[0]} failed: ${err.message}`,
-      err.stderr ?? '',
-      err.code ?? null
+      `git ${args[0]} failed: ${e.message ?? String(err)}`,
+      e.stderr ?? '',
+      e.code ?? null
     )
   }
 }

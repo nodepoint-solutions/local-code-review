@@ -2,7 +2,7 @@
 // better-sqlite3 uses __non_webpack_require__ to load its native .node binding;
 // without this, electron-vite's bundled require would intercept the call and
 // the native module would fail to load at runtime.
-;(globalThis as any).__non_webpack_require__ = require
+(globalThis as Record<string, unknown>).__non_webpack_require__ = require
 
 import { app, BrowserWindow, Tray, Menu, nativeImage, shell, ipcMain } from 'electron'
 import { join } from 'path'

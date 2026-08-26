@@ -2,6 +2,7 @@
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
+import { execSync } from 'child_process'
 import { app } from 'electron'
 import type { IntegrationStatus } from '../shared/types'
 
@@ -154,7 +155,6 @@ function mcpBinaryPath(): string {
 }
 
 function resolveNodePath(): string {
-  const { execSync } = require('child_process') as typeof import('child_process')
   try {
     return execSync('which node', { encoding: 'utf8' }).trim()
   } catch {
