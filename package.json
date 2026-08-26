@@ -21,9 +21,9 @@
     "dist:win": "npm run build && electron-builder --win --publish never",
     "dist:win:zip": "npm run build && electron-builder --win zip --publish never",
     "dist:linux": "npm run build && electron-builder --linux --publish never",
-    "test": "vitest --workspace vitest.workspace.ts",
-    "test:main": "vitest --workspace vitest.workspace.ts --project main",
-    "test:renderer": "vitest --workspace vitest.workspace.ts --project renderer"
+    "test": "ELECTRON_RUN_AS_NODE=1 electron node_modules/vitest/vitest.mjs --workspace vitest.workspace.ts",
+    "test:main": "ELECTRON_RUN_AS_NODE=1 electron node_modules/vitest/vitest.mjs --workspace vitest.workspace.ts --project main",
+    "test:renderer": "ELECTRON_RUN_AS_NODE=1 electron node_modules/vitest/vitest.mjs --workspace vitest.workspace.ts --project renderer"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",
