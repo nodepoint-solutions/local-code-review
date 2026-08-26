@@ -63,10 +63,6 @@ export default function ReviewPanel({ pr, review, reviews, comments, prId, repoP
     }
   }
 
-  function getFileName(path: string): string {
-    return path.split('/').pop() ?? path
-  }
-
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
@@ -104,7 +100,17 @@ export default function ReviewPanel({ pr, review, reviews, comments, prId, repoP
             {workflow.phase === 'awaiting_review' ? (
               <>
                 <p className={styles.emptyTitle}>No review started</p>
-                <p className={styles.emptyText}>Start a review to add inline comments on the diff.</p>
+                <p className={styles.emptyText}>
+                  Open <strong>Files changed</strong> and click the <strong>+</strong> button on any
+                  diff line — your first comment starts the review.
+                </p>
+              </>
+            ) : workflow.phase === 'fix_complete' ? (
+              <>
+                <p className={styles.emptyTitle}>All comments addressed</p>
+                <p className={styles.emptyText}>
+                  Adding a new comment on the diff starts the next review round.
+                </p>
               </>
             ) : (
               <>
@@ -124,7 +130,7 @@ export default function ReviewPanel({ pr, review, reviews, comments, prId, repoP
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
                 <span className={styles.commentFileName} title={comment.file}>
-                  {getFileName(comment.file)}
+                  {comment.file}
                 </span>
                 <span className={styles.commentLines}>
                   :{comment.start_line}

@@ -170,8 +170,8 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
               <div className={styles.welcomeText}>
                 <h1 className={styles.welcomeTitle}>Local Code Review</h1>
                 <p className={styles.welcomeSubtitle}>
-                  AI-powered code review, running entirely on your machine. Let&apos;s get you
-                  set up in a few quick steps.
+                  Review AI-generated code on your machine before it reaches GitHub.
+                  Let&apos;s get you set up in a few quick steps.
                 </p>
               </div>
 
@@ -298,7 +298,8 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
                 <h2 className={styles.stepTitle}>Scan Directory</h2>
                 <p className={styles.stepDesc}>
                   Choose a base directory for Local Code Review to scan and auto-discover git
-                  repositories.
+                  repositories. This is optional — you can also add repositories one by one
+                  later.
                 </p>
               </div>
 
@@ -351,7 +352,7 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
                   className={[styles.btn, styles.btnPrimary].join(' ')}
                   onClick={() => goTo(3)}
                 >
-                  Continue
+                  {scanDir ? 'Continue' : 'Skip for now'}
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path
                       d="M2.5 7h9M8 3.5L11.5 7 8 10.5"

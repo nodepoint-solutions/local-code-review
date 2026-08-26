@@ -63,6 +63,7 @@ export default function ReviewTimeline({ pr, reviews, reviewCommitCounts, onReso
                     <CommentThread
                       key={comment.id}
                       comment={comment}
+                      showFile
                       onResolve={onResolveComment ? (status) => onResolveComment(review.id, comment.id, status) : undefined}
                     />
                   ))}

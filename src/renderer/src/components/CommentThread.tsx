@@ -11,6 +11,8 @@ interface Props {
   focused?: boolean
   /** When set, open comments offer Resolve / Won't fix actions to the reviewer. */
   onResolve?: (status: 'resolved' | 'wont_fix') => void
+  /** Prefix the line reference with the file path — for contexts outside the diff. */
+  showFile?: boolean
 }
 
 function TrashIcon(): JSX.Element {
@@ -21,10 +23,11 @@ function TrashIcon(): JSX.Element {
   )
 }
 
-export default function CommentThread({ comment, allowDelete, onDelete, focused, onResolve }: Props): JSX.Element {
+export default function CommentThread({ comment, allowDelete, onDelete, focused, onResolve, showFile }: Props): JSX.Element {
   const lineRange = comment.start_line === comment.end_line
     ? `Line ${comment.start_line}`
     : `Lines ${comment.start_line}–${comment.end_line}`
+  const lineLabel = showFile ? `${comment.file} · ${lineRange}` : lineRange
 
   return (
     <div
@@ -36,7 +39,7 @@ export default function CommentThread({ comment, allowDelete, onDelete, focused,
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          <span className={styles.lineRef}>{lineRange}</span>
+          <span className={styles.lineRef}>{lineLabel}</span>
         </div>
         <div className={styles.meta}>
           {comment.is_stale && <span className={styles.staleTag}>outdated</span>}

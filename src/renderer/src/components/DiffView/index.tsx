@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { AddCommentPayload, ReviewComment, ParsedFile } from '../../../../shared/types'
 import { extractContext } from '../../../../shared/diff-utils'
 import { getLanguageForFile } from '../../utils/syntax'
@@ -49,6 +49,17 @@ export default function DiffView({
   const [hoverLine, setHoverLine] = useState<number | null>(null)
   const [selectionSide, setSelectionSide] = useState<'left' | 'right'>('right')
   const [showCommentBox, setShowCommentBox] = useState(false)
+
+  // Escape abandons a line selection that never became a comment, so a stray
+  // click on the gutter can't silently widen the next comment's range
+  useEffect(() => {
+    if (!isSelecting) return
+    function onKeyDown(e: KeyboardEvent): void {
+      if (e.key === 'Escape') handleCancelComment()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isSelecting])
 
   const language = getLanguageForFile(file.newPath)
 

@@ -19,7 +19,18 @@ export default function OpenPR(): JSX.Element {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (repo) window.api.listBranches(repo.path).then(setBranches)
+    if (!repo) return
+    window.api.listBranches(repo.path).then((list) => {
+      setBranches(list)
+      // Preselect the conventional default branch as base — the compare
+      // branch is the choice the user actually came here to make
+      setBaseBranch((current) => {
+        if (current) return current
+        if (list.includes('main')) return 'main'
+        if (list.includes('master')) return 'master'
+        return current
+      })
+    })
   }, [repo?.path])
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
