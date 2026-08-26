@@ -434,6 +434,18 @@ export default function PR(): JSX.Element {
     return true
   }
 
+  async function handleResolveComment(reviewId: string, commentId: string, status: 'resolved' | 'wont_fix'): Promise<void> {
+    if (!repo || !prId) return
+    const result = await window.api.resolveComment(repo.path, prId, reviewId, commentId, status)
+    if ('error' in result) {
+      showNotification(result.error)
+      return
+    }
+    // Refetch through prs:get so a fully addressed review auto-completes
+    const updated = await window.api.getPr(repo.path, prId)
+    if (updated && !('error' in updated)) setPrDetail(updated)
+  }
+
   async function handleDeleteComment(commentId: string): Promise<void> {
     if (!repo || !prId || !review || review.status !== 'in_progress') return
     await window.api.deleteComment(repo.path, prId, review.id, commentId)
@@ -641,6 +653,7 @@ export default function PR(): JSX.Element {
                   pr={pr}
                   reviews={prDetail.reviews}
                   reviewCommitCounts={prDetail.reviewCommitCounts}
+                  onResolveComment={workflow.allowsManualResolve() ? handleResolveComment : undefined}
                 />
             </div>
           </div>
@@ -939,6 +952,11 @@ export default function PR(): JSX.Element {
                     readOnly={workflow.phase === 'reviewed' || workflow.phase === 'in_fix' || workflow.phase === 'closed'}
                     allowDeleteComment={review?.status === 'in_progress'}
                     onDeleteComment={handleDeleteComment}
+                    onResolveComment={
+                      workflow.allowsManualResolve() && review
+                        ? (commentId, status) => handleResolveComment(review.id, commentId, status)
+                        : undefined
+                    }
                     focusedCommentId={navComments[focusedCommentIndex]?.id}
                     matchedLineNumbers={matchedLineNumbersByFile.get(file.newPath)}
                     activeMatchLineNumber={activeMatch?.filePath === file.newPath ? activeMatch.diffLineNumber : null}

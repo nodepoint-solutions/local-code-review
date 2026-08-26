@@ -15,6 +15,7 @@ interface Props {
   readOnly?: boolean
   allowDeleteComment?: boolean
   onDeleteComment?: (commentId: string) => void
+  onResolveComment?: (commentId: string, status: 'resolved' | 'wont_fix') => void
   focusedCommentId?: string
   matchedLineNumbers?: Set<number>
   activeMatchLineNumber?: number | null
@@ -38,7 +39,7 @@ function ChevronRightIcon(): JSX.Element {
 
 export default function DiffView({
   file, comments, view, onAddComment, readOnly = false,
-  allowDeleteComment, onDeleteComment, focusedCommentId,
+  allowDeleteComment, onDeleteComment, onResolveComment, focusedCommentId,
   matchedLineNumbers, activeMatchLineNumber,
 }: Props): JSX.Element {
   const [expanded, setExpanded] = useState(true)
@@ -164,6 +165,7 @@ export default function DiffView({
               hoverLine={hoverLine}
               allowDeleteComment={allowDeleteComment}
               onDeleteComment={onDeleteComment}
+              onResolveComment={onResolveComment}
               focusedCommentId={focusedCommentId}
               showCommentBox={showCommentBox}
               commentBoxEndLine={selectionStart !== null && selectionEnd !== null ? Math.max(selectionStart, selectionEnd) : null}
@@ -187,6 +189,7 @@ export default function DiffView({
               hoverLine={hoverLine}
               allowDeleteComment={allowDeleteComment}
               onDeleteComment={onDeleteComment}
+              onResolveComment={onResolveComment}
               focusedCommentId={focusedCommentId}
               showCommentBox={showCommentBox}
               commentBoxEndLine={selectionStart !== null && selectionEnd !== null ? Math.max(selectionStart, selectionEnd) : null}

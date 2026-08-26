@@ -9,6 +9,8 @@ interface Props {
   allowDelete?: boolean
   onDelete?: () => void
   focused?: boolean
+  /** When set, open comments offer Resolve / Won't fix actions to the reviewer. */
+  onResolve?: (status: 'resolved' | 'wont_fix') => void
 }
 
 function TrashIcon(): JSX.Element {
@@ -19,7 +21,7 @@ function TrashIcon(): JSX.Element {
   )
 }
 
-export default function CommentThread({ comment, allowDelete, onDelete, focused }: Props): JSX.Element {
+export default function CommentThread({ comment, allowDelete, onDelete, focused, onResolve }: Props): JSX.Element {
   const lineRange = comment.start_line === comment.end_line
     ? `Line ${comment.start_line}`
     : `Lines ${comment.start_line}–${comment.end_line}`
@@ -48,6 +50,16 @@ export default function CommentThread({ comment, allowDelete, onDelete, focused 
         </div>
       </div>
       <div className={styles.body}><ReactMarkdown>{comment.body}</ReactMarkdown></div>
+      {onResolve && comment.status === 'open' && !comment.is_stale && (
+        <div className={styles.resolveActions}>
+          <button className={styles.resolveBtn} onClick={() => onResolve('resolved')}>
+            Resolve
+          </button>
+          <button className={styles.wontFixBtn} onClick={() => onResolve('wont_fix')}>
+            Won't fix
+          </button>
+        </div>
+      )}
       {comment.resolution && (
         <div className={styles.resolution}>
           <div className={styles.resolutionMeta}>

@@ -183,3 +183,29 @@
 .focused {
   animation: focusPulse 1.2s ease-out forwards;
 }
+
+.resolveActions {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+}
+.resolveBtn,
+.wontFixBtn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  color: var(--text);
+}
+.resolveBtn:hover {
+  border-color: var(--success, #2da44e);
+  color: var(--success, #2da44e);
+}
+.wontFixBtn:hover {
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+}

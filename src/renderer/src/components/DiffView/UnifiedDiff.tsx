@@ -17,6 +17,7 @@ interface Props {
   hoverLine: number | null
   allowDeleteComment?: boolean
   onDeleteComment?: (commentId: string) => void
+  onResolveComment?: (commentId: string, status: 'resolved' | 'wont_fix') => void
   focusedCommentId?: string
   showCommentBox?: boolean
   commentBoxEndLine?: number | null
@@ -31,7 +32,7 @@ export default function UnifiedDiff({
   file, comments, language,
   onStartComment, onExtendComment, onHoverLine,
   isSelecting, selectionStart, selectionEnd, hoverLine,
-  allowDeleteComment, onDeleteComment, focusedCommentId,
+  allowDeleteComment, onDeleteComment, onResolveComment, focusedCommentId,
   showCommentBox, commentBoxEndLine, commentBoxStartLine,
   onCommentBoxSubmit, onCommentBoxCancel,
   matchedLineNumbers, activeMatchLineNumber,
@@ -73,6 +74,7 @@ export default function UnifiedDiff({
                     comment={comment}
                     allowDelete={allowDeleteComment}
                     onDelete={onDeleteComment ? () => onDeleteComment(comment.id) : undefined}
+                    onResolve={onResolveComment ? (status) => onResolveComment(comment.id, status) : undefined}
                     focused={focusedCommentId === comment.id}
                   />
                 </td>
@@ -99,6 +101,7 @@ export default function UnifiedDiff({
                 comment={comment}
                 allowDelete={allowDeleteComment}
                 onDelete={onDeleteComment ? () => onDeleteComment(comment.id) : undefined}
+                onResolve={onResolveComment ? (status) => onResolveComment(comment.id, status) : undefined}
                 focused={focusedCommentId === comment.id}
               />
             </td>

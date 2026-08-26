@@ -66,6 +66,14 @@ export class PRWorkflow {
     return this.phase === 'reviewed' || this.phase === 'in_fix'
   }
 
+  /**
+   * The reviewer can resolve or decline comments directly, so the cycle can
+   * finish without an agent — the reviewer stays the source of truth.
+   */
+  allowsManualResolve(): boolean {
+    return this.phase === 'reviewed' || this.phase === 'in_fix'
+  }
+
   /** A new review round can be started. */
   allowsNewReview(): boolean {
     return this.phase === 'fix_complete'

@@ -70,6 +70,16 @@ const api = {
   deleteComment: (repoPath: string, prId: string, reviewId: string, commentId: string): Promise<ReviewFile | { error: string }> =>
     ipcRenderer.invoke('comments:delete', repoPath, prId, reviewId, commentId),
 
+  resolveComment: (
+    repoPath: string,
+    prId: string,
+    reviewId: string,
+    commentId: string,
+    status: 'resolved' | 'wont_fix',
+    note?: string
+  ): Promise<ReviewFile | { error: string }> =>
+    ipcRenderer.invoke('comments:resolve', repoPath, prId, reviewId, commentId, status, note),
+
   // Commits
   listCommits: (prId: string, repoPath: string): Promise<Commit[] | { error: string }> =>
     ipcRenderer.invoke('commits:list', prId, repoPath),

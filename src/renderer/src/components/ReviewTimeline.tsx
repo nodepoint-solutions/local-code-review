@@ -8,9 +8,10 @@ interface Props {
   pr: PRFile
   reviews: ReviewFile[]
   reviewCommitCounts: Record<string, number>
+  onResolveComment?: (reviewId: string, commentId: string, status: 'resolved' | 'wont_fix') => void
 }
 
-export default function ReviewTimeline({ pr, reviews, reviewCommitCounts }: Props): JSX.Element {
+export default function ReviewTimeline({ pr, reviews, reviewCommitCounts, onResolveComment }: Props): JSX.Element {
   return (
     <div className={styles.timeline}>
       {/* PR opened */}
@@ -59,7 +60,11 @@ export default function ReviewTimeline({ pr, reviews, reviewCommitCounts }: Prop
               {visibleComments.length > 0 && (
                 <div className={styles.commentList}>
                   {visibleComments.map((comment) => (
-                    <CommentThread key={comment.id} comment={comment} />
+                    <CommentThread
+                      key={comment.id}
+                      comment={comment}
+                      onResolve={onResolveComment ? (status) => onResolveComment(review.id, comment.id, status) : undefined}
+                    />
                   ))}
                 </div>
               )}

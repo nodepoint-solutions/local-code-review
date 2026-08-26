@@ -48,6 +48,30 @@ export function registerReviewHandlers(db: Database.Database): void {
     }
   })
 
+  ipcMain.handle(
+    'comments:resolve',
+    (_e, repoPath: string, prId: string, reviewId: string, commentId: string, status: 'resolved' | 'wont_fix', note?: string) => {
+      try {
+        assertKnownRepo(db, repoPath)
+        const pr = store.getPR(repoPath, prId)
+        const activeReview = store.getActiveReview(repoPath, prId)
+        const workflow = new PRWorkflow(pr, activeReview)
+        if (!workflow.allowsManualResolve()) {
+          return { error: 'Comments can be resolved once the review has been submitted.' }
+        }
+        return store.resolveComment(repoPath, prId, reviewId, commentId, status, {
+          comment:
+            note?.trim() ||
+            (status === 'resolved' ? 'Marked as resolved by the reviewer.' : 'Declined by the reviewer.'),
+          resolved_by: 'reviewer',
+          resolved_at: new Date().toISOString(),
+        })
+      } catch (err) {
+        return { error: (err as Error).message }
+      }
+    }
+  )
+
   ipcMain.handle('reviews:submit', async (_e, repoPath: string, prId: string, reviewId: string) => {
     try {
       assertKnownRepo(db, repoPath)
