@@ -9,7 +9,10 @@ import { ReviewStore } from '../../shared/review-store'
 import { checkGlobalGitignore, installGlobalGitignore } from '../gitignore'
 const store = new ReviewStore()
 
-export function registerRepoHandlers(db: Database.Database): void {
+export function registerRepoHandlers(
+  db: Database.Database,
+  onRepoAdded?: (repoPath: string) => void
+): void {
   ipcMain.handle('repos:list', async () => {
     try {
       const baseDir = getSetting(db, 'scan_base_dir')
@@ -17,6 +20,7 @@ export function registerRepoHandlers(db: Database.Database): void {
         const discovered = await scanForReviewRepos(baseDir)
         for (const { path: repoPath, name } of discovered) {
           insertRepo(db, repoPath, name)
+          onRepoAdded?.(repoPath)
         }
       }
       const repos = listRepos(db)
@@ -44,6 +48,7 @@ export function registerRepoHandlers(db: Database.Database): void {
       const name = path.basename(repoPath)
       const repo = insertRepo(db, repoPath, name)
       touchRepo(db, repo.id)
+      onRepoAdded?.(repoPath)
       return { repo }
     } catch (err) {
       return { error: 'unexpected', message: (err as Error).message }
@@ -58,6 +63,7 @@ export function registerRepoHandlers(db: Database.Database): void {
       const name = path.basename(repoPath)
       const repo = insertRepo(db, repoPath, name)
       touchRepo(db, repo.id)
+      onRepoAdded?.(repoPath)
       return { repo }
     } catch (err) {
       return { error: 'unexpected', message: (err as Error).message }
