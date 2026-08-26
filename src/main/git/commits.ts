@@ -4,7 +4,11 @@ import type { Commit, ParsedFile } from '../../shared/types'
 import type { ReviewFile } from '../../shared/review-store'
 
 /** Returns commits reachable from compareSha but not baseSha. */
-export async function listCommits(repoPath: string, baseSha: string, compareSha: string): Promise<Commit[]> {
+export async function listCommits(
+  repoPath: string,
+  baseSha: string,
+  compareSha: string
+): Promise<Commit[]> {
   const raw = await execGit(repoPath, [
     'log',
     '--format=%H%x00%h%x00%s%x00%an%x00%ae%x00%at',
@@ -21,7 +25,11 @@ export async function listCommits(repoPath: string, baseSha: string, compareSha:
 }
 
 /** Returns the number of commits reachable from toSha but not fromSha. */
-export async function countCommitsBetween(repoPath: string, fromSha: string, toSha: string): Promise<number> {
+export async function countCommitsBetween(
+  repoPath: string,
+  fromSha: string,
+  toSha: string
+): Promise<number> {
   if (fromSha === toSha) return 0
   try {
     const raw = await execGit(repoPath, ['rev-list', '--count', `${fromSha}..${toSha}`])
@@ -40,7 +48,7 @@ export async function countCommitsBetween(repoPath: string, fromSha: string, toS
 export async function buildReviewCommitCounts(
   repoPath: string,
   reviews: ReviewFile[],
-  headCompareSha: string,
+  headCompareSha: string
 ): Promise<Record<string, number>> {
   const counts: Record<string, number> = {}
   for (let i = 0; i < reviews.length; i++) {
@@ -56,7 +64,14 @@ export async function buildReviewCommitCounts(
 /** Returns the file diffs introduced by a single commit. */
 export async function getCommitDiff(repoPath: string, hash: string): Promise<ParsedFile[]> {
   try {
-    const raw = await execGit(repoPath, ['diff-tree', '--no-commit-id', '-p', '-r', '--unified=3', hash])
+    const raw = await execGit(repoPath, [
+      'diff-tree',
+      '--no-commit-id',
+      '-p',
+      '-r',
+      '--unified=3',
+      hash,
+    ])
     return parseDiff(raw)
   } catch {
     // Fallback for merge commits / root commits where diff-tree gives nothing

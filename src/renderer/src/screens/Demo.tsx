@@ -44,7 +44,7 @@ const STEPS: Step[] = [
   {
     id: 'ship',
     hint: '05 — Ship',
-    headline: 'Open the PR on GitHub when it\'s ready',
+    headline: "Open the PR on GitHub when it's ready",
     description:
       'Once the code meets your bar, one button transfers the PR to GitHub. Clean history, no half-baked commits, and no noise for the rest of your team.',
   },
@@ -65,7 +65,9 @@ function MockNav({
       {crumbs.map((crumb, i) => (
         <span key={i} className={styles.mockNavSep}>
           ›{' '}
-          <span className={i === crumbs.length - 1 ? styles.mockNavCrumbActive : styles.mockNavCrumb}>
+          <span
+            className={i === crumbs.length - 1 ? styles.mockNavCrumbActive : styles.mockNavCrumb}
+          >
             {crumb}
           </span>
         </span>
@@ -92,14 +94,27 @@ function MockPrHeader({
     <div className={styles.mockPrHeader}>
       <div className={styles.mockPrTitleRow}>
         <span className={styles.mockPrTitle}>{title}</span>
-        <span className={`${styles.mockStatusBadge} ${status === 'open' ? styles.mockStatusOpen : styles.mockStatusSubmitted}`}>
+        <span
+          className={`${styles.mockStatusBadge} ${status === 'open' ? styles.mockStatusOpen : styles.mockStatusSubmitted}`}
+        >
           {status === 'open' ? 'Open' : 'Closed'}
         </span>
       </div>
       <div className={styles.mockPrMeta}>
         <code className={styles.mockBranch}>{compareBranch}</code>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <polyline points="12 5 19 12 12 19" />
         </svg>
         <code className={styles.mockBranch}>{baseBranch}</code>
         <span className={styles.mockMetaDot}>·</span>
@@ -124,12 +139,12 @@ function MockTabBar({
         {tabs.map((t) => (
           <div
             key={t.key}
-            className={t.key === active ? `${styles.mockTab} ${styles.mockTabActive}` : styles.mockTab}
+            className={
+              t.key === active ? `${styles.mockTab} ${styles.mockTabActive}` : styles.mockTab
+            }
           >
             {t.label}
-            {t.count !== undefined && (
-              <span className={styles.mockTabCount}>{t.count}</span>
-            )}
+            {t.count !== undefined && <span className={styles.mockTabCount}>{t.count}</span>}
           </div>
         ))}
       </div>
@@ -137,7 +152,6 @@ function MockTabBar({
     </div>
   )
 }
-
 
 // ─── Mockup 1: Open a PR (OpenPR screen) ─────────────────────────────────────
 
@@ -159,20 +173,51 @@ function MockupOpen(): JSX.Element {
                 <label className={styles.m1Label}>Base branch</label>
                 <div className={styles.m1Select}>
                   <span>main</span>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="6 9 12 15 18 9" /></svg>
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
                 </div>
                 <span className={styles.m1FieldHint}>The branch you want to merge into</span>
               </div>
               <div className={styles.m1Arrow}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
                 </svg>
               </div>
               <div className={styles.m1BranchField}>
                 <label className={styles.m1Label}>Compare branch</label>
                 <div className={styles.m1Select}>
                   <span>feature/auth-refactor</span>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="6 9 12 15 18 9" /></svg>
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
                 </div>
                 <span className={styles.m1FieldHint}>The branch with your changes</span>
               </div>
@@ -193,7 +238,6 @@ function MockupOpen(): JSX.Element {
   )
 }
 
-
 // ─── Mockup 2: Review the diff (PR screen — Files Changed tab) ────────────────
 
 type DiffLineType = 'context' | 'removed' | 'added'
@@ -207,19 +251,19 @@ const DIFF_LINES: DiffLine[] = [
   { type: 'context', content: "import { Request } from 'express'" },
   { type: 'context', content: '' },
   { type: 'removed', content: 'const token = req.headers.authorization' },
-  { type: 'added',   content: 'const token = extractToken(req)' },
+  { type: 'added', content: 'const token = extractToken(req)' },
   { type: 'context', content: '' },
-  { type: 'added',   content: 'function extractToken(req: Request) {' },
-  { type: 'added',   content: "  return req.headers.authorization?.split(' ')[1]" },
-  { type: 'added',   content: '}' },
+  { type: 'added', content: 'function extractToken(req: Request) {' },
+  { type: 'added', content: "  return req.headers.authorization?.split(' ')[1]" },
+  { type: 'added', content: '}' },
 ]
 
 const SIDEBAR_FILES = [
-  { name: 'auth.ts',       active: true  },
+  { name: 'auth.ts', active: true },
   { name: 'middleware.ts', active: false },
-  { name: 'utils/',        active: false },
-  { name: 'token.ts',      active: false },
-  { name: 'types.ts',      active: false },
+  { name: 'utils/', active: false },
+  { name: 'token.ts', active: false },
+  { name: 'types.ts', active: false },
 ]
 
 function MockupReview(): JSX.Element {
@@ -229,7 +273,17 @@ function MockupReview(): JSX.Element {
         crumbs={['my-repo', 'Refactor auth middleware']}
         rightSlot={
           <div className={`${styles.mockNavBtn} ${styles.mockNavBtnActive}`}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
             Review
@@ -247,8 +301,8 @@ function MockupReview(): JSX.Element {
       <MockTabBar
         tabs={[
           { key: 'overview', label: 'Overview' },
-          { key: 'commits',  label: 'Commits' },
-          { key: 'files',    label: 'Files changed', count: 14 },
+          { key: 'commits', label: 'Commits' },
+          { key: 'files', label: 'Files changed', count: 14 },
         ]}
         active="files"
         rightSlot={
@@ -264,7 +318,11 @@ function MockupReview(): JSX.Element {
           {SIDEBAR_FILES.map((f, i) => (
             <div
               key={f.name}
-              className={f.active ? `${styles.m2SidebarFile} ${styles.m2SidebarFileActive}` : styles.m2SidebarFile}
+              className={
+                f.active
+                  ? `${styles.m2SidebarFile} ${styles.m2SidebarFileActive}`
+                  : styles.m2SidebarFile
+              }
               style={{ animationDelay: `${0.35 + i * 0.06}s` }}
             >
               {f.name}
@@ -273,8 +331,19 @@ function MockupReview(): JSX.Element {
         </div>
         <div className={styles.m2Diff}>
           <div className={styles.m2DiffFileHeader}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
             </svg>
             <span className={styles.m2DiffFileName}>auth.ts</span>
           </div>
@@ -302,7 +371,6 @@ function MockupReview(): JSX.Element {
   )
 }
 
-
 // ─── Mockup 3: Assign to agent (PR Overview tab after submitting) ─────────────
 
 function MockupSubmit(): JSX.Element {
@@ -319,8 +387,8 @@ function MockupSubmit(): JSX.Element {
       <MockTabBar
         tabs={[
           { key: 'overview', label: 'Overview' },
-          { key: 'commits',  label: 'Commits' },
-          { key: 'files',    label: 'Files changed', count: 14 },
+          { key: 'commits', label: 'Commits' },
+          { key: 'files', label: 'Files changed', count: 14 },
         ]}
         active="overview"
       />
@@ -378,7 +446,6 @@ function MockupSubmit(): JSX.Element {
   )
 }
 
-
 // ─── Mockup 4: Agent resolves ─────────────────────────────────────────────────
 
 interface TermLine {
@@ -389,16 +456,21 @@ interface TermLine {
 }
 
 const TERM_LINES: TermLine[] = [
-  { delay: 0,    prefix: '$', text: 'claude-code',                                  variant: 'cmd'     },
-  { delay: 450,  prefix: '›', text: 'Loaded review: auth-refactor',                 variant: 'info'    },
-  { delay: 950,  prefix: '›', text: '3 open comments across 2 files',               variant: 'info'    },
-  { delay: 1500, prefix: '›', text: 'Fixing auth.ts:12 — validate token format…',   variant: 'info'    },
-  { delay: 2400, prefix: '›', text: 'Committing: "fix: validate token format"',     variant: 'info'    },
-  { delay: 3100, prefix: '✓', text: 'auth.ts:12 resolved',                          variant: 'success' },
-  { delay: 3600, prefix: '›', text: 'Fixing utils/token.ts:8 — error annotation…',  variant: 'info'    },
-  { delay: 4400, prefix: '✓', text: 'utils/token.ts:8 resolved',                    variant: 'success' },
-  { delay: 4600, prefix: '›', text: 'Fixing auth.ts:22 — optional chaining…',       variant: 'info'    },
-  { delay: 4900, prefix: '✓', text: 'All 3 comments resolved',                      variant: 'success' },
+  { delay: 0, prefix: '$', text: 'claude-code', variant: 'cmd' },
+  { delay: 450, prefix: '›', text: 'Loaded review: auth-refactor', variant: 'info' },
+  { delay: 950, prefix: '›', text: '3 open comments across 2 files', variant: 'info' },
+  { delay: 1500, prefix: '›', text: 'Fixing auth.ts:12 — validate token format…', variant: 'info' },
+  { delay: 2400, prefix: '›', text: 'Committing: "fix: validate token format"', variant: 'info' },
+  { delay: 3100, prefix: '✓', text: 'auth.ts:12 resolved', variant: 'success' },
+  {
+    delay: 3600,
+    prefix: '›',
+    text: 'Fixing utils/token.ts:8 — error annotation…',
+    variant: 'info',
+  },
+  { delay: 4400, prefix: '✓', text: 'utils/token.ts:8 resolved', variant: 'success' },
+  { delay: 4600, prefix: '›', text: 'Fixing auth.ts:22 — optional chaining…', variant: 'info' },
+  { delay: 4900, prefix: '✓', text: 'All 3 comments resolved', variant: 'success' },
 ]
 
 interface AgentComment {
@@ -409,15 +481,19 @@ interface AgentComment {
 }
 
 const AGENT_COMMENTS: AgentComment[] = [
-  { file: 'auth.ts',         line: '12', text: 'Validate token format before use',   resolvedDelay: 3100 },
-  { file: 'utils/token.ts',  line: '8',  text: 'Add error annotation for null case', resolvedDelay: 4400 },
-  { file: 'auth.ts',         line: '22', text: 'Use optional chaining here',          resolvedDelay: 4900 },
+  { file: 'auth.ts', line: '12', text: 'Validate token format before use', resolvedDelay: 3100 },
+  {
+    file: 'utils/token.ts',
+    line: '8',
+    text: 'Add error annotation for null case',
+    resolvedDelay: 4400,
+  },
+  { file: 'auth.ts', line: '22', text: 'Use optional chaining here', resolvedDelay: 4900 },
 ]
 
 function MockupAgent(): JSX.Element {
   return (
     <div className={styles.m4Wrap}>
-
       {/* ─── Left: app pane (timeline + comments) ─── */}
       <div className={styles.m4AppPane}>
         <div className={styles.m4AppNav}>
@@ -426,7 +502,6 @@ function MockupAgent(): JSX.Element {
           <span className={styles.m4AppNavActive}>Refactor auth middleware</span>
         </div>
         <div className={styles.m4TlWrap}>
-
           {/* Entry: Review submitted */}
           <div className={styles.m4TlEntry} style={{ animationDelay: '0.2s' }}>
             <div className={styles.m4TlRail}>
@@ -446,11 +521,21 @@ function MockupAgent(): JSX.Element {
                     style={{ animationDelay: `${200 + i * 100}ms` }}
                   >
                     <div className={styles.m4CommentIconWrap}>
-                      <span className={styles.m4CommentCircle} style={{ animationDelay: `${c.resolvedDelay}ms` }} />
-                      <span className={styles.m4CommentCheck} style={{ animationDelay: `${c.resolvedDelay}ms` }}>✓</span>
+                      <span
+                        className={styles.m4CommentCircle}
+                        style={{ animationDelay: `${c.resolvedDelay}ms` }}
+                      />
+                      <span
+                        className={styles.m4CommentCheck}
+                        style={{ animationDelay: `${c.resolvedDelay}ms` }}
+                      >
+                        ✓
+                      </span>
                     </div>
                     <div className={styles.m4CommentBody}>
-                      <code className={styles.m4CommentFile}>{c.file}:{c.line}</code>
+                      <code className={styles.m4CommentFile}>
+                        {c.file}:{c.line}
+                      </code>
                       <span className={styles.m4CommentText}>{c.text}</span>
                     </div>
                   </div>
@@ -471,7 +556,6 @@ function MockupAgent(): JSX.Element {
               <div className={styles.m4CommitCount}>3 commits created</div>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -505,11 +589,9 @@ function MockupAgent(): JSX.Element {
           </div>
         </div>
       </div>
-
     </div>
   )
 }
-
 
 // ─── Mockup 5: Open on GitHub (focused actions card) ─────────────────────────
 
@@ -545,20 +627,24 @@ function MockupShip(): JSX.Element {
   )
 }
 
-
 // ─── Mockup router ────────────────────────────────────────────────────────────
 
 function renderMockup(stepIndex: number): JSX.Element {
   switch (stepIndex) {
-    case 0: return <MockupOpen />
-    case 1: return <MockupReview />
-    case 2: return <MockupSubmit />
-    case 3: return <MockupAgent />
-    case 4: return <MockupShip />
-    default: return <MockupOpen />
+    case 0:
+      return <MockupOpen />
+    case 1:
+      return <MockupReview />
+    case 2:
+      return <MockupSubmit />
+    case 3:
+      return <MockupAgent />
+    case 4:
+      return <MockupShip />
+    default:
+      return <MockupOpen />
   }
 }
-
 
 // ─── Demo screen ─────────────────────────────────────────────────────────────
 
@@ -596,7 +682,6 @@ export default function Demo(): JSX.Element {
   return (
     <div className={styles.page}>
       <div className={styles.panel}>
-
         {/* Window chrome */}
         <div className={styles.chrome}>
           <div className={styles.chromeDots}>
@@ -669,7 +754,6 @@ export default function Demo(): JSX.Element {
             )}
           </div>
         </div>
-
       </div>
     </div>
   )

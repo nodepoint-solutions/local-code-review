@@ -30,7 +30,9 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
   const [integrations, setIntegrations] = useState<IntegrationStatus[]>([])
   const [installing, setInstalling] = useState(false)
   const [scanDir, setScanDir] = useState<string | null>(null)
-  const [gitignoreStatus, setGitignoreStatus] = useState<'pending' | 'installed' | 'skipped'>('pending')
+  const [gitignoreStatus, setGitignoreStatus] = useState<'pending' | 'installed' | 'skipped'>(
+    'pending'
+  )
   const [gitignoreInstalling, setGitignoreInstalling] = useState(false)
   const [gitignoreError, setGitignoreError] = useState<string | null>(null)
 
@@ -131,10 +133,9 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
                 </div>
                 {idx < STEPS.length - 2 && (
                   <div
-                    className={[
-                      styles.stepLine,
-                      step - 1 > idx ? styles.stepLineDone : '',
-                    ].join(' ')}
+                    className={[styles.stepLine, step - 1 > idx ? styles.stepLineDone : ''].join(
+                      ' '
+                    )}
                   />
                 )}
               </Fragment>
@@ -154,9 +155,29 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
               <div className={styles.logoMark}>
                 <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
                   <rect width="52" height="52" rx="14" fill="var(--accent)" fillOpacity="0.12" />
-                  <rect width="52" height="52" rx="14" stroke="var(--accent)" strokeOpacity="0.3" strokeWidth="1" />
-                  <path d="M14 18h24M14 26h18M14 34h12" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" />
-                  <circle cx="38" cy="34" r="7" fill="var(--accent)" fillOpacity="0.15" stroke="var(--accent)" strokeWidth="1.5" />
+                  <rect
+                    width="52"
+                    height="52"
+                    rx="14"
+                    stroke="var(--accent)"
+                    strokeOpacity="0.3"
+                    strokeWidth="1"
+                  />
+                  <path
+                    d="M14 18h24M14 26h18M14 34h12"
+                    stroke="var(--accent)"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                  <circle
+                    cx="38"
+                    cy="34"
+                    r="7"
+                    fill="var(--accent)"
+                    fillOpacity="0.15"
+                    stroke="var(--accent)"
+                    strokeWidth="1.5"
+                  />
                   <path
                     d="M35 34l2 2 4-4"
                     stroke="var(--accent)"
@@ -170,8 +191,8 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
               <div className={styles.welcomeText}>
                 <h1 className={styles.welcomeTitle}>Local Code Review</h1>
                 <p className={styles.welcomeSubtitle}>
-                  Review AI-generated code on your machine before it reaches GitHub.
-                  Let&apos;s get you set up in a few quick steps.
+                  Review AI-generated code on your machine before it reaches GitHub. Let&apos;s get
+                  you set up in a few quick steps.
                 </p>
               </div>
 
@@ -298,8 +319,7 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
                 <h2 className={styles.stepTitle}>Scan Directory</h2>
                 <p className={styles.stepDesc}>
                   Choose a base directory for Local Code Review to scan and auto-discover git
-                  repositories. This is optional — you can also add repositories one by one
-                  later.
+                  repositories. This is optional — you can also add repositories one by one later.
                 </p>
               </div>
 
@@ -333,10 +353,7 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
               </div>
 
               <div className={styles.stepActions}>
-                <button
-                  className={[styles.btn, styles.btnGhost].join(' ')}
-                  onClick={() => goTo(1)}
-                >
+                <button className={[styles.btn, styles.btnGhost].join(' ')} onClick={() => goTo(1)}>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path
                       d="M11.5 7h-9M6 3.5L2.5 7 6 10.5"
@@ -372,10 +389,9 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
               <div className={styles.stepHeader}>
                 <h2 className={styles.stepTitle}>Global .gitignore</h2>
                 <p className={styles.stepDesc}>
-                  Local Code Review stores data in{' '}
-                  <code className={styles.code}>.reviews</code> folders inside each repo. A
-                  global gitignore rule prevents these from being accidentally committed across
-                  all your projects.
+                  Local Code Review stores data in <code className={styles.code}>.reviews</code>{' '}
+                  folders inside each repo. A global gitignore rule prevents these from being
+                  accidentally committed across all your projects.
                 </p>
               </div>
 
@@ -439,10 +455,7 @@ export default function Setup({ onComplete }: SetupProps): JSX.Element {
               )}
 
               <div className={styles.stepActions}>
-                <button
-                  className={[styles.btn, styles.btnGhost].join(' ')}
-                  onClick={() => goTo(2)}
-                >
+                <button className={[styles.btn, styles.btnGhost].join(' ')} onClick={() => goTo(2)}>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path
                       d="M11.5 7h-9M6 3.5L2.5 7 6 10.5"

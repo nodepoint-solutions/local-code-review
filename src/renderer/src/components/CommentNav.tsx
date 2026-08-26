@@ -2,7 +2,7 @@ import styles from './CommentNav.module.css'
 
 interface Props {
   total: number
-  current: number   // 0-based index, -1 when nothing focused
+  current: number // 0-based index, -1 when nothing focused
   onPrev: () => void
   onNext: () => void
 }

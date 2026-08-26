@@ -2,8 +2,8 @@ import type { ReviewComment } from '../../../shared/types'
 import styles from './CommentOutline.module.css'
 
 interface Props {
-  comments: ReviewComment[]  // sorted, non-stale
-  focusedIndex: number       // -1 = none focused
+  comments: ReviewComment[] // sorted, non-stale
+  focusedIndex: number // -1 = none focused
   onSelect: (index: number) => void
 }
 
@@ -16,11 +16,18 @@ function getDir(path: string): string {
   return parts.length > 1 ? parts.slice(0, -1).join('/') : ''
 }
 
-export default function CommentOutline({ comments, focusedIndex, onSelect }: Props): JSX.Element | null {
+export default function CommentOutline({
+  comments,
+  focusedIndex,
+  onSelect,
+}: Props): JSX.Element | null {
   if (comments.length === 0) return null
 
   // Group into file sections preserving order
-  const sections: Array<{ file: string; entries: Array<{ comment: ReviewComment; index: number }> }> = []
+  const sections: Array<{
+    file: string
+    entries: Array<{ comment: ReviewComment; index: number }>
+  }> = []
   for (let i = 0; i < comments.length; i++) {
     const c = comments[i]
     const last = sections[sections.length - 1]

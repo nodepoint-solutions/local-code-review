@@ -11,7 +11,12 @@ interface Props {
   onResolveComment?: (reviewId: string, commentId: string, status: 'resolved' | 'wont_fix') => void
 }
 
-export default function ReviewTimeline({ pr, reviews, reviewCommitCounts, onResolveComment }: Props): JSX.Element {
+export default function ReviewTimeline({
+  pr,
+  reviews,
+  reviewCommitCounts,
+  onResolveComment,
+}: Props): JSX.Element {
   return (
     <div className={styles.timeline}>
       {/* PR opened */}
@@ -54,7 +59,9 @@ export default function ReviewTimeline({ pr, reviews, reviewCommitCounts, onReso
               <div className={styles.entryHeader}>
                 <span className={styles.entryTitle}>Review submitted</span>
                 {review.submitted_at && (
-                  <span className={styles.entryTime}>{formatRelativeTime(review.submitted_at)}</span>
+                  <span className={styles.entryTime}>
+                    {formatRelativeTime(review.submitted_at)}
+                  </span>
                 )}
               </div>
               {visibleComments.length > 0 && (
@@ -64,7 +71,11 @@ export default function ReviewTimeline({ pr, reviews, reviewCommitCounts, onReso
                       key={comment.id}
                       comment={comment}
                       showFile
-                      onResolve={onResolveComment ? (status) => onResolveComment(review.id, comment.id, status) : undefined}
+                      onResolve={
+                        onResolveComment
+                          ? (status) => onResolveComment(review.id, comment.id, status)
+                          : undefined
+                      }
                     />
                   ))}
                 </div>

@@ -21,11 +21,12 @@ export class McpManager {
   onStderr?: (line: string) => void
 
   constructor(private onEvent: (event: McpEvent) => void) {
-    const suffix = process.platform === 'win32' ? `local-review-${process.pid}` : `local-review-${process.pid}.sock`
-    this.socketPath =
+    const suffix =
       process.platform === 'win32'
-        ? `\\\\.\\pipe\\${suffix}`
-        : path.join(os.tmpdir(), suffix)
+        ? `local-review-${process.pid}`
+        : `local-review-${process.pid}.sock`
+    this.socketPath =
+      process.platform === 'win32' ? `\\\\.\\pipe\\${suffix}` : path.join(os.tmpdir(), suffix)
   }
 
   get running(): boolean {

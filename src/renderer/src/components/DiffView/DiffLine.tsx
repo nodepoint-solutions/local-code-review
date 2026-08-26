@@ -36,7 +36,9 @@ export default function DiffLine({
   if (line.type === 'hunk-header') {
     return (
       <tr className={styles.hunkHeader}>
-        <td colSpan={4} className={styles.hunkHeaderContent}>{line.content}</td>
+        <td colSpan={4} className={styles.hunkHeaderContent}>
+          {line.content}
+        </td>
       </tr>
     )
   }
@@ -67,7 +69,9 @@ export default function DiffLine({
     isInSelection ? styles.inSelection : '',
     hasReviewComments ? styles.hasComment : '',
     isActiveSearchMatch ? styles.activeSearchMatch : isSearchMatch ? styles.searchMatch : '',
-  ].filter(Boolean).join(' ')
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   // Strip prefix char from content for syntax highlighting
   const rawContent = line.content
@@ -88,7 +92,10 @@ export default function DiffLine({
         <button
           className={styles.gutterBtn}
           title="Add comment"
-          onMouseDown={(e) => { e.stopPropagation(); onStartComment(line.diffLineNumber, side) }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+            onStartComment(line.diffLineNumber, side)
+          }}
         >
           +
         </button>

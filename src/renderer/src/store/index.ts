@@ -42,7 +42,11 @@ function getInitialTheme(): Theme {
 export const useStore = create<AppState>((set) => ({
   theme: getInitialTheme(),
   setTheme: (theme) => {
-    try { localStorage.setItem('theme', theme) } catch { /* ignore */ }
+    try {
+      localStorage.setItem('theme', theme)
+    } catch {
+      /* ignore */
+    }
     set({ theme })
   },
 

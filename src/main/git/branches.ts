@@ -50,7 +50,7 @@ export async function isBranchPushed(repoPath: string, branch: string): Promise<
   try {
     // Ask the remote directly for the branch tip SHA
     const lsRemoteOutput = await execGit(repoPath, ['ls-remote', '--heads', 'origin', branch])
-    if (lsRemoteOutput.trim() === '') return false  // branch doesn't exist on remote
+    if (lsRemoteOutput.trim() === '') return false // branch doesn't exist on remote
     const remoteSha = lsRemoteOutput.trim().split('\t')[0]
     // Compare with local branch tip
     const localSha = (await execGit(repoPath, ['rev-parse', `refs/heads/${branch}`])).trim()
@@ -75,7 +75,7 @@ export async function fetchOrigin(repoPath: string): Promise<void> {
 export async function isMergedIntoRemote(
   repoPath: string,
   compareSha: string,
-  baseBranch: string,
+  baseBranch: string
 ): Promise<boolean> {
   try {
     await execGit(repoPath, ['merge-base', '--is-ancestor', compareSha, `origin/${baseBranch}`])

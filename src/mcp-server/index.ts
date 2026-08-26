@@ -18,7 +18,7 @@ if (SOCKET_PATH) socketClient.connect(SOCKET_PATH)
 
 const server = new Server(
   { name: 'local-code-review', version: '1.0.0' },
-  { capabilities: { tools: {}, prompts: {} } },
+  { capabilities: { tools: {}, prompts: {} } }
 )
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({

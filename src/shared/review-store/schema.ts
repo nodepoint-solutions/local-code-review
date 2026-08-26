@@ -14,7 +14,7 @@ export const ResolutionSchema = z.object({
 })
 
 export const ReviewCommentSchema = z.object({
-  id: z.string(),           // "RVW-001" format
+  id: z.string(), // "RVW-001" format
   file: z.string(),
   start_line: z.number().int().positive(),
   end_line: z.number().int().positive(),

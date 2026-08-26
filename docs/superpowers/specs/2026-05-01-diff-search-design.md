@@ -43,7 +43,8 @@ Scan all `diff[fileIndex].lines[lineIndex].content` with a case-insensitive `inc
 A `useEffect` watches `activeMatchLineNumber`. When it changes and is non-null:
 
 ```ts
-document.querySelector(`tr[data-diff-line-number="${activeMatchLineNumber}"]`)
+document
+  .querySelector(`tr[data-diff-line-number="${activeMatchLineNumber}"]`)
   ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
 ```
 
@@ -79,7 +80,7 @@ interface Props {
   query: string
   onQueryChange: (q: string) => void
   matchCount: number
-  activeIndex: number        // 0-based
+  activeIndex: number // 0-based
   onPrev: () => void
   onNext: () => void
   onClose: () => void
@@ -96,6 +97,7 @@ Layout (left to right):
 6. Close button (`✕`)
 
 Keyboard:
+
 - `Enter` → `onNext`
 - `Shift+Enter` → `onPrev`
 - `Escape` → `onClose`
@@ -114,7 +116,7 @@ New variables in the existing theme:
 
 ```css
 --search-match-bg: rgba(255, 200, 0, 0.18);
---search-match-active-bg: rgba(255, 185, 0, 0.40);
+--search-match-active-bg: rgba(255, 185, 0, 0.4);
 --search-match-active-border: #e6a800;
 ```
 
@@ -140,14 +142,14 @@ Reset `searchMatchIndex` to `0` whenever `searchQuery` changes.
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `src/renderer/src/screens/PR.tsx` | Search state, match computation, scroll effect, toolbar button, DiffSearchBar render |
-| `src/renderer/src/screens/PR.module.css` | CSS variables for search highlight colours |
-| `src/renderer/src/components/DiffView/index.tsx` | Accept + forward `matchedLineNumbers`, `activeMatchLineNumber` |
-| `src/renderer/src/components/DiffView/UnifiedDiff.tsx` | Accept + forward, pass booleans to DiffLine |
-| `src/renderer/src/components/DiffView/SplitDiff.tsx` | Accept + forward, pass booleans to DiffLine |
-| `src/renderer/src/components/DiffView/DiffLine.tsx` | `data-diff-line-number` attr, two new optional props + classes |
-| `src/renderer/src/components/DiffView/DiffLine.module.css` | `.searchMatch`, `.activeSearchMatch` |
-| `src/renderer/src/components/DiffView/DiffSearchBar.tsx` | New component |
-| `src/renderer/src/components/DiffView/DiffSearchBar.module.css` | New styles |
+| File                                                            | Change                                                                               |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `src/renderer/src/screens/PR.tsx`                               | Search state, match computation, scroll effect, toolbar button, DiffSearchBar render |
+| `src/renderer/src/screens/PR.module.css`                        | CSS variables for search highlight colours                                           |
+| `src/renderer/src/components/DiffView/index.tsx`                | Accept + forward `matchedLineNumbers`, `activeMatchLineNumber`                       |
+| `src/renderer/src/components/DiffView/UnifiedDiff.tsx`          | Accept + forward, pass booleans to DiffLine                                          |
+| `src/renderer/src/components/DiffView/SplitDiff.tsx`            | Accept + forward, pass booleans to DiffLine                                          |
+| `src/renderer/src/components/DiffView/DiffLine.tsx`             | `data-diff-line-number` attr, two new optional props + classes                       |
+| `src/renderer/src/components/DiffView/DiffLine.module.css`      | `.searchMatch`, `.activeSearchMatch`                                                 |
+| `src/renderer/src/components/DiffView/DiffSearchBar.tsx`        | New component                                                                        |
+| `src/renderer/src/components/DiffView/DiffSearchBar.module.css` | New styles                                                                           |

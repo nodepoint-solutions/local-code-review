@@ -7,7 +7,16 @@ import styles from './Home.module.css'
 
 function FolderIcon(): JSX.Element {
   return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="40"
+      height="40"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
     </svg>
   )
@@ -15,7 +24,16 @@ function FolderIcon(): JSX.Element {
 
 function RepoIcon(): JSX.Element {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="6" y1="3" x2="6" y2="15" />
       <circle cx="18" cy="6" r="3" />
       <circle cx="6" cy="18" r="3" />
@@ -26,7 +44,16 @@ function RepoIcon(): JSX.Element {
 
 function PlusIcon(): JSX.Element {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -35,7 +62,16 @@ function PlusIcon(): JSX.Element {
 
 function ChevronRightIcon(): JSX.Element {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="9 18 15 12 9 6" />
     </svg>
   )
@@ -43,7 +79,16 @@ function ChevronRightIcon(): JSX.Element {
 
 function SearchIcon(): JSX.Element {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="11" cy="11" r="8" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
@@ -59,9 +104,13 @@ function matches(item: { name: string; path: string }, query: string): boolean {
 export default function Home(): JSX.Element {
   const navigate = useNavigate()
   const {
-    repos, setRepos, setSelectedRepo,
-    scanResults, setScanResults,
-    scanInProgress, setScanInProgress,
+    repos,
+    setRepos,
+    setSelectedRepo,
+    scanResults,
+    setScanResults,
+    scanInProgress,
+    setScanInProgress,
   } = useStore()
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -161,7 +210,9 @@ export default function Home(): JSX.Element {
         <div className={styles.pageHeader}>
           <div>
             <h1 className={styles.heading}>Repositories</h1>
-            <p className={styles.subheading}>Select a local git repository to start reviewing pull requests.</p>
+            <p className={styles.subheading}>
+              Select a local git repository to start reviewing pull requests.
+            </p>
           </div>
           <button onClick={handleOpenRepo}>
             <PlusIcon />
@@ -173,8 +224,8 @@ export default function Home(): JSX.Element {
           <div className={styles.onboardingCard}>
             <h2 className={styles.onboardingTitle}>Auto-discover your repositories</h2>
             <p className={styles.onboardingText}>
-              Set a scan directory and we'll find your local git repos automatically.
-              This is optional — you can always add repos manually instead.
+              Set a scan directory and we'll find your local git repos automatically. This is
+              optional — you can always add repos manually instead.
             </p>
             <div className={styles.onboardingActions}>
               <button className="primary" onClick={handleConfigureScanDir}>
@@ -194,7 +245,9 @@ export default function Home(): JSX.Element {
 
         {(repos.length > 0 || scanResults.length > 0) && (
           <div className={styles.searchBar}>
-            <span className={styles.searchIcon}><SearchIcon /></span>
+            <span className={styles.searchIcon}>
+              <SearchIcon />
+            </span>
             <input
               type="text"
               placeholder="Search repositories..."
@@ -206,7 +259,9 @@ export default function Home(): JSX.Element {
 
         {!showOnboarding && repos.length === 0 && scanResults.length === 0 && (
           <div className={styles.empty}>
-            <div className={styles.emptyIcon}><FolderIcon /></div>
+            <div className={styles.emptyIcon}>
+              <FolderIcon />
+            </div>
             <h3 className={styles.emptyTitle}>No repositories yet</h3>
             <p className={styles.emptyText}>
               Add a local git repository to start reviewing pull requests offline.
@@ -234,12 +289,16 @@ export default function Home(): JSX.Element {
                   className={styles.repoItem}
                   onClick={() => handleSelectRepo(repo)}
                 >
-                  <div className={styles.repoIcon}><RepoIcon /></div>
+                  <div className={styles.repoIcon}>
+                    <RepoIcon />
+                  </div>
                   <div className={styles.repoInfo}>
                     <span className={styles.repoName}>{repo.name}</span>
                     <span className={styles.repoPath}>{repo.path}</span>
                   </div>
-                  <span className={styles.repoBadge}>{repo.pr_count} PR{repo.pr_count !== 1 ? 's' : ''}</span>
+                  <span className={styles.repoBadge}>
+                    {repo.pr_count} PR{repo.pr_count !== 1 ? 's' : ''}
+                  </span>
                   <ChevronRightIcon />
                 </button>
               ))}
@@ -259,7 +318,9 @@ export default function Home(): JSX.Element {
                   className={styles.repoItem}
                   onClick={() => handleSelectRepo(repo)}
                 >
-                  <div className={styles.repoIcon}><RepoIcon /></div>
+                  <div className={styles.repoIcon}>
+                    <RepoIcon />
+                  </div>
                   <div className={styles.repoInfo}>
                     <span className={styles.repoName}>{repo.name}</span>
                     <span className={styles.repoPath}>{repo.path}</span>
@@ -285,7 +346,9 @@ export default function Home(): JSX.Element {
                     className={`${styles.repoItem} ${styles.repoItemDiscovered}`}
                     onClick={() => handleDiscoveredRepo(repo)}
                   >
-                    <div className={`${styles.repoIcon} ${styles.repoIconDiscovered}`}><RepoIcon /></div>
+                    <div className={`${styles.repoIcon} ${styles.repoIconDiscovered}`}>
+                      <RepoIcon />
+                    </div>
                     <div className={styles.repoInfo}>
                       <span className={styles.repoName}>{repo.name}</span>
                       <span className={styles.repoPath}>{repo.path}</span>

@@ -29,41 +29,59 @@ function parseMountPoint(hdiutilOutput: string): string | null {
   return null
 }
 
-function downloadFile(
-  url: string,
-  dest: string,
-  onProgress: (pct: number) => void
-): Promise<void> {
+function downloadFile(url: string, dest: string, onProgress: (pct: number) => void): Promise<void> {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest)
     file.on('finish', resolve)
-    file.on('error', (err) => { file.destroy(); reject(err) })
+    file.on('error', (err) => {
+      file.destroy()
+      reject(err)
+    })
 
     function get(urlStr: string, redirects = 0): void {
-      if (redirects > 8) { file.destroy(); reject(new Error('Too many redirects')); return }
+      if (redirects > 8) {
+        file.destroy()
+        reject(new Error('Too many redirects'))
+        return
+      }
       const protocol = urlStr.startsWith('https') ? https : http
-      const req = protocol.get(urlStr, { headers: { 'User-Agent': 'local-code-review-app' } }, (res) => {
-        if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307 || res.statusCode === 308) {
-          res.resume()
-          get(res.headers.location!, redirects + 1)
-          return
+      const req = protocol.get(
+        urlStr,
+        { headers: { 'User-Agent': 'local-code-review-app' } },
+        (res) => {
+          if (
+            res.statusCode === 301 ||
+            res.statusCode === 302 ||
+            res.statusCode === 307 ||
+            res.statusCode === 308
+          ) {
+            res.resume()
+            get(res.headers.location!, redirects + 1)
+            return
+          }
+          if (res.statusCode !== 200) {
+            file.destroy()
+            reject(new Error(`Download failed: HTTP ${res.statusCode}`))
+            return
+          }
+          const total = parseInt(res.headers['content-length'] ?? '0', 10)
+          let received = 0
+          res.on('data', (chunk: Buffer) => {
+            received += chunk.length
+            file.write(chunk)
+            if (total > 0) onProgress(received / total)
+          })
+          res.on('end', () => file.end())
+          res.on('error', (err) => {
+            file.destroy()
+            reject(err)
+          })
         }
-        if (res.statusCode !== 200) {
-          file.destroy()
-          reject(new Error(`Download failed: HTTP ${res.statusCode}`))
-          return
-        }
-        const total = parseInt(res.headers['content-length'] ?? '0', 10)
-        let received = 0
-        res.on('data', (chunk: Buffer) => {
-          received += chunk.length
-          file.write(chunk)
-          if (total > 0) onProgress(received / total)
-        })
-        res.on('end', () => file.end())
-        res.on('error', (err) => { file.destroy(); reject(err) })
+      )
+      req.on('error', (err) => {
+        file.destroy()
+        reject(err)
       })
-      req.on('error', (err) => { file.destroy(); reject(err) })
     }
     get(url)
   })
@@ -84,7 +102,11 @@ export async function installUpdate(
   // 2. Mount DMG
   onProgress('Installing…', 60)
   const { stdout: attachOutput } = await execFileAsync('hdiutil', [
-    'attach', '-nobrowse', '-quiet', '-noverify', dmgPath,
+    'attach',
+    '-nobrowse',
+    '-quiet',
+    '-noverify',
+    dmgPath,
   ])
   const mountPoint = parseMountPoint(attachOutput)
   if (!mountPoint) throw new Error('Could not mount update DMG')

@@ -17,12 +17,12 @@ import type { PRFile, ReviewFile } from './review-store'
 // ── Phases ────────────────────────────────────────────────────────────────────
 
 export type WorkflowPhase =
-  | 'awaiting_review'  // PR open, no review created yet
-  | 'reviewing'        // in_progress review exists
-  | 'reviewed'         // review submitted, no agent assigned
-  | 'in_fix'           // review submitted, agent assigned
-  | 'fix_complete'     // review complete (all comments resolved)
-  | 'closed'           // PR closed
+  | 'awaiting_review' // PR open, no review created yet
+  | 'reviewing' // in_progress review exists
+  | 'reviewed' // review submitted, no agent assigned
+  | 'in_fix' // review submitted, agent assigned
+  | 'fix_complete' // review complete (all comments resolved)
+  | 'closed' // PR closed
 
 // ── State machine ─────────────────────────────────────────────────────────────
 
@@ -36,12 +36,16 @@ export class PRWorkflow {
     this.phase = PRWorkflow.derive(pr, review, allReviews)
   }
 
-  private static derive(pr: PRFile, review: ReviewFile | null, allReviews: ReviewFile[] = []): WorkflowPhase {
+  private static derive(
+    pr: PRFile,
+    review: ReviewFile | null,
+    allReviews: ReviewFile[] = []
+  ): WorkflowPhase {
     if (pr.status === 'closed') return 'closed'
     if (review === null) {
       // No active (in_progress/submitted) review. If a complete review exists in
       // history we are in fix_complete so the user can start a new review round.
-      return allReviews.some(r => r.status === 'complete') ? 'fix_complete' : 'awaiting_review'
+      return allReviews.some((r) => r.status === 'complete') ? 'fix_complete' : 'awaiting_review'
     }
     if (review.status === 'in_progress') return 'reviewing'
     if (review.status === 'complete') return 'fix_complete'

@@ -169,7 +169,15 @@
   margin-left: 4px;
 }
 
-.statusAdded    { color: var(--added-text); }
-.statusDeleted  { color: var(--removed-text); }
-.statusRenamed  { color: var(--badge-renamed-text); }
-.statusModified { color: var(--accent-text); }
+.statusAdded {
+  color: var(--added-text);
+}
+.statusDeleted {
+  color: var(--removed-text);
+}
+.statusRenamed {
+  color: var(--badge-renamed-text);
+}
+.statusModified {
+  color: var(--accent-text);
+}

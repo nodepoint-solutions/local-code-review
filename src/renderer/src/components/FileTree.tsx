@@ -24,10 +24,10 @@ type FolderNode = {
 type TreeNode = FileNode | FolderNode
 
 // Layout constants — keep in sync with CSS
-const INDENT = 16   // px per depth level
-const BASE   = 8    // base left padding
-const CHEV   = 12   // chevron width
-const GAP    = 4    // gap between chevron and icon
+const INDENT = 16 // px per depth level
+const BASE = 8 // base left padding
+const CHEV = 12 // chevron width
+const GAP = 4 // gap between chevron and icon
 
 function getStatusChar(f: ParsedFile): { char: string; cls: string } {
   if (f.isNew) return { char: 'A', cls: styles.statusAdded }
@@ -88,12 +88,12 @@ function TreeNodeItem({
   activeFile,
   openFolders,
   onToggleFolder,
-  onSelectFile
+  onSelectFile,
 }: NodeProps): JSX.Element {
   // Icons for folders and files start at the same X for the same depth
-  const folderPL = depth * INDENT + BASE          // chevron starts here
-  const filePL   = depth * INDENT + BASE + CHEV + GAP  // icon starts here (matches folder icon)
-  const lineX    = depth * INDENT + BASE + CHEV / 2    // center of chevron column
+  const folderPL = depth * INDENT + BASE // chevron starts here
+  const filePL = depth * INDENT + BASE + CHEV + GAP // icon starts here (matches folder icon)
+  const lineX = depth * INDENT + BASE + CHEV / 2 // center of chevron column
 
   if (node.type === 'file') {
     const { char, cls } = getStatusChar(node.file)
@@ -141,10 +141,7 @@ function TreeNodeItem({
         <span className={styles.folderName}>{node.name}</span>
       </button>
       {isOpen && (
-        <div
-          className={styles.children}
-          style={{ '--line-x': `${lineX}px` } as CSSProperties}
-        >
+        <div className={styles.children} style={{ '--line-x': `${lineX}px` } as CSSProperties}>
           {node.children.map((child) => (
             <TreeNodeItem
               key={child.type === 'file' ? child.file.newPath : child.path}

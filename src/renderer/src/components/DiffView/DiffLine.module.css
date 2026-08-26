@@ -91,7 +91,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform var(--transition), background var(--transition);
+  transition:
+    transform var(--transition),
+    background var(--transition);
 }
 .gutterBtn:hover {
   background: var(--accent-hover);

@@ -7,7 +7,16 @@ import styles from './Repo.module.css'
 
 function TrashIcon(): JSX.Element {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6l-1 14H6L5 6" />
       <path d="M10 11v6M14 11v6" />
@@ -18,7 +27,16 @@ function TrashIcon(): JSX.Element {
 
 function PlusIcon(): JSX.Element {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -27,7 +45,16 @@ function PlusIcon(): JSX.Element {
 
 function PRIcon(): JSX.Element {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="18" cy="18" r="3" />
       <circle cx="6" cy="6" r="3" />
       <path d="M13 6h3a2 2 0 0 1 2 2v7" />
@@ -71,15 +98,22 @@ export default function Repo(): JSX.Element {
 
   async function handleDelete(pr: PRFile): Promise<void> {
     if (!repo) return
-    if (!window.confirm(`Delete "${pr.title}"?\n\nThis will permanently remove all review data for this PR and cannot be undone.`)) return
+    if (
+      !window.confirm(
+        `Delete "${pr.title}"?\n\nThis will permanently remove all review data for this PR and cannot be undone.`
+      )
+    )
+      return
     await window.api.deletePr(repo.path, pr.id)
     setPrs(await window.api.listPrs(repo.path))
   }
 
   // repos load asynchronously at app start — an empty list means "still loading",
   // not "unknown repo", so a reload deep in the app doesn't flash an error
-  if (!repo && repos.length === 0) return <div style={{ padding: 32, color: 'var(--text-muted)' }}>Loading…</div>
-  if (!repo) return <div style={{ padding: 32, color: 'var(--text-muted)' }}>Repository not found.</div>
+  if (!repo && repos.length === 0)
+    return <div style={{ padding: 32, color: 'var(--text-muted)' }}>Loading…</div>
+  if (!repo)
+    return <div style={{ padding: 32, color: 'var(--text-muted)' }}>Repository not found.</div>
 
   return (
     <div className={styles.page}>
@@ -105,7 +139,9 @@ export default function Repo(): JSX.Element {
               <PRIcon />
             </div>
             <h3 className={styles.emptyTitle}>No pull requests yet</h3>
-            <p className={styles.emptyText}>Create a pull request to start reviewing changes between branches.</p>
+            <p className={styles.emptyText}>
+              Create a pull request to start reviewing changes between branches.
+            </p>
             <button className="primary" onClick={() => navigate(`/repo/${repo.id}/open-pr`)}>
               <PlusIcon />
               New pull request
@@ -123,7 +159,9 @@ export default function Repo(): JSX.Element {
                   onClick={() => navigate(`/repo/${repo.id}/pr/${pr.id}`)}
                 >
                   <div className={styles.prLeft}>
-                    <div className={`${styles.prIconWrap} ${pr.status === 'closed' ? styles.prIconWrapClosed : ''}`}>
+                    <div
+                      className={`${styles.prIconWrap} ${pr.status === 'closed' ? styles.prIconWrapClosed : ''}`}
+                    >
                       <PRIcon />
                     </div>
                   </div>
@@ -137,15 +175,24 @@ export default function Repo(): JSX.Element {
                   </div>
                 </button>
                 <div className={styles.prActions}>
-                  <span className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}>
+                  <span
+                    className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}
+                  >
                     {statusLabel(pr.status)}
                   </span>
                   {pr.status === 'open' ? (
-                    <button className={styles.prActionBtn} onClick={() => handleClose(pr)}>Close</button>
+                    <button className={styles.prActionBtn} onClick={() => handleClose(pr)}>
+                      Close
+                    </button>
                   ) : (
-                    <button className={styles.prActionBtn} onClick={() => handleReopen(pr)}>Reopen</button>
+                    <button className={styles.prActionBtn} onClick={() => handleReopen(pr)}>
+                      Reopen
+                    </button>
                   )}
-                  <button className={`${styles.prActionBtn} ${styles.prActionDanger}`} onClick={() => handleDelete(pr)}>
+                  <button
+                    className={`${styles.prActionBtn} ${styles.prActionDanger}`}
+                    onClick={() => handleDelete(pr)}
+                  >
                     <TrashIcon />
                   </button>
                 </div>

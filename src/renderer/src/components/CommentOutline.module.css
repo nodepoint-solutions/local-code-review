@@ -60,12 +60,12 @@
 }
 
 .item:hover {
-  background: var(--bg-hover, rgba(255,255,255,0.04));
+  background: var(--bg-hover, rgba(255, 255, 255, 0.04));
 }
 
 .itemFocused {
   border-left-color: var(--accent);
-  background: var(--bg-hover, rgba(255,255,255,0.04));
+  background: var(--bg-hover, rgba(255, 255, 255, 0.04));
 }
 
 .lineRef {

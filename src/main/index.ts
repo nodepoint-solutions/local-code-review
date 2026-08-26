@@ -2,7 +2,7 @@
 // better-sqlite3 uses __non_webpack_require__ to load its native .node binding;
 // without this, electron-vite's bundled require would intercept the call and
 // the native module would fail to load at runtime.
-(globalThis as Record<string, unknown>).__non_webpack_require__ = require
+;(globalThis as Record<string, unknown>).__non_webpack_require__ = require
 
 import { app, BrowserWindow, Tray, Menu, nativeImage, shell, ipcMain } from 'electron'
 import { join } from 'path'
@@ -37,13 +37,12 @@ function writeErrorLog(err: unknown): void {
   try {
     const logsDir = join(app.getPath('logs'), 'local-code-review')
     mkdirSync(logsDir, { recursive: true })
-    const msg = `[${new Date().toISOString()}] ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`
+    const msg = `[${new Date().toISOString()}] ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`
     writeFileSync(join(logsDir, 'error.log'), msg, { flag: 'a' })
   } catch {
     // ignore — can't do anything if logging itself fails
   }
 }
-
 
 process.on('uncaughtException', (err) => {
   writeErrorLog(err)
@@ -93,7 +92,9 @@ function createTray(db: ReturnType<typeof getDb>): void {
             setSetting(db, 'mcp_enabled', 'true')
           }
           updateMenu()
-          mainWindow?.webContents.send('mcp:status-changed', { running: mcpManager?.running ?? false })
+          mainWindow?.webContents.send('mcp:status-changed', {
+            running: mcpManager?.running ?? false,
+          })
         },
       },
       { type: 'separator' },
@@ -130,7 +131,7 @@ function createWindow(): BrowserWindow {
     icon: join(resourcesPath(), 'icon-512.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      },
+    },
   })
 
   win.on('ready-to-show', () => win.show())
@@ -139,8 +140,14 @@ function createWindow(): BrowserWindow {
     // Show dock whenever window becomes visible or is restored from minimise.
     // We do NOT hook 'hide' here — fullscreen transitions also emit hide/show and would
     // incorrectly toggle the dock. Dock visibility is driven solely by windowHiddenToTray.
-    win.on('show', () => { windowHiddenToTray = false; syncDock() })
-    win.on('restore', () => { windowHiddenToTray = false; syncDock() })
+    win.on('show', () => {
+      windowHiddenToTray = false
+      syncDock()
+    })
+    win.on('restore', () => {
+      windowHiddenToTray = false
+      syncDock()
+    })
   }
 
   win.webContents.on('render-process-gone', (_event, details) => {
@@ -196,98 +203,109 @@ if (!gotTheLock) {
 
 app.whenReady().then(() => {
   try {
-  electronApp.setAppUserModelId('com.local-code-review')
-  app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
+    electronApp.setAppUserModelId('com.local-code-review')
+    app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
 
-  const db = getDb()
+    const db = getDb()
 
-  reviewWatcher = new ReviewWatcher()
-  mcpManager = new McpManager((event) => {
-    if (event.event === 'pr:updated') {
-      mainWindow?.webContents.send('pr:updated', { repoPath: event.repoPath, prId: event.prId })
-    } else {
-      mainWindow?.webContents.send('review:updated', {
-        repoPath: event.repoPath,
-        prId: event.prId,
-        reviewId: event.reviewId,
+    reviewWatcher = new ReviewWatcher()
+    mcpManager = new McpManager((event) => {
+      if (event.event === 'pr:updated') {
+        mainWindow?.webContents.send('pr:updated', { repoPath: event.repoPath, prId: event.prId })
+      } else {
+        mainWindow?.webContents.send('review:updated', {
+          repoPath: event.repoPath,
+          prId: event.prId,
+          reviewId: event.reviewId,
+        })
+      }
+    })
+    mcpManager.onChildStart = () => {
+      mainWindow?.webContents.send('mcp:status-changed', { running: true })
+      updateTrayMenu?.()
+    }
+    mcpManager.onChildExit = () => {
+      mainWindow?.webContents.send('mcp:status-changed', { running: false })
+      updateTrayMenu?.()
+    }
+    mcpManager.onStderr = (line) => writeErrorLog(new Error(line))
+
+    if (getSetting(db, 'mcp_enabled') !== 'false') {
+      mcpManager.start()
+    }
+
+    for (const repo of listRepos(db)) {
+      reviewWatcher.watch(repo.path, (repoPath) => {
+        mainWindow?.webContents.send('review:updated', { repoPath, prId: null, reviewId: null })
       })
     }
-  })
-  mcpManager.onChildStart = () => {
-    mainWindow?.webContents.send('mcp:status-changed', { running: true })
-    updateTrayMenu?.()
-  }
-  mcpManager.onChildExit = () => {
-    mainWindow?.webContents.send('mcp:status-changed', { running: false })
-    updateTrayMenu?.()
-  }
-  mcpManager.onStderr = (line) => writeErrorLog(new Error(line))
 
-  if (getSetting(db, 'mcp_enabled') !== 'false') {
-    mcpManager.start()
-  }
-
-  for (const repo of listRepos(db)) {
-    reviewWatcher.watch(repo.path, (repoPath) => {
-      mainWindow?.webContents.send('review:updated', { repoPath, prId: null, reviewId: null })
-    })
-  }
-
-  // Watch every repo, including ones added later in the session, so review
-  // changes written by agents surface in the UI without a restart
-  registerRepoHandlers(db, (repoPath) => {
-    reviewWatcher?.watch(repoPath, (changedRepoPath) => {
-      mainWindow?.webContents.send('review:updated', { repoPath: changedRepoPath, prId: null, reviewId: null })
-    })
-  })
-  registerPrHandlers(db)
-  registerReviewHandlers(db)
-  registerExportHandlers(db)
-  registerMcpHandlers(db, mcpManager, () => mainWindow, () => updateTrayMenu?.())
-
-  // Only check for updates in production builds — never interrupt local dev
-  ipcMain.handle('update:check', () => (is.dev ? null : checkForUpdate()))
-
-  ipcMain.handle('update:install', async (_event, dmgUrl: string) => {
-    const { installUpdate } = await import('./update-installer')
-    try {
-      await installUpdate(dmgUrl, (stage, pct) => {
-        mainWindow?.webContents.send('update:progress', { stage, pct })
+    // Watch every repo, including ones added later in the session, so review
+    // changes written by agents surface in the UI without a restart
+    registerRepoHandlers(db, (repoPath) => {
+      reviewWatcher?.watch(repoPath, (changedRepoPath) => {
+        mainWindow?.webContents.send('review:updated', {
+          repoPath: changedRepoPath,
+          prId: null,
+          reviewId: null,
+        })
       })
-      return { success: true }
-    } catch (err) {
-      return { error: (err as Error).message }
+    })
+    registerPrHandlers(db)
+    registerReviewHandlers(db)
+    registerExportHandlers(db)
+    registerMcpHandlers(
+      db,
+      mcpManager,
+      () => mainWindow,
+      () => updateTrayMenu?.()
+    )
+
+    // Only check for updates in production builds — never interrupt local dev
+    ipcMain.handle('update:check', () => (is.dev ? null : checkForUpdate()))
+
+    ipcMain.handle('update:install', async (_event, dmgUrl: string) => {
+      const { installUpdate } = await import('./update-installer')
+      try {
+        await installUpdate(dmgUrl, (stage, pct) => {
+          mainWindow?.webContents.send('update:progress', { stage, pct })
+        })
+        return { success: true }
+      } catch (err) {
+        return { error: (err as Error).message }
+      }
+    })
+
+    // Hide the dock icon — the tray owns the app lifecycle
+    if (process.platform === 'darwin') {
+      app.dock.hide()
     }
-  })
 
-  // Hide the dock icon — the tray owns the app lifecycle
-  if (process.platform === 'darwin') {
-    app.dock.hide()
-  }
+    createTray(db)
+    mainWindow = createWindow()
 
-  createTray(db)
-  mainWindow = createWindow()
+    // Guard prevents rapid successive activate events from spawning multiple windows.
+    // On macOS dock-hidden apps, calling focus() inside the activate handler can
+    // re-trigger activate, so we only show/create — never focus — from here.
+    let _activating = false
+    app.on('activate', () => {
+      if (_activating) return
+      _activating = true
+      setTimeout(() => {
+        _activating = false
+      }, 500)
 
-  // Guard prevents rapid successive activate events from spawning multiple windows.
-  // On macOS dock-hidden apps, calling focus() inside the activate handler can
-  // re-trigger activate, so we only show/create — never focus — from here.
-  let _activating = false
-  app.on('activate', () => {
-    if (_activating) return
-    _activating = true
-    setTimeout(() => { _activating = false }, 500)
-
-    if (!mainWindow || mainWindow.isDestroyed()) {
-      mainWindow = createWindow()
-    } else if (mainWindow.isMinimized()) {
-      mainWindow.restore()
-    } else if (!mainWindow.isVisible() && !mainWindow.isFullScreen()) {
-      // Guard isFullScreen(): during the macOS fullscreen Space transition the window is
-      // briefly not-visible; calling show() here would abort the animation and hide it.
-      mainWindow.show()
-    }
-    // Do NOT call focus() — triggers re-entrant activate on dock-hidden macOS apps
-  })
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        mainWindow = createWindow()
+      } else if (mainWindow.isMinimized()) {
+        mainWindow.restore()
+      } else if (!mainWindow.isVisible() && !mainWindow.isFullScreen()) {
+        // Guard isFullScreen(): during the macOS fullscreen Space transition the window is
+        // briefly not-visible; calling show() here would abort the animation and hide it.
+        mainWindow.show()
+      }
+      // Do NOT call focus() — triggers re-entrant activate on dock-hidden macOS apps
+    })
   } catch (err) {
     writeErrorLog(err)
     app.quit()

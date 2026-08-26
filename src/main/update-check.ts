@@ -25,13 +25,22 @@ function fetchJson(url: string): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const req = https.get(url, { headers: { 'User-Agent': 'local-code-review-app' } }, (res) => {
       let data = ''
-      res.on('data', (chunk: Buffer) => { data += chunk })
+      res.on('data', (chunk: Buffer) => {
+        data += chunk
+      })
       res.on('end', () => {
-        try { resolve(JSON.parse(data)) } catch (e) { reject(e) }
+        try {
+          resolve(JSON.parse(data))
+        } catch (e) {
+          reject(e)
+        }
       })
     })
     req.on('error', reject)
-    req.setTimeout(10_000, () => { req.destroy(); reject(new Error('timeout')) })
+    req.setTimeout(10_000, () => {
+      req.destroy()
+      reject(new Error('timeout'))
+    })
   })
 }
 
@@ -41,9 +50,13 @@ export async function checkForUpdate(): Promise<UpdateInfo | null> {
   if (!current) return null
 
   try {
-    const release = await fetchJson(
+    const release = (await fetchJson(
       'https://api.github.com/repos/nodepoint-solutions/local-code-review/releases/latest'
-    ) as { tag_name: string; html_url: string; assets: { name: string; browser_download_url: string }[] }
+    )) as {
+      tag_name: string
+      html_url: string
+      assets: { name: string; browser_download_url: string }[]
+    }
 
     const latest = parseSemver(release.tag_name)
     if (!latest || !isNewer(latest, current)) return null

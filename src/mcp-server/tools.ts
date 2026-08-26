@@ -16,16 +16,18 @@ export function buildTools() {
   return [
     {
       name: 'list_prs',
-      description: 'List all pull requests in a repository\'s .reviews/ directory.',
+      description: "List all pull requests in a repository's .reviews/ directory.",
       inputSchema: {
         type: 'object' as const,
-        properties: { repo_path: { type: 'string', description: 'Absolute path to the repository' } },
+        properties: {
+          repo_path: { type: 'string', description: 'Absolute path to the repository' },
+        },
         required: ['repo_path'],
       },
     },
     {
       name: 'get_pr',
-      description: 'Get a pull request\'s metadata and review summary.',
+      description: "Get a pull request's metadata and review summary.",
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -37,7 +39,8 @@ export function buildTools() {
     },
     {
       name: 'get_review',
-      description: 'Get the full content of a review including all comments and their resolution state.',
+      description:
+        'Get the full content of a review including all comments and their resolution state.',
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -50,7 +53,8 @@ export function buildTools() {
     },
     {
       name: 'get_open_issues',
-      description: 'Get only open (unresolved) comments. Omit review_id to query the latest review.',
+      description:
+        'Get only open (unresolved) comments. Omit review_id to query the latest review.',
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -63,7 +67,8 @@ export function buildTools() {
     },
     {
       name: 'mark_resolved',
-      description: 'Mark a review comment as resolved. A resolution_comment explaining what was done is required.',
+      description:
+        'Mark a review comment as resolved. A resolution_comment explaining what was done is required.',
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -71,14 +76,18 @@ export function buildTools() {
           pr_id: { type: 'string' },
           review_id: { type: 'string' },
           comment_id: { type: 'string', description: 'e.g. "RVW-001"' },
-          resolution_comment: { type: 'string', description: 'Required. Explain what fix was applied.' },
+          resolution_comment: {
+            type: 'string',
+            description: 'Required. Explain what fix was applied.',
+          },
         },
         required: ['repo_path', 'pr_id', 'review_id', 'comment_id', 'resolution_comment'],
       },
     },
     {
       name: 'mark_wont_fix',
-      description: 'Mark a review comment as won\'t fix. A resolution_comment explaining why is required.',
+      description:
+        "Mark a review comment as won't fix. A resolution_comment explaining why is required.",
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -86,14 +95,18 @@ export function buildTools() {
           pr_id: { type: 'string' },
           review_id: { type: 'string' },
           comment_id: { type: 'string', description: 'e.g. "RVW-001"' },
-          resolution_comment: { type: 'string', description: 'Required. Explain why this is not being fixed.' },
+          resolution_comment: {
+            type: 'string',
+            description: 'Required. Explain why this is not being fixed.',
+          },
         },
         required: ['repo_path', 'pr_id', 'review_id', 'comment_id', 'resolution_comment'],
       },
     },
     {
       name: 'complete_assignment',
-      description: 'Call this when you have finished addressing all open review issues. Unassigns you from the PR so the reviewer knows the work is done.',
+      description:
+        'Call this when you have finished addressing all open review issues. Unassigns you from the PR so the reviewer knows the work is done.',
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -110,7 +123,7 @@ export async function callTool(
   name: string,
   args: Record<string, string>,
   socketClient: SocketClient,
-  resolvedBy: string,
+  resolvedBy: string
 ) {
   try {
     switch (name) {
@@ -122,7 +135,16 @@ export async function callTool(
       case 'get_pr': {
         const pr = store.getPR(args.repo_path, args.pr_id)
         const reviews = store.listReviews(args.repo_path, args.pr_id)
-        return ok({ pr, review_count: reviews.length, reviews: reviews.map((r) => ({ id: r.id, status: r.status, created_at: r.created_at, comment_count: r.comments.length })) })
+        return ok({
+          pr,
+          review_count: reviews.length,
+          reviews: reviews.map((r) => ({
+            id: r.id,
+            status: r.status,
+            created_at: r.created_at,
+            comment_count: r.comments.length,
+          })),
+        })
       }
 
       case 'get_review': {
@@ -147,12 +169,27 @@ export async function callTool(
           return err('resolution_comment is required and cannot be empty')
         }
         const updated = store.resolveComment(
-          args.repo_path, args.pr_id, args.review_id, args.comment_id,
+          args.repo_path,
+          args.pr_id,
+          args.review_id,
+          args.comment_id,
           'resolved',
-          { comment: args.resolution_comment, resolved_by: resolvedBy, resolved_at: new Date().toISOString() },
+          {
+            comment: args.resolution_comment,
+            resolved_by: resolvedBy,
+            resolved_at: new Date().toISOString(),
+          }
         )
-        socketClient.emit({ event: 'review:updated', repoPath: args.repo_path, prId: args.pr_id, reviewId: args.review_id })
-        return ok({ success: true, comment: updated.comments.find((c) => c.id === args.comment_id) })
+        socketClient.emit({
+          event: 'review:updated',
+          repoPath: args.repo_path,
+          prId: args.pr_id,
+          reviewId: args.review_id,
+        })
+        return ok({
+          success: true,
+          comment: updated.comments.find((c) => c.id === args.comment_id),
+        })
       }
 
       case 'mark_wont_fix': {
@@ -160,18 +197,36 @@ export async function callTool(
           return err('resolution_comment is required and cannot be empty')
         }
         const updated = store.resolveComment(
-          args.repo_path, args.pr_id, args.review_id, args.comment_id,
+          args.repo_path,
+          args.pr_id,
+          args.review_id,
+          args.comment_id,
           'wont_fix',
-          { comment: args.resolution_comment, resolved_by: resolvedBy, resolved_at: new Date().toISOString() },
+          {
+            comment: args.resolution_comment,
+            resolved_by: resolvedBy,
+            resolved_at: new Date().toISOString(),
+          }
         )
-        socketClient.emit({ event: 'review:updated', repoPath: args.repo_path, prId: args.pr_id, reviewId: args.review_id })
-        return ok({ success: true, comment: updated.comments.find((c) => c.id === args.comment_id) })
+        socketClient.emit({
+          event: 'review:updated',
+          repoPath: args.repo_path,
+          prId: args.pr_id,
+          reviewId: args.review_id,
+        })
+        return ok({
+          success: true,
+          comment: updated.comments.find((c) => c.id === args.comment_id),
+        })
       }
 
       case 'complete_assignment': {
         store.assignPR(args.repo_path, args.pr_id, null)
         socketClient.emit({ event: 'pr:updated', repoPath: args.repo_path, prId: args.pr_id })
-        return ok({ success: true, message: 'Assignment cleared. You have been unassigned from this PR.' })
+        return ok({
+          success: true,
+          message: 'Assignment cleared. You have been unassigned from this PR.',
+        })
       }
 
       default:

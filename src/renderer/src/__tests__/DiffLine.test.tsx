@@ -13,12 +13,30 @@ const addedLine: ParsedLine = {
 
 describe('DiffLine', () => {
   it('renders the line content', () => {
-    render(<DiffLine line={addedLine} comments={[]} onStartComment={vi.fn()} onExtendComment={vi.fn()} isSelecting={false} selectionStart={null} />)
+    render(
+      <DiffLine
+        line={addedLine}
+        comments={[]}
+        onStartComment={vi.fn()}
+        onExtendComment={vi.fn()}
+        isSelecting={false}
+        selectionStart={null}
+      />
+    )
     expect(screen.getByText('const x = 1')).toBeInTheDocument()
   })
 
   it('shows gutter button on mouse enter', () => {
-    render(<DiffLine line={addedLine} comments={[]} onStartComment={vi.fn()} onExtendComment={vi.fn()} isSelecting={false} selectionStart={null} />)
+    render(
+      <DiffLine
+        line={addedLine}
+        comments={[]}
+        onStartComment={vi.fn()}
+        onExtendComment={vi.fn()}
+        isSelecting={false}
+        selectionStart={null}
+      />
+    )
     const row = screen.getByRole('row')
     fireEvent.mouseEnter(row)
     expect(screen.getByTitle('Add comment')).toBeInTheDocument()

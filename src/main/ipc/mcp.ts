@@ -12,7 +12,7 @@ export function registerMcpHandlers(
   db: Database.Database,
   mcpManager: McpManager,
   getMainWindow: () => BrowserWindow | null,
-  updateTrayMenu: () => void,
+  updateTrayMenu: () => void
 ): void {
   ipcMain.handle('mcp:get-status', () => ({ running: mcpManager.running }))
 
@@ -34,44 +34,53 @@ export function registerMcpHandlers(
   ipcMain.handle('integrations:install', () => installIntegrations())
 
   // "Fix with" launcher — opens the agent tool in Terminal / VS Code
-  ipcMain.handle('fix:launch', (_e, tool: string, repoPath: string, prId: string, reviewId: string) => {
-    try {
-      assertKnownRepo(db, repoPath)
-    } catch (err) {
-      return { error: (err as Error).message }
+  ipcMain.handle(
+    'fix:launch',
+    (_e, tool: string, repoPath: string, prId: string, reviewId: string) => {
+      try {
+        assertKnownRepo(db, repoPath)
+      } catch (err) {
+        return { error: (err as Error).message }
+      }
+
+      const prompt = `/local-code-review repo_path="${repoPath}" pr_id="${prId}" review_id="${reviewId}"`
+
+      if (tool === 'claude') {
+        // Pass repoPath and prompt as separate osascript argv items so the shell
+        // never tokenises them — AppleScript's `quoted form of` handles quoting
+        // for the final `do script` call using OS-provided rules. No string
+        // escaping required on our side.
+        spawn(
+          'osascript',
+          [
+            '-e',
+            'on run argv',
+            '-e',
+            '  tell application "Terminal" to do script ("cd " & quoted form of item 1 of argv & " && claude " & quoted form of item 2 of argv)',
+            '-e',
+            'end run',
+            '--',
+            repoPath,
+            prompt,
+          ],
+          { detached: true, stdio: 'ignore' }
+        ).unref()
+        return {}
+      }
+
+      if (tool === 'vscode') {
+        clipboard.writeText(prompt)
+        // Delay opening VS Code by 10 s so the user has time to read the modal
+        setTimeout(() => {
+          spawn('open', ['-a', 'Visual Studio Code', repoPath], {
+            detached: true,
+            stdio: 'ignore',
+          }).unref()
+        }, 5_000)
+        return { prompt }
+      }
+
+      return { error: `Unknown tool: ${tool}` }
     }
-
-    const prompt = `/local-code-review repo_path="${repoPath}" pr_id="${prId}" review_id="${reviewId}"`
-
-    if (tool === 'claude') {
-      // Pass repoPath and prompt as separate osascript argv items so the shell
-      // never tokenises them — AppleScript's `quoted form of` handles quoting
-      // for the final `do script` call using OS-provided rules. No string
-      // escaping required on our side.
-      spawn(
-        'osascript',
-        [
-          '-e', 'on run argv',
-          '-e', '  tell application "Terminal" to do script ("cd " & quoted form of item 1 of argv & " && claude " & quoted form of item 2 of argv)',
-          '-e', 'end run',
-          '--',
-          repoPath,
-          prompt,
-        ],
-        { detached: true, stdio: 'ignore' },
-      ).unref()
-      return {}
-    }
-
-    if (tool === 'vscode') {
-      clipboard.writeText(prompt)
-      // Delay opening VS Code by 10 s so the user has time to read the modal
-      setTimeout(() => {
-        spawn('open', ['-a', 'Visual Studio Code', repoPath], { detached: true, stdio: 'ignore' }).unref()
-      }, 5_000)
-      return { prompt }
-    }
-
-    return { error: `Unknown tool: ${tool}` }
-  })
+  )
 }

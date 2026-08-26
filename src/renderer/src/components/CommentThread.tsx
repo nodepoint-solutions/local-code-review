@@ -17,16 +17,36 @@ interface Props {
 
 function TrashIcon(): JSX.Element {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4h6v2" />
     </svg>
   )
 }
 
-export default function CommentThread({ comment, allowDelete, onDelete, focused, onResolve, showFile }: Props): JSX.Element {
-  const lineRange = comment.start_line === comment.end_line
-    ? `Line ${comment.start_line}`
-    : `Lines ${comment.start_line}–${comment.end_line}`
+export default function CommentThread({
+  comment,
+  allowDelete,
+  onDelete,
+  focused,
+  onResolve,
+  showFile,
+}: Props): JSX.Element {
+  const lineRange =
+    comment.start_line === comment.end_line
+      ? `Line ${comment.start_line}`
+      : `Lines ${comment.start_line}–${comment.end_line}`
   const lineLabel = showFile ? `${comment.file} · ${lineRange}` : lineRange
 
   return (
@@ -36,7 +56,16 @@ export default function CommentThread({ comment, allowDelete, onDelete, focused,
     >
       <div className={styles.header}>
         <div className={styles.meta}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <span className={styles.lineRef}>{lineLabel}</span>
@@ -52,7 +81,9 @@ export default function CommentThread({ comment, allowDelete, onDelete, focused,
           )}
         </div>
       </div>
-      <div className={styles.body}><ReactMarkdown>{comment.body}</ReactMarkdown></div>
+      <div className={styles.body}>
+        <ReactMarkdown>{comment.body}</ReactMarkdown>
+      </div>
       {onResolve && comment.status === 'open' && !comment.is_stale && (
         <div className={styles.resolveActions}>
           <button className={styles.resolveBtn} onClick={() => onResolve('resolved')}>
@@ -70,9 +101,13 @@ export default function CommentThread({ comment, allowDelete, onDelete, focused,
               <AgentAvatar resolvedBy={comment.resolution.resolved_by} size={18} />
               <span className={styles.resolutionAgent}>{comment.resolution.resolved_by}</span>
             </div>
-            <span className={styles.resolutionTime}>{formatRelativeTime(comment.resolution.resolved_at)}</span>
+            <span className={styles.resolutionTime}>
+              {formatRelativeTime(comment.resolution.resolved_at)}
+            </span>
           </div>
-          <div className={styles.resolutionComment}><ReactMarkdown>{comment.resolution.comment}</ReactMarkdown></div>
+          <div className={styles.resolutionComment}>
+            <ReactMarkdown>{comment.resolution.comment}</ReactMarkdown>
+          </div>
         </div>
       )}
     </div>

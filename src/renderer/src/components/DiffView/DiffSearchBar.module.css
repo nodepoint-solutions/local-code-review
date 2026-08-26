@@ -75,7 +75,9 @@
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   cursor: pointer;
-  transition: background var(--transition), color var(--transition);
+  transition:
+    background var(--transition),
+    color var(--transition);
 }
 .navBtn:hover:not(:disabled) {
   background: var(--bg-surface-2);
@@ -101,7 +103,9 @@
   color: var(--text-muted);
   cursor: pointer;
   margin-left: 2px;
-  transition: background var(--transition), color var(--transition);
+  transition:
+    background var(--transition),
+    color var(--transition);
 }
 .closeBtn:hover {
   background: var(--bg-surface-2);

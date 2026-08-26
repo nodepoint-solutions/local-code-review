@@ -1,55 +1,105 @@
 /* ─── Keyframes ──────────────────────────────────────────── */
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideForward {
-  from { opacity: 0; transform: translateX(28px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes slideBack {
-  from { opacity: 0; transform: translateX(-28px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes slideInFromRight {
-  from { opacity: 0; transform: translateX(32px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes progressGrow {
-  from { width: 0; }
-  to   { width: 100%; }
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 @keyframes dotPulse {
-  0%, 100% { box-shadow: 0 0 0 0 var(--accent); }
-  50%       { box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.25); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--accent);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.25);
+  }
 }
 
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(31, 111, 235, 0); }
-  50%       { box-shadow: 0 0 20px 4px rgba(31, 111, 235, 0.3); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(31, 111, 235, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(31, 111, 235, 0.3);
+  }
 }
 
 @keyframes hideOnResolve {
-  from { opacity: 1; }
-  to   { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
-
 
 /* ─── Page wrapper ───────────────────────────────────────── */
 
@@ -80,7 +130,6 @@
   pointer-events: none;
 }
 
-
 /* ─── Panel ──────────────────────────────────────────────── */
 
 .panel {
@@ -97,7 +146,6 @@
   position: relative;
   z-index: 1;
 }
-
 
 /* ─── Window chrome ──────────────────────────────────────── */
 
@@ -125,9 +173,15 @@
   display: block;
 }
 
-.chromeDotRed    { background: #ff5f56; }
-.chromeDotYellow { background: #ffbd2e; }
-.chromeDotGreen  { background: #27c93f; }
+.chromeDotRed {
+  background: #ff5f56;
+}
+.chromeDotYellow {
+  background: #ffbd2e;
+}
+.chromeDotGreen {
+  background: #27c93f;
+}
 
 .chromeTitle {
   position: absolute;
@@ -149,7 +203,9 @@
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
   -webkit-app-region: no-drag;
 }
 
@@ -157,7 +213,6 @@
   color: var(--text-muted);
   background: var(--bg-surface-3);
 }
-
 
 /* ─── Mockup area ────────────────────────────────────────── */
 
@@ -179,7 +234,6 @@
   height: 100%;
 }
 
-
 /* ─── Progress bar ───────────────────────────────────────── */
 
 .progressTrack {
@@ -195,7 +249,6 @@
   width: 0;
   animation: progressGrow linear both;
 }
-
 
 /* ─── Step body ──────────────────────────────────────────── */
 
@@ -239,7 +292,6 @@
   max-width: 600px;
 }
 
-
 /* ─── Navigation ─────────────────────────────────────────── */
 
 .nav {
@@ -263,7 +315,9 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .dot:hover {
@@ -292,7 +346,10 @@
   padding: 7px 16px;
   border-radius: 6px;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
 }
 
 .btnPrev:hover {
@@ -310,7 +367,9 @@
   padding: 7px 20px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .btnNext:hover {
@@ -333,7 +392,6 @@
 .btnFinish:hover {
   background: var(--accent-hover);
 }
-
 
 /* ═══════════════════════════════════════════════════════════
    SHARED MOCK CHROME (navbar, pr header, tab bar)
@@ -564,7 +622,6 @@
   color: var(--text);
 }
 
-
 /* ═══════════════════════════════════════════════════════════
    MOCKUP 1 — Open a PR (matches OpenPR.tsx)
    ═══════════════════════════════════════════════════════════ */
@@ -725,7 +782,6 @@
   box-shadow: 0 1px 4px rgba(31, 111, 235, 0.3);
 }
 
-
 /* ═══════════════════════════════════════════════════════════
    MOCKUP 2 — Review the diff (matches PR.tsx Files Changed tab)
    ═══════════════════════════════════════════════════════════ */
@@ -800,7 +856,9 @@
   color: var(--text-muted);
 }
 
-.m2DiffFileName { color: var(--text); }
+.m2DiffFileName {
+  color: var(--text);
+}
 
 .m2Line {
   display: flex;
@@ -813,8 +871,12 @@
   animation: fadeIn 0.25s ease both;
 }
 
-.m2LineRemoved { background: var(--removed-bg); }
-.m2LineAdded   { background: var(--added-bg); }
+.m2LineRemoved {
+  background: var(--removed-bg);
+}
+.m2LineAdded {
+  background: var(--added-bg);
+}
 
 .m2LineGutter {
   width: 14px;
@@ -824,13 +886,24 @@
   user-select: none;
 }
 
-.m2LineRemoved .m2LineGutter { color: var(--removed-text); }
-.m2LineAdded   .m2LineGutter { color: var(--added-text); }
+.m2LineRemoved .m2LineGutter {
+  color: var(--removed-text);
+}
+.m2LineAdded .m2LineGutter {
+  color: var(--added-text);
+}
 
-.m2LineCode { color: var(--text); font-family: inherit; font-size: inherit; }
-.m2LineRemoved .m2LineCode { color: var(--removed-text); }
-.m2LineAdded   .m2LineCode { color: var(--added-text); }
-
+.m2LineCode {
+  color: var(--text);
+  font-family: inherit;
+  font-size: inherit;
+}
+.m2LineRemoved .m2LineCode {
+  color: var(--removed-text);
+}
+.m2LineAdded .m2LineCode {
+  color: var(--added-text);
+}
 
 /* ═══════════════════════════════════════════════════════════
    MOCKUP 3 — Submit review (matches ReviewPanel.tsx)
@@ -865,8 +938,12 @@
   color: var(--text);
 }
 
-.m3DiffLineRemoved { background: var(--removed-bg); }
-.m3DiffLineAdded   { background: var(--added-bg); }
+.m3DiffLineRemoved {
+  background: var(--removed-bg);
+}
+.m3DiffLineAdded {
+  background: var(--added-bg);
+}
 
 .m3DiffGutter {
   width: 14px;
@@ -875,12 +952,23 @@
   color: var(--text-subtle);
 }
 
-.m3DiffLineRemoved .m3DiffGutter { color: var(--removed-text); }
-.m3DiffLineAdded   .m3DiffGutter { color: var(--added-text); }
+.m3DiffLineRemoved .m3DiffGutter {
+  color: var(--removed-text);
+}
+.m3DiffLineAdded .m3DiffGutter {
+  color: var(--added-text);
+}
 
-.m3DiffCode { font-family: inherit; font-size: inherit; }
-.m3DiffLineRemoved .m3DiffCode { color: var(--removed-text); }
-.m3DiffLineAdded   .m3DiffCode { color: var(--added-text); }
+.m3DiffCode {
+  font-family: inherit;
+  font-size: inherit;
+}
+.m3DiffLineRemoved .m3DiffCode {
+  color: var(--removed-text);
+}
+.m3DiffLineAdded .m3DiffCode {
+  color: var(--added-text);
+}
 
 /* The ReviewPanel — matches ReviewPanel.module.css exactly */
 .m3Panel {
@@ -1001,7 +1089,6 @@
   box-shadow: 0 1px 4px rgba(31, 111, 235, 0.3);
 }
 
-
 /* ═══════════════════════════════════════════════════════════
    MOCKUP 4 — Agent resolves (split: app left, terminal right)
    ═══════════════════════════════════════════════════════════ */
@@ -1011,7 +1098,6 @@
   display: flex;
   overflow: hidden;
 }
-
 
 /* ─── Left: app pane ─────────────────────────────────────── */
 
@@ -1222,7 +1308,6 @@
   text-overflow: ellipsis;
 }
 
-
 /* ─── Right: terminal pane ───────────────────────────────── */
 
 .m4TermPane {
@@ -1288,12 +1373,24 @@
   overflow: hidden;
 }
 
-.m4LineCmd     { color: #e6edf3; }
-.m4LineSuccess { color: #3fb950; }
+.m4LineCmd {
+  color: #e6edf3;
+}
+.m4LineSuccess {
+  color: #3fb950;
+}
 
-.m4LinePrefix { color: #656d76; min-width: 12px; flex-shrink: 0; }
-.m4LineCmd     .m4LinePrefix { color: #79c0ff; }
-.m4LineSuccess .m4LinePrefix { color: #3fb950; }
+.m4LinePrefix {
+  color: #656d76;
+  min-width: 12px;
+  flex-shrink: 0;
+}
+.m4LineCmd .m4LinePrefix {
+  color: #79c0ff;
+}
+.m4LineSuccess .m4LinePrefix {
+  color: #3fb950;
+}
 
 .m4Cursor {
   display: inline-block;
@@ -1305,7 +1402,6 @@
   margin-top: 2px;
   border-radius: 1px;
 }
-
 
 /* ═══════════════════════════════════════════════════════════
    MOCKUP 5 — Open on GitHub (matches PR.tsx Overview tab)
@@ -1370,7 +1466,9 @@
   border-bottom: 1px solid var(--border-muted);
 }
 
-.m5ActivityItem:last-child { border-bottom: none; }
+.m5ActivityItem:last-child {
+  border-bottom: none;
+}
 
 .m5ActivityDot {
   width: 8px;
@@ -1404,7 +1502,9 @@
   animation: fadeIn 0.3s ease both;
 }
 
-.m5SidebarSection:last-child { border-bottom: none; }
+.m5SidebarSection:last-child {
+  border-bottom: none;
+}
 
 .m5SidebarLabel {
   font-size: 10px;

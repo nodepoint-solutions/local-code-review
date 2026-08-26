@@ -4,19 +4,31 @@ import { parseGithubRemote } from '../git/branches'
 
 describe('parseGithubRemote', () => {
   it('parses SSH URL', () => {
-    expect(parseGithubRemote('git@github.com:owner/repo.git')).toEqual({ owner: 'owner', repo: 'repo' })
+    expect(parseGithubRemote('git@github.com:owner/repo.git')).toEqual({
+      owner: 'owner',
+      repo: 'repo',
+    })
   })
 
   it('parses HTTPS URL', () => {
-    expect(parseGithubRemote('https://github.com/owner/repo.git')).toEqual({ owner: 'owner', repo: 'repo' })
+    expect(parseGithubRemote('https://github.com/owner/repo.git')).toEqual({
+      owner: 'owner',
+      repo: 'repo',
+    })
   })
 
   it('parses HTTPS URL without .git suffix', () => {
-    expect(parseGithubRemote('https://github.com/owner/repo')).toEqual({ owner: 'owner', repo: 'repo' })
+    expect(parseGithubRemote('https://github.com/owner/repo')).toEqual({
+      owner: 'owner',
+      repo: 'repo',
+    })
   })
 
   it('parses HTTP URL', () => {
-    expect(parseGithubRemote('http://github.com/owner/repo.git')).toEqual({ owner: 'owner', repo: 'repo' })
+    expect(parseGithubRemote('http://github.com/owner/repo.git')).toEqual({
+      owner: 'owner',
+      repo: 'repo',
+    })
   })
 
   it('parses HTTPS URL with embedded credentials', () => {

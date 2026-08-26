@@ -2,7 +2,11 @@ import { execGit } from './runner'
 import type { ParsedFile, ParsedLine } from '../../shared/types'
 
 /** Returns the parsed diff between two SHAs. */
-export async function getDiff(repoPath: string, baseSha: string, compareSha: string): Promise<ParsedFile[]> {
+export async function getDiff(
+  repoPath: string,
+  baseSha: string,
+  compareSha: string
+): Promise<ParsedFile[]> {
   const raw = await execGit(repoPath, ['diff', `${baseSha}..${compareSha}`, '--unified=3'])
   return parseDiff(raw)
 }
@@ -67,15 +71,33 @@ export function parseDiff(raw: string): ParsedFile[] {
 
       if (rawLine.startsWith('+')) {
         diffLineNumber++
-        parsedLines.push({ diffLineNumber, type: 'added', content: rawLine.slice(1), oldLineNumber: null, newLineNumber: newLine })
+        parsedLines.push({
+          diffLineNumber,
+          type: 'added',
+          content: rawLine.slice(1),
+          oldLineNumber: null,
+          newLineNumber: newLine,
+        })
         newLine++
       } else if (rawLine.startsWith('-')) {
         diffLineNumber++
-        parsedLines.push({ diffLineNumber, type: 'removed', content: rawLine.slice(1), oldLineNumber: oldLine, newLineNumber: null })
+        parsedLines.push({
+          diffLineNumber,
+          type: 'removed',
+          content: rawLine.slice(1),
+          oldLineNumber: oldLine,
+          newLineNumber: null,
+        })
         oldLine++
       } else if (rawLine.startsWith(' ')) {
         diffLineNumber++
-        parsedLines.push({ diffLineNumber, type: 'context', content: rawLine.slice(1), oldLineNumber: oldLine, newLineNumber: newLine })
+        parsedLines.push({
+          diffLineNumber,
+          type: 'context',
+          content: rawLine.slice(1),
+          oldLineNumber: oldLine,
+          newLineNumber: newLine,
+        })
         oldLine++
         newLine++
       }

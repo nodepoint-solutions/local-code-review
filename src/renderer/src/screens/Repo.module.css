@@ -153,7 +153,10 @@
   background: var(--bg-surface-2);
   color: var(--text-muted);
   cursor: pointer;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  transition:
+    background var(--transition),
+    color var(--transition),
+    border-color var(--transition);
   white-space: nowrap;
 }
 .prActionBtn:hover {

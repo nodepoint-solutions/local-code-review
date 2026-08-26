@@ -107,8 +107,14 @@ function resolveConfigs(): ToolConfig[] {
         platform === 'win32'
           ? path.join(appdata, 'Claude', 'claude_desktop_config.json')
           : platform === 'darwin'
-          ? path.join(home, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')
-          : path.join(xdgConfig(), 'Claude', 'claude_desktop_config.json'),
+            ? path.join(
+                home,
+                'Library',
+                'Application Support',
+                'Claude',
+                'claude_desktop_config.json'
+              )
+            : path.join(xdgConfig(), 'Claude', 'claude_desktop_config.json'),
       keyPath: ['mcpServers'],
     },
     {
@@ -118,8 +124,8 @@ function resolveConfigs(): ToolConfig[] {
         platform === 'win32'
           ? path.join(appdata, 'Code', 'User', 'mcp.json')
           : platform === 'darwin'
-          ? path.join(home, 'Library', 'Application Support', 'Code', 'User', 'mcp.json')
-          : path.join(xdgConfig(), 'Code', 'User', 'mcp.json'),
+            ? path.join(home, 'Library', 'Application Support', 'Code', 'User', 'mcp.json')
+            : path.join(xdgConfig(), 'Code', 'User', 'mcp.json'),
       keyPath: ['servers'],
     },
     {
@@ -129,8 +135,8 @@ function resolveConfigs(): ToolConfig[] {
         platform === 'win32'
           ? path.join(appdata, 'Cursor', 'User', 'settings.json')
           : platform === 'darwin'
-          ? path.join(home, 'Library', 'Application Support', 'Cursor', 'User', 'settings.json')
-          : path.join(xdgConfig(), 'Cursor', 'User', 'settings.json'),
+            ? path.join(home, 'Library', 'Application Support', 'Cursor', 'User', 'settings.json')
+            : path.join(xdgConfig(), 'Cursor', 'User', 'settings.json'),
       keyPath: ['mcp', 'servers'],
     },
     {
@@ -140,8 +146,8 @@ function resolveConfigs(): ToolConfig[] {
         platform === 'win32'
           ? path.join(appdata, 'Windsurf', 'User', 'settings.json')
           : platform === 'darwin'
-          ? path.join(home, 'Library', 'Application Support', 'Windsurf', 'User', 'settings.json')
-          : path.join(xdgConfig(), 'Windsurf', 'User', 'settings.json'),
+            ? path.join(home, 'Library', 'Application Support', 'Windsurf', 'User', 'settings.json')
+            : path.join(xdgConfig(), 'Windsurf', 'User', 'settings.json'),
       keyPath: ['mcp', 'servers'],
     },
   ]
@@ -183,9 +189,10 @@ function toolEcosystem(id: IntegrationStatus['id']): 'claude' | 'copilot' {
 }
 
 function skillDir(ecosystem: 'claude' | 'copilot'): string {
-  const base = ecosystem === 'claude'
-    ? path.join(home, '.claude', 'skills')
-    : path.join(home, '.copilot', 'skills') // per Agent Skills spec (agentskills.io)
+  const base =
+    ecosystem === 'claude'
+      ? path.join(home, '.claude', 'skills')
+      : path.join(home, '.copilot', 'skills') // per Agent Skills spec (agentskills.io)
   return path.join(base, 'local-code-review')
 }
 

@@ -180,7 +180,9 @@
   border-radius: 0;
   border-bottom: 2px solid transparent;
   color: var(--text-muted);
-  transition: color var(--transition), border-color var(--transition);
+  transition:
+    color var(--transition),
+    border-color var(--transition);
   margin-bottom: -1px;
 }
 .tab:hover {
@@ -230,11 +232,22 @@
   border-radius: 0;
   background: transparent;
   color: var(--text-muted);
-  transition: background var(--transition), color var(--transition);
+  transition:
+    background var(--transition),
+    color var(--transition);
 }
-.toggleBtn:hover { background: var(--bg-surface-2); color: var(--text); border-color: transparent; }
-.toggleBtn + .toggleBtn { border-left: 1px solid var(--border); }
-.toggleActive { background: var(--bg-surface-2); color: var(--text); }
+.toggleBtn:hover {
+  background: var(--bg-surface-2);
+  color: var(--text);
+  border-color: transparent;
+}
+.toggleBtn + .toggleBtn {
+  border-left: 1px solid var(--border);
+}
+.toggleActive {
+  background: var(--bg-surface-2);
+  color: var(--text);
+}
 
 /* ─── Overview tab ────────────────────────── */
 .overview {
@@ -285,7 +298,10 @@
   border-radius: var(--radius-sm);
   padding: 2px 8px;
   cursor: pointer;
-  transition: color var(--transition), border-color var(--transition), background var(--transition);
+  transition:
+    color var(--transition),
+    border-color var(--transition),
+    background var(--transition);
 }
 .editBtn:hover {
   color: var(--text);
@@ -345,7 +361,9 @@
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: color var(--transition), background var(--transition);
+  transition:
+    color var(--transition),
+    background var(--transition);
 }
 .editCancelBtn:hover {
   color: var(--text);
@@ -359,19 +377,46 @@
   line-height: 1.7;
 }
 
-.descriptionBody p { margin: 0 0 12px; }
-.descriptionBody p:last-child { margin-bottom: 0; }
-.descriptionBody h1 { font-size: 16px; margin: 16px 0 8px; font-weight: 600; color: var(--text); }
-.descriptionBody h2 { font-size: 15px; margin: 14px 0 6px; font-weight: 600; color: var(--text); }
-.descriptionBody h3 { font-size: 14px; margin: 12px 0 6px; font-weight: 600; color: var(--text); }
-.descriptionBody h4, .descriptionBody h5, .descriptionBody h6 {
-  font-size: 13px; margin: 10px 0 4px; font-weight: 600; color: var(--text);
+.descriptionBody p {
+  margin: 0 0 12px;
 }
-.descriptionBody ul, .descriptionBody ol {
+.descriptionBody p:last-child {
+  margin-bottom: 0;
+}
+.descriptionBody h1 {
+  font-size: 16px;
+  margin: 16px 0 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+.descriptionBody h2 {
+  font-size: 15px;
+  margin: 14px 0 6px;
+  font-weight: 600;
+  color: var(--text);
+}
+.descriptionBody h3 {
+  font-size: 14px;
+  margin: 12px 0 6px;
+  font-weight: 600;
+  color: var(--text);
+}
+.descriptionBody h4,
+.descriptionBody h5,
+.descriptionBody h6 {
+  font-size: 13px;
+  margin: 10px 0 4px;
+  font-weight: 600;
+  color: var(--text);
+}
+.descriptionBody ul,
+.descriptionBody ol {
   margin: 0 0 12px;
   padding-left: 20px;
 }
-.descriptionBody li { margin-bottom: 4px; }
+.descriptionBody li {
+  margin-bottom: 4px;
+}
 .descriptionBody code {
   font-family: monospace;
   font-size: 13px;
@@ -396,8 +441,13 @@
   padding: 4px 0 4px 12px;
   color: var(--text-muted);
 }
-.descriptionBody a { color: var(--accent); text-decoration: none; }
-.descriptionBody a:hover { text-decoration: underline; }
+.descriptionBody a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.descriptionBody a:hover {
+  text-decoration: underline;
+}
 
 .descriptionEmpty {
   padding: 16px;
@@ -457,7 +507,10 @@
   background: var(--bg-surface-2);
   color: var(--text-muted);
   cursor: pointer;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  transition:
+    background var(--transition),
+    color var(--transition),
+    border-color var(--transition);
 }
 .sidebarActionBtn:hover {
   background: var(--bg);
@@ -563,8 +616,12 @@
   font-family: var(--font-mono);
 }
 
-.additions { color: var(--added-text); }
-.deletions { color: var(--removed-text); }
+.additions {
+  color: var(--added-text);
+}
+.deletions {
+  color: var(--removed-text);
+}
 
 .reviewStatus {
   font-size: 12px;

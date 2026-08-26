@@ -19,10 +19,15 @@ const pr: PRFile = {
 }
 
 const resolvedComment: ReviewComment = {
-  id: 'RVW-001', file: 'src/foo.ts',
-  start_line: 3, end_line: 3, side: 'right',
-  body: 'Add null check here', is_stale: false,
-  context: [], status: 'resolved',
+  id: 'RVW-001',
+  file: 'src/foo.ts',
+  start_line: 3,
+  end_line: 3,
+  side: 'right',
+  body: 'Add null check here',
+  is_stale: false,
+  context: [],
+  status: 'resolved',
   resolution: {
     comment: 'Fixed with optional chaining.',
     resolved_by: 'Claude Code',
@@ -32,10 +37,16 @@ const resolvedComment: ReviewComment = {
 }
 
 const openComment: ReviewComment = {
-  id: 'RVW-002', file: 'src/bar.ts',
-  start_line: 10, end_line: 12, side: 'right',
-  body: 'Rename this variable', is_stale: false,
-  context: [], status: 'open', resolution: null,
+  id: 'RVW-002',
+  file: 'src/bar.ts',
+  start_line: 10,
+  end_line: 12,
+  side: 'right',
+  body: 'Rename this variable',
+  is_stale: false,
+  context: [],
+  status: 'open',
+  resolution: null,
   created_at: '2026-04-08T11:05:00Z',
 }
 
@@ -47,23 +58,27 @@ const staleComment: ReviewComment = {
 }
 
 const submittedReview: ReviewFile = {
-  version: 1, id: 'rev-1',
+  version: 1,
+  id: 'rev-1',
   status: 'submitted',
-  base_sha: 'abc', compare_sha: 'def',
+  base_sha: 'abc',
+  compare_sha: 'def',
   created_at: '2026-04-08T10:00:00Z',
   submitted_at: '2026-04-08T11:00:00Z',
   comments: [resolvedComment, openComment],
 }
 
 const inProgressReview: ReviewFile = {
-  ...submittedReview, id: 'rev-2',
+  ...submittedReview,
+  id: 'rev-2',
   status: 'in_progress',
   submitted_at: null,
   comments: [],
 }
 
 const completeReview: ReviewFile = {
-  ...submittedReview, id: 'rev-3',
+  ...submittedReview,
+  id: 'rev-3',
   status: 'complete',
   submitted_at: '2026-04-08T13:00:00Z',
   comments: [resolvedComment],
@@ -115,18 +130,24 @@ describe('ReviewTimeline', () => {
   })
 
   it('shows both "Review submitted" and "Review feedback implemented" for a complete review', () => {
-    render(<ReviewTimeline pr={pr} reviews={[completeReview]} reviewCommitCounts={{ 'rev-3': 3 }} />)
+    render(
+      <ReviewTimeline pr={pr} reviews={[completeReview]} reviewCommitCounts={{ 'rev-3': 3 }} />
+    )
     expect(screen.getByText(/review submitted/i)).toBeInTheDocument()
     expect(screen.getByText(/review feedback implemented/i)).toBeInTheDocument()
   })
 
   it('shows commit count in "Review feedback implemented" entry', () => {
-    render(<ReviewTimeline pr={pr} reviews={[completeReview]} reviewCommitCounts={{ 'rev-3': 3 }} />)
+    render(
+      <ReviewTimeline pr={pr} reviews={[completeReview]} reviewCommitCounts={{ 'rev-3': 3 }} />
+    )
     expect(screen.getByText(/3 commits created/i)).toBeInTheDocument()
   })
 
   it('shows "1 commit created" (singular) correctly', () => {
-    render(<ReviewTimeline pr={pr} reviews={[completeReview]} reviewCommitCounts={{ 'rev-3': 1 }} />)
+    render(
+      <ReviewTimeline pr={pr} reviews={[completeReview]} reviewCommitCounts={{ 'rev-3': 1 }} />
+    )
     expect(screen.getByText(/1 commit created/i)).toBeInTheDocument()
   })
 
@@ -138,7 +159,13 @@ describe('ReviewTimeline', () => {
       submitted_at: '2026-04-09T11:00:00Z',
       comments: [openComment],
     }
-    render(<ReviewTimeline pr={pr} reviews={[completeReview, secondReview]} reviewCommitCounts={{ 'rev-3': 2 }} />)
+    render(
+      <ReviewTimeline
+        pr={pr}
+        reviews={[completeReview, secondReview]}
+        reviewCommitCounts={{ 'rev-3': 2 }}
+      />
+    )
     // First complete review shows both entries
     expect(screen.getByText(/review feedback implemented/i)).toBeInTheDocument()
     // Second submitted review also shows

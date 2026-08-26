@@ -35,6 +35,7 @@ Less noise for your colleagues. No embarrassing early commits in the PR history.
 ### Workflow comparison
 
 **Traditional (agent-assisted coding):**
+
 ```
 prompt → review code → fix code → repeat
 ```
@@ -42,6 +43,7 @@ prompt → review code → fix code → repeat
 Lots of micro-adjustments. More context switching, reduced productivity.
 
 **Fully agentic + Local Code Review:**
+
 ```
 you: up-front design (most of your effort)
 agent: builds the feature (usually with build+test+review phases)
@@ -58,11 +60,11 @@ Bigger batches, less context switching, no premature GitHub noise.
 
 Download the latest release for your platform from the [Releases](../../releases/latest) page:
 
-| Platform | File |
-|---|---|
-| macOS | `Local.Review-mac.dmg` |
-| Windows | `Local.Review-win-setup.exe` |
-| Linux (Debian/Ubuntu) | `Local.Review-linux.deb` |
+| Platform              | File                         |
+| --------------------- | ---------------------------- |
+| macOS                 | `Local.Review-mac.dmg`       |
+| Windows               | `Local.Review-win-setup.exe` |
+| Linux (Debian/Ubuntu) | `Local.Review-linux.deb`     |
 
 ### macOS
 
@@ -129,14 +131,14 @@ Once a review is submitted, you assign it to an agent. The agent resolves commen
 
 Local Code Review runs an MCP server that AI agents connect to directly. Once connected, the agent can:
 
-| Tool | Description |
-|---|---|
-| `list_prs` | List all PRs in a repository |
-| `get_pr` | Get PR metadata and review summary |
-| `get_review` | Get full review content with all comments |
-| `get_open_issues` | Get only unresolved comments (defaults to latest review) |
-| `mark_resolved` | Mark a comment resolved with an explanation |
-| `mark_wont_fix` | Mark a comment as won't fix with a reason |
+| Tool                  | Description                                               |
+| --------------------- | --------------------------------------------------------- |
+| `list_prs`            | List all PRs in a repository                              |
+| `get_pr`              | Get PR metadata and review summary                        |
+| `get_review`          | Get full review content with all comments                 |
+| `get_open_issues`     | Get only unresolved comments (defaults to latest review)  |
+| `mark_resolved`       | Mark a comment resolved with an explanation               |
+| `mark_wont_fix`       | Mark a comment as won't fix with a reason                 |
 | `complete_assignment` | Signal that all issues are addressed; unassigns the agent |
 
 The agent is expected to fix, commit, and mark issues — in that order, one logical group at a time. The skill installed alongside the MCP server enforces this workflow automatically.

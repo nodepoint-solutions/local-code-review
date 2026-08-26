@@ -7,7 +7,13 @@ import { applySchema } from './schema'
 let _db: Database.Database | null = null
 
 function getNativeBinding(): string {
-  const relPath = path.join('node_modules', 'better-sqlite3', 'build', 'Release', 'better_sqlite3.node')
+  const relPath = path.join(
+    'node_modules',
+    'better-sqlite3',
+    'build',
+    'Release',
+    'better_sqlite3.node'
+  )
   if (app.isPackaged) {
     return path.join(process.resourcesPath, 'app.asar.unpacked', relPath)
   }

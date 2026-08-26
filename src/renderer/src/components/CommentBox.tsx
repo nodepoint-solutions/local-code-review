@@ -12,9 +12,7 @@ export default function CommentBox({ startLine, endLine, onSubmit, onCancel }: P
   const [body, setBody] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const lineLabel = startLine === endLine
-    ? `Line ${startLine}`
-    : `Lines ${startLine}–${endLine}`
+  const lineLabel = startLine === endLine ? `Line ${startLine}` : `Lines ${startLine}–${endLine}`
 
   async function handleSubmit(): Promise<void> {
     if (!body.trim()) return
@@ -32,13 +30,31 @@ export default function CommentBox({ startLine, endLine, onSubmit, onCancel }: P
     <div className={styles.box}>
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <span>Comment on {lineLabel}</span>
         </div>
         <button className={styles.closeBtn} onClick={onCancel} title="Cancel (Esc)">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>

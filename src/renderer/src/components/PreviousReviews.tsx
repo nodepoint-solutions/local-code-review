@@ -8,7 +8,7 @@ import { sortCommentsByPosition } from '../utils/sortComments'
 import styles from './PreviousReviews.module.css'
 
 interface Props {
-  reviews: ReviewFile[]   // only complete reviews, oldest→newest
+  reviews: ReviewFile[] // only complete reviews, oldest→newest
   repoPath: string
   prId: string
 }
@@ -46,13 +46,16 @@ export default function PreviousReviews({ reviews, repoPath, prId }: Props): JSX
     }
   }
 
-  const handleNav = useCallback((index: number) => {
-    setFocusedCommentIndex(index)
-    const comment = navComments[index]
-    if (!comment) return
-    const el = document.querySelector(`[data-comment-id="${comment.id}"]`)
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [navComments])
+  const handleNav = useCallback(
+    (index: number) => {
+      setFocusedCommentIndex(index)
+      const comment = navComments[index]
+      if (!comment) return
+      const el = document.querySelector(`[data-comment-id="${comment.id}"]`)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    },
+    [navComments]
+  )
 
   return (
     <div className={styles.layout}>
@@ -72,7 +75,8 @@ export default function PreviousReviews({ reviews, repoPath, prId }: Props): JSX
               )}
             </div>
             <div className={styles.reviewCommentCount}>
-              {review.comments.filter((c) => !c.is_stale).length} comment{review.comments.filter((c) => !c.is_stale).length !== 1 ? 's' : ''}
+              {review.comments.filter((c) => !c.is_stale).length} comment
+              {review.comments.filter((c) => !c.is_stale).length !== 1 ? 's' : ''}
             </div>
           </div>
         ))}
@@ -88,33 +92,38 @@ export default function PreviousReviews({ reviews, repoPath, prId }: Props): JSX
               onPrev={() => handleNav(Math.max(0, focusedCommentIndex - 1))}
               onNext={() => handleNav(Math.min(navComments.length - 1, focusedCommentIndex + 1))}
             />
-            <button className={styles.exportBtn} onClick={handleExport}>Export as Markdown</button>
+            <button className={styles.exportBtn} onClick={handleExport}>
+              Export as Markdown
+            </button>
             {exportError && <span className={styles.exportError}>{exportError}</span>}
           </div>
         )}
         <div className={styles.diffScroll}>
           {!selectedReview && (
-            <div className={styles.empty}>Select a review to see the diff at that point in time.</div>
+            <div className={styles.empty}>
+              Select a review to see the diff at that point in time.
+            </div>
           )}
-          {selectedReview && loading && (
-            <div className={styles.loading}>Loading diff…</div>
-          )}
-          {selectedReview && !loading && historicDiff && (
-            historicDiff.length === 0 ? (
+          {selectedReview && loading && <div className={styles.loading}>Loading diff…</div>}
+          {selectedReview &&
+            !loading &&
+            historicDiff &&
+            (historicDiff.length === 0 ? (
               <div className={styles.empty}>No file changes in this review snapshot.</div>
             ) : (
               historicDiff.map((file) => (
                 <DiffView
                   key={file.newPath}
                   file={file}
-                  comments={selectedReview.comments.filter((c) => c.file === file.newPath && !c.is_stale)}
+                  comments={selectedReview.comments.filter(
+                    (c) => c.file === file.newPath && !c.is_stale
+                  )}
                   view="unified"
                   onAddComment={async () => false}
                   readOnly
                 />
               ))
-            )
-          )}
+            ))}
         </div>
       </div>
       <CommentOutline

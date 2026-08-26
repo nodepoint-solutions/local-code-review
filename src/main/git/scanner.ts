@@ -52,10 +52,7 @@ export async function scanForReviewRepos(
   return results
 }
 
-export async function scanForRepos(
-  basePath: string,
-  maxDepth = 5
-): Promise<DiscoveredRepo[]> {
+export async function scanForRepos(basePath: string, maxDepth = 5): Promise<DiscoveredRepo[]> {
   const results: DiscoveredRepo[] = []
 
   async function walk(dirPath: string, depth: number): Promise<void> {

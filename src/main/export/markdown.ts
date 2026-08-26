@@ -45,8 +45,10 @@ export function buildMarkdown(pr: PRFile, review: ReviewFile): string {
 
     if (comment.resolution) {
       lines.push('')
-      const statusLabel = comment.status === 'resolved' ? 'Resolved' : 'Won\'t Fix'
-      lines.push(`**${statusLabel} by ${comment.resolution.resolved_by}:** ${comment.resolution.comment}`)
+      const statusLabel = comment.status === 'resolved' ? 'Resolved' : "Won't Fix"
+      lines.push(
+        `**${statusLabel} by ${comment.resolution.resolved_by}:** ${comment.resolution.comment}`
+      )
     }
 
     lines.push('')

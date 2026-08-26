@@ -6,7 +6,16 @@ import pkg from '../../../../package.json'
 
 function FolderIcon(): JSX.Element {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
     </svg>
   )
@@ -83,16 +92,28 @@ export default function Settings(): JSX.Element {
 
         <section className={`${styles.section} ${styles.aboutSection}`}>
           <div className={styles.aboutHeader}>
-            <span className={styles.aboutName}>{(pkg as { productName?: string }).productName ?? pkg.name}</span>
+            <span className={styles.aboutName}>
+              {(pkg as { productName?: string }).productName ?? pkg.name}
+            </span>
             <span className={styles.aboutVersion}>v{pkg.version}</span>
           </div>
           <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>
             By{' '}
-            <a href="https://nodepoint.co.uk" target="_blank" rel="noreferrer" className={styles.aboutLink}>
+            <a
+              href="https://nodepoint.co.uk"
+              target="_blank"
+              rel="noreferrer"
+              className={styles.aboutLink}
+            >
               Nodepoint Solutions Limited
             </a>
             {' · '}
-            <a href="https://github.com/nodepoint-solutions/local-code-review" target="_blank" rel="noreferrer" className={styles.aboutLink}>
+            <a
+              href="https://github.com/nodepoint-solutions/local-code-review"
+              target="_blank"
+              rel="noreferrer"
+              className={styles.aboutLink}
+            >
               GitHub
             </a>
           </p>
@@ -104,7 +125,9 @@ export default function Settings(): JSX.Element {
             Local Code Review scans this directory to auto-discover git repositories.
           </p>
           <div className={styles.row} style={{ marginTop: 12 }}>
-            <span className={styles.dirPath}>{scanDir ?? <em className={styles.none}>Not configured</em>}</span>
+            <span className={styles.dirPath}>
+              {scanDir ?? <em className={styles.none}>Not configured</em>}
+            </span>
             <button onClick={handleChangeScanDir}>
               <FolderIcon />
               {scanDir ? 'Change' : 'Set directory'}
@@ -116,13 +139,16 @@ export default function Settings(): JSX.Element {
         <section style={{ marginTop: 32 }}>
           <h2>MCP Server</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-            Expose a local MCP server so AI agents (Claude, Copilot) can read reviews and mark issues resolved.
+            Expose a local MCP server so AI agents (Claude, Copilot) can read reviews and mark
+            issues resolved.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
             <button onClick={handleToggleMcp} disabled={mcpLoading}>
               {mcpRunning ? 'Stop MCP Server' : 'Start MCP Server'}
             </button>
-            <span style={{ fontSize: 13, color: mcpRunning ? 'var(--green)' : 'var(--text-muted)' }}>
+            <span
+              style={{ fontSize: 13, color: mcpRunning ? 'var(--green)' : 'var(--text-muted)' }}
+            >
               {mcpRunning ? 'Running' : 'Stopped'}
             </span>
           </div>
@@ -143,15 +169,15 @@ export default function Settings(): JSX.Element {
                     {!tool.detected
                       ? '(not detected)'
                       : tool.installed
-                      ? '✓ MCP installed'
-                      : 'MCP not installed'}
+                        ? '✓ MCP installed'
+                        : 'MCP not installed'}
                   </td>
                   <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                     {!tool.detected
                       ? ''
                       : tool.skillInstalled
-                      ? '✓ Skill installed'
-                      : 'Skill not installed'}
+                        ? '✓ Skill installed'
+                        : 'Skill not installed'}
                   </td>
                 </tr>
               ))}
@@ -170,7 +196,8 @@ export default function Settings(): JSX.Element {
         <section style={{ marginTop: 32 }}>
           <h2>Global .gitignore</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-            Adds a <code>.reviews</code> rule to your global gitignore so review files are never accidentally committed in any repository.
+            Adds a <code>.reviews</code> rule to your global gitignore so review files are never
+            accidentally committed in any repository.
           </p>
           <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
             {gitignoreInstalled === true ? (
@@ -193,7 +220,9 @@ export default function Settings(): JSX.Element {
             <div>
               <p className={styles.dangerLabel}>Reset to factory settings</p>
               <p className={styles.dangerDesc}>
-                Clears all app settings and removes repositories from the app. Runs you through setup and the tour again. Your <code>.reviews</code> files on disk are never touched.
+                Clears all app settings and removes repositories from the app. Runs you through
+                setup and the tour again. Your <code>.reviews</code> files on disk are never
+                touched.
               </p>
             </div>
             {!confirmReset ? (

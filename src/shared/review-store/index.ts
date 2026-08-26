@@ -1,8 +1,13 @@
 // src/shared/review-store/index.ts
 import { v4 as uuidv4 } from 'uuid'
 import {
-  readPR, writePR, readReview, writeReview,
-  listPRIds, listReviewIds, deletePRDir,
+  readPR,
+  writePR,
+  readReview,
+  writeReview,
+  listPRIds,
+  listReviewIds,
+  deletePRDir,
 } from './serializer'
 import type { PRFile, ReviewFile, ReviewComment, Resolution, ContextLineEntry } from './schema'
 
@@ -41,7 +46,11 @@ export class ReviewStore {
   listPRs(repoPath: string): PRFile[] {
     return listPRIds(repoPath)
       .flatMap((prId) => {
-        try { return [readPR(repoPath, prId)] } catch { return [] }
+        try {
+          return [readPR(repoPath, prId)]
+        } catch {
+          return []
+        }
       })
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
   }
@@ -74,7 +83,11 @@ export class ReviewStore {
     deletePRDir(repoPath, prId)
   }
 
-  updatePR(repoPath: string, prId: string, changes: { title?: string; description?: string | null }): PRFile {
+  updatePR(
+    repoPath: string,
+    prId: string,
+    changes: { title?: string; description?: string | null }
+  ): PRFile {
     const pr = readPR(repoPath, prId)
     const updated: PRFile = { ...pr, ...changes, updated_at: new Date().toISOString() }
     writePR(repoPath, updated)
@@ -84,7 +97,8 @@ export class ReviewStore {
   updatePRStatus(repoPath: string, prId: string, status: 'open' | 'closed'): PRFile {
     const pr = readPR(repoPath, prId)
     const now = new Date().toISOString()
-    const updated_at = now > pr.updated_at ? now : new Date(new Date(pr.updated_at).getTime() + 1).toISOString()
+    const updated_at =
+      now > pr.updated_at ? now : new Date(new Date(pr.updated_at).getTime() + 1).toISOString()
     const updated: PRFile = { ...pr, status, updated_at }
     writePR(repoPath, updated)
     return updated
@@ -93,9 +107,8 @@ export class ReviewStore {
   mergePR(repoPath: string, prId: string): PRFile {
     const pr = readPR(repoPath, prId)
     const now = new Date().toISOString()
-    const updated_at = now > pr.updated_at
-      ? now
-      : new Date(new Date(pr.updated_at).getTime() + 1).toISOString()
+    const updated_at =
+      now > pr.updated_at ? now : new Date(new Date(pr.updated_at).getTime() + 1).toISOString()
     const updated: PRFile = { ...pr, status: 'closed', merged_at: now, updated_at }
     writePR(repoPath, updated)
     return updated
@@ -118,7 +131,11 @@ export class ReviewStore {
   listReviews(repoPath: string, prId: string): ReviewFile[] {
     return listReviewIds(repoPath, prId)
       .flatMap((reviewId) => {
-        try { return [readReview(repoPath, prId, reviewId)] } catch { return [] }
+        try {
+          return [readReview(repoPath, prId, reviewId)]
+        } catch {
+          return []
+        }
       })
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
   }
@@ -185,7 +202,13 @@ export class ReviewStore {
     return updated
   }
 
-  updateReviewShas(repoPath: string, prId: string, reviewId: string, baseSha: string, compareSha: string): void {
+  updateReviewShas(
+    repoPath: string,
+    prId: string,
+    reviewId: string,
+    baseSha: string,
+    compareSha: string
+  ): void {
     const review = readReview(repoPath, prId, reviewId)
     const updated: ReviewFile = { ...review, base_sha: baseSha, compare_sha: compareSha }
     writeReview(repoPath, prId, updated)
@@ -214,15 +237,13 @@ export class ReviewStore {
     return updated
   }
 
-  deleteComment(
-    repoPath: string,
-    prId: string,
-    reviewId: string,
-    commentId: string,
-  ): ReviewFile {
+  deleteComment(repoPath: string, prId: string, reviewId: string, commentId: string): ReviewFile {
     const review = readReview(repoPath, prId, reviewId)
     if (!review.comments.some((c) => c.id === commentId)) throw new Error('Comment not found')
-    const updated: ReviewFile = { ...review, comments: review.comments.filter((c) => c.id !== commentId) }
+    const updated: ReviewFile = {
+      ...review,
+      comments: review.comments.filter((c) => c.id !== commentId),
+    }
     writeReview(repoPath, prId, updated)
     return updated
   }
@@ -233,14 +254,12 @@ export class ReviewStore {
     reviewId: string,
     commentId: string,
     status: 'resolved' | 'wont_fix',
-    resolution: Resolution,
+    resolution: Resolution
   ): ReviewFile {
     const review = readReview(repoPath, prId, reviewId)
     const updated: ReviewFile = {
       ...review,
-      comments: review.comments.map((c) =>
-        c.id === commentId ? { ...c, status, resolution } : c
-      ),
+      comments: review.comments.map((c) => (c.id === commentId ? { ...c, status, resolution } : c)),
     }
     writeReview(repoPath, prId, updated)
     return updated
@@ -251,7 +270,7 @@ export class ReviewStore {
     prId: string,
     reviewId: string,
     filePath: string,
-    staleRanges: LineRange[],
+    staleRanges: LineRange[]
   ): void {
     const review = readReview(repoPath, prId, reviewId)
     const updated: ReviewFile = {

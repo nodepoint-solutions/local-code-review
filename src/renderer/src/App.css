@@ -1,4 +1,10 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 :root {
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
@@ -15,7 +21,7 @@
 
 /* ─── Dark Theme (default) ─────────────────────────────────── */
 :root,
-[data-theme="dark"] {
+[data-theme='dark'] {
   --bg: #0d1117;
   --bg-surface: #161b22;
   --bg-surface-2: #21262d;
@@ -102,7 +108,7 @@
 }
 
 /* ─── Light Theme ────────────────────────────────────────────── */
-[data-theme="light"] {
+[data-theme='light'] {
   --bg: #ffffff;
   --bg-surface: #f6f8fa;
   --bg-surface-2: #eaeef2;
@@ -229,7 +235,9 @@ button {
   font-family: var(--font-sans);
   background: var(--bg-surface-2);
   color: var(--text);
-  transition: background var(--transition), border-color var(--transition);
+  transition:
+    background var(--transition),
+    border-color var(--transition);
   white-space: nowrap;
 }
 button:hover:not(:disabled) {
@@ -263,7 +271,9 @@ textarea {
   font-size: 13px;
   font-family: var(--font-sans);
   outline: none;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
   width: 100%;
 }
 select:focus,

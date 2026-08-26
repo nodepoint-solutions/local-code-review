@@ -155,7 +155,7 @@
 }
 
 .dangerBtn:hover {
-  background: var(--danger-subtle, rgba(239,68,68,0.08));
+  background: var(--danger-subtle, rgba(239, 68, 68, 0.08));
 }
 
 .confirmRow {

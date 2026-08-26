@@ -69,10 +69,7 @@ export default function OpenPR(): JSX.Element {
   return (
     <div className={styles.page}>
       <NavBar
-        crumbs={[
-          { label: repo.name, to: `/repo/${repoId}` },
-          { label: 'New pull request' },
-        ]}
+        crumbs={[{ label: repo.name, to: `/repo/${repoId}` }, { label: 'New pull request' }]}
       />
 
       <div className={styles.content}>
@@ -91,13 +88,26 @@ export default function OpenPR(): JSX.Element {
                 <label className={styles.label}>Base branch</label>
                 <select value={baseBranch} onChange={(e) => setBaseBranch(e.target.value)} required>
                   <option value="">Select base…</option>
-                  {branches.map((b) => <option key={b} value={b}>{b}</option>)}
+                  {branches.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
                 </select>
                 <span className={styles.fieldHint}>The branch you want to merge into</span>
               </div>
 
               <div className={styles.branchArrow}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <line x1="5" y1="12" x2="19" y2="12" />
                   <polyline points="12 5 19 12 12 19" />
                 </svg>
@@ -105,9 +115,17 @@ export default function OpenPR(): JSX.Element {
 
               <div className={styles.branchField}>
                 <label className={styles.label}>Compare branch</label>
-                <select value={compareBranch} onChange={(e) => setCompareBranch(e.target.value)} required>
+                <select
+                  value={compareBranch}
+                  onChange={(e) => setCompareBranch(e.target.value)}
+                  required
+                >
                   <option value="">Select compare…</option>
-                  {branches.map((b) => <option key={b} value={b}>{b}</option>)}
+                  {branches.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
                 </select>
                 <span className={styles.fieldHint}>The branch with your changes</span>
               </div>
@@ -117,7 +135,9 @@ export default function OpenPR(): JSX.Element {
 
             {/* Title */}
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="pr-title">Title</label>
+              <label className={styles.label} htmlFor="pr-title">
+                Title
+              </label>
               <input
                 id="pr-title"
                 value={title}
@@ -130,7 +150,9 @@ export default function OpenPR(): JSX.Element {
 
             {/* Description */}
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="pr-desc">Description <span className={styles.optional}>(optional)</span></label>
+              <label className={styles.label} htmlFor="pr-desc">
+                Description <span className={styles.optional}>(optional)</span>
+              </label>
               <textarea
                 id="pr-desc"
                 value={description}
@@ -142,7 +164,16 @@ export default function OpenPR(): JSX.Element {
 
             {error && (
               <div className={styles.errorBanner}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="8" x2="12" y2="12" />
                   <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -152,7 +183,9 @@ export default function OpenPR(): JSX.Element {
             )}
 
             <div className={styles.actions}>
-              <button type="button" onClick={() => navigate(`/repo/${repoId}`)}>Cancel</button>
+              <button type="button" onClick={() => navigate(`/repo/${repoId}`)}>
+                Cancel
+              </button>
               <button type="submit" className="primary" disabled={loading}>
                 {loading ? 'Creating…' : 'Create pull request'}
               </button>

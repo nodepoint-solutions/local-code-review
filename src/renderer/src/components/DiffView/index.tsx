@@ -11,7 +11,9 @@ interface Props {
   comments: ReviewComment[]
   view: 'unified' | 'split'
   /** Resolves true when the comment was persisted; false keeps the box open with its draft. */
-  onAddComment: (payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>) => Promise<boolean>
+  onAddComment: (
+    payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>
+  ) => Promise<boolean>
   readOnly?: boolean
   allowDeleteComment?: boolean
   onDeleteComment?: (commentId: string) => void
@@ -23,7 +25,16 @@ interface Props {
 
 function ChevronDownIcon(): JSX.Element {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="6 9 12 15 18 9" />
     </svg>
   )
@@ -31,16 +42,33 @@ function ChevronDownIcon(): JSX.Element {
 
 function ChevronRightIcon(): JSX.Element {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="9 18 15 12 9 6" />
     </svg>
   )
 }
 
 export default function DiffView({
-  file, comments, view, onAddComment, readOnly = false,
-  allowDeleteComment, onDeleteComment, onResolveComment, focusedCommentId,
-  matchedLineNumbers, activeMatchLineNumber,
+  file,
+  comments,
+  view,
+  onAddComment,
+  readOnly = false,
+  allowDeleteComment,
+  onDeleteComment,
+  onResolveComment,
+  focusedCommentId,
+  matchedLineNumbers,
+  activeMatchLineNumber,
 }: Props): JSX.Element {
   const [expanded, setExpanded] = useState(true)
   const [isSelecting, setIsSelecting] = useState(false)
@@ -145,7 +173,9 @@ export default function DiffView({
         </span>
         <div className={styles.fileStats}>
           {file.isNew && <span className={`${styles.badge} ${styles.badgeAdded}`}>Added</span>}
-          {file.isDeleted && <span className={`${styles.badge} ${styles.badgeDeleted}`}>Deleted</span>}
+          {file.isDeleted && (
+            <span className={`${styles.badge} ${styles.badgeDeleted}`}>Deleted</span>
+          )}
           {file.isRenamed && (
             <span className={`${styles.badge} ${styles.badgeRenamed}`}>
               Renamed from {file.oldPath}
@@ -179,8 +209,16 @@ export default function DiffView({
               onResolveComment={onResolveComment}
               focusedCommentId={focusedCommentId}
               showCommentBox={showCommentBox}
-              commentBoxEndLine={selectionStart !== null && selectionEnd !== null ? Math.max(selectionStart, selectionEnd) : null}
-              commentBoxStartLine={selectionStart !== null && selectionEnd !== null ? Math.min(selectionStart, selectionEnd) : null}
+              commentBoxEndLine={
+                selectionStart !== null && selectionEnd !== null
+                  ? Math.max(selectionStart, selectionEnd)
+                  : null
+              }
+              commentBoxStartLine={
+                selectionStart !== null && selectionEnd !== null
+                  ? Math.min(selectionStart, selectionEnd)
+                  : null
+              }
               onCommentBoxSubmit={handleSubmitComment}
               onCommentBoxCancel={handleCancelComment}
               matchedLineNumbers={matchedLineNumbers}
@@ -203,8 +241,16 @@ export default function DiffView({
               onResolveComment={onResolveComment}
               focusedCommentId={focusedCommentId}
               showCommentBox={showCommentBox}
-              commentBoxEndLine={selectionStart !== null && selectionEnd !== null ? Math.max(selectionStart, selectionEnd) : null}
-              commentBoxStartLine={selectionStart !== null && selectionEnd !== null ? Math.min(selectionStart, selectionEnd) : null}
+              commentBoxEndLine={
+                selectionStart !== null && selectionEnd !== null
+                  ? Math.max(selectionStart, selectionEnd)
+                  : null
+              }
+              commentBoxStartLine={
+                selectionStart !== null && selectionEnd !== null
+                  ? Math.min(selectionStart, selectionEnd)
+                  : null
+              }
               onCommentBoxSubmit={handleSubmitComment}
               onCommentBoxCancel={handleCancelComment}
               matchedLineNumbers={matchedLineNumbers}

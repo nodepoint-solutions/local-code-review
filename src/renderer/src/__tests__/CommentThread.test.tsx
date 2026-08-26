@@ -5,9 +5,13 @@ import CommentThread from '../components/CommentThread'
 import type { ReviewComment } from '../../../shared/types'
 
 const base: ReviewComment = {
-  id: 'RVW-001', file: 'src/foo.ts',
-  start_line: 3, end_line: 3, side: 'right',
-  body: 'This needs a null check', is_stale: false,
+  id: 'RVW-001',
+  file: 'src/foo.ts',
+  start_line: 3,
+  end_line: 3,
+  side: 'right',
+  body: 'This needs a null check',
+  is_stale: false,
   context: [],
   status: 'open',
   resolution: null,
@@ -47,15 +51,19 @@ describe('CommentThread', () => {
   })
 
   it('shows resolution panel with agent comment when resolution is present', () => {
-    render(<CommentThread comment={{
-      ...base,
-      status: 'resolved',
-      resolution: {
-        comment: 'Added null guard on line 3.',
-        resolved_by: 'Claude Code',
-        resolved_at: '2026-04-08T12:00:00Z',
-      }
-    }} />)
+    render(
+      <CommentThread
+        comment={{
+          ...base,
+          status: 'resolved',
+          resolution: {
+            comment: 'Added null guard on line 3.',
+            resolved_by: 'Claude Code',
+            resolved_at: '2026-04-08T12:00:00Z',
+          },
+        }}
+      />
+    )
     expect(screen.getByText('Added null guard on line 3.')).toBeInTheDocument()
     expect(screen.getByText('Claude Code')).toBeInTheDocument()
   })

@@ -10,7 +10,11 @@ import Setup from './screens/Setup'
 import Demo from './screens/Demo'
 import './App.css'
 
-interface UpdateInfo { version: string; url: string; dmgUrl: string | null }
+interface UpdateInfo {
+  version: string
+  url: string
+  dmgUrl: string | null
+}
 
 const bannerStyle: React.CSSProperties = {
   display: 'flex',
@@ -24,20 +28,42 @@ const bannerStyle: React.CSSProperties = {
   flexShrink: 0,
 }
 
-const linkStyle: React.CSSProperties = { color: 'inherit', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }
+const linkStyle: React.CSSProperties = {
+  color: 'inherit',
+  fontWeight: 600,
+  textDecoration: 'underline',
+  cursor: 'pointer',
+}
 
 const dismissBtnStyle: React.CSSProperties = {
-  background: 'transparent', border: 'none', color: 'inherit',
-  cursor: 'pointer', padding: '0 4px', fontSize: 16, lineHeight: 1, opacity: 0.7,
+  background: 'transparent',
+  border: 'none',
+  color: 'inherit',
+  cursor: 'pointer',
+  padding: '0 4px',
+  fontSize: 16,
+  lineHeight: 1,
+  opacity: 0.7,
 }
 
 const installBtnStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.4)',
-  borderRadius: 4, color: 'inherit', cursor: 'pointer', fontSize: 12,
-  fontWeight: 600, padding: '3px 10px',
+  background: 'rgba(255,255,255,0.2)',
+  border: '1px solid rgba(255,255,255,0.4)',
+  borderRadius: 4,
+  color: 'inherit',
+  cursor: 'pointer',
+  fontSize: 12,
+  fontWeight: 600,
+  padding: '3px 10px',
 }
 
-function UpdateBanner({ info, onDismiss }: { info: UpdateInfo; onDismiss: () => void }): JSX.Element {
+function UpdateBanner({
+  info,
+  onDismiss,
+}: {
+  info: UpdateInfo
+  onDismiss: () => void
+}): JSX.Element {
   const [installing, setInstalling] = useState(false)
   const [progress, setProgress] = useState<{ stage: string; pct: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -46,7 +72,10 @@ function UpdateBanner({ info, onDismiss }: { info: UpdateInfo; onDismiss: () => 
   useEffect(() => {
     if (!installing) return
     unsubRef.current = window.api.onUpdateProgress((data) => setProgress(data))
-    return () => { unsubRef.current?.(); unsubRef.current = null }
+    return () => {
+      unsubRef.current?.()
+      unsubRef.current = null
+    }
   }, [installing])
 
   async function handleInstall(): Promise<void> {
@@ -62,12 +91,17 @@ function UpdateBanner({ info, onDismiss }: { info: UpdateInfo; onDismiss: () => 
     // On success the app quits — nothing more to do
   }
 
-  function openUrl(): void { window.open(info.url) }
+  function openUrl(): void {
+    window.open(info.url)
+  }
 
   if (installing) {
     return (
       <div style={bannerStyle}>
-        <span>{progress?.stage ?? 'Installing…'}{progress ? ` ${progress.pct}%` : ''}</span>
+        <span>
+          {progress?.stage ?? 'Installing…'}
+          {progress ? ` ${progress.pct}%` : ''}
+        </span>
       </div>
     )
   }
@@ -75,20 +109,35 @@ function UpdateBanner({ info, onDismiss }: { info: UpdateInfo; onDismiss: () => 
   if (error) {
     return (
       <div style={bannerStyle}>
-        <span>Update failed — <span style={linkStyle} onClick={openUrl}>download manually</span></span>
-        <button onClick={onDismiss} style={dismissBtnStyle} title="Dismiss">×</button>
+        <span>
+          Update failed —{' '}
+          <span style={linkStyle} onClick={openUrl}>
+            download manually
+          </span>
+        </span>
+        <button onClick={onDismiss} style={dismissBtnStyle} title="Dismiss">
+          ×
+        </button>
       </div>
     )
   }
 
   return (
     <div style={bannerStyle}>
-      <span>Version <strong>{info.version}</strong> is available</span>
+      <span>
+        Version <strong>{info.version}</strong> is available
+      </span>
       {info.dmgUrl && window.api.platform === 'darwin' && (
-        <button onClick={handleInstall} style={installBtnStyle}>Install &amp; Relaunch</button>
+        <button onClick={handleInstall} style={installBtnStyle}>
+          Install &amp; Relaunch
+        </button>
       )}
-      <span style={linkStyle} onClick={openUrl}>Download manually</span>
-      <button onClick={onDismiss} style={dismissBtnStyle} title="Dismiss">×</button>
+      <span style={linkStyle} onClick={openUrl}>
+        Download manually
+      </span>
+      <button onClick={onDismiss} style={dismissBtnStyle} title="Dismiss">
+        ×
+      </button>
     </div>
   )
 }
@@ -107,7 +156,8 @@ export default function App(): JSX.Element {
   const { setRepos } = useStore()
 
   useEffect(() => {
-    window.api.getSetting('setup_complete')
+    window.api
+      .getSetting('setup_complete')
       .then((val) => setSetupComplete(val === 'true'))
       .catch(() => setSetupComplete(false))
   }, [])
@@ -115,12 +165,18 @@ export default function App(): JSX.Element {
   // Load repositories up front so every route can resolve its repo — a reload
   // or deep link straight into a repo/PR screen renders without visiting Home.
   useEffect(() => {
-    window.api.listRepos().then(setRepos).catch(() => {})
+    window.api
+      .listRepos()
+      .then(setRepos)
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
-    window.api.checkUpdate()
-      .then((info) => { if (info) setUpdate(info) })
+    window.api
+      .checkUpdate()
+      .then((info) => {
+        if (info) setUpdate(info)
+      })
       .catch(() => {})
   }, [])
 

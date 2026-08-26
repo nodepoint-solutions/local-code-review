@@ -12,24 +12,25 @@
 
 ## File Map
 
-| File | Action | What changes |
-|------|--------|-------------|
-| `src/renderer/src/App.css` | Modify | Add `--search-match-bg`, `--search-match-active-bg`, `--search-match-active-border` CSS variables to both `:root`/dark and `[data-theme="light"]` blocks |
-| `src/renderer/src/components/DiffView/DiffLine.module.css` | Modify | Add `.searchMatch` and `.activeSearchMatch` rules |
-| `src/renderer/src/components/DiffView/DiffLine.tsx` | Modify | Add `data-diff-line-number` attr to `<tr>`, accept `isSearchMatch?` and `isActiveSearchMatch?` props |
-| `src/renderer/src/components/DiffView/UnifiedDiff.tsx` | Modify | Accept `matchedLineNumbers?` + `activeMatchLineNumber?`, pass booleans to `DiffLine` |
-| `src/renderer/src/components/DiffView/SplitDiff.tsx` | Modify | Same as UnifiedDiff |
-| `src/renderer/src/components/DiffView/index.tsx` | Modify | Accept + forward `matchedLineNumbers?` + `activeMatchLineNumber?` to UnifiedDiff/SplitDiff |
-| `src/renderer/src/components/DiffView/DiffSearchBar.tsx` | Create | Search input, match count label, Prev/Next/Close buttons |
-| `src/renderer/src/components/DiffView/DiffSearchBar.module.css` | Create | Styles for the search bar strip |
-| `src/renderer/src/screens/PR.tsx` | Modify | Search state, match computation, scroll effect, toolbar button, diffPane restructure, DiffSearchBar render, pass new props to DiffView |
-| `src/renderer/src/screens/PR.module.css` | Modify | Change `.diffPane` to flex column, add `.diffScrollContent` |
+| File                                                            | Action | What changes                                                                                                                                             |
+| --------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/renderer/src/App.css`                                      | Modify | Add `--search-match-bg`, `--search-match-active-bg`, `--search-match-active-border` CSS variables to both `:root`/dark and `[data-theme="light"]` blocks |
+| `src/renderer/src/components/DiffView/DiffLine.module.css`      | Modify | Add `.searchMatch` and `.activeSearchMatch` rules                                                                                                        |
+| `src/renderer/src/components/DiffView/DiffLine.tsx`             | Modify | Add `data-diff-line-number` attr to `<tr>`, accept `isSearchMatch?` and `isActiveSearchMatch?` props                                                     |
+| `src/renderer/src/components/DiffView/UnifiedDiff.tsx`          | Modify | Accept `matchedLineNumbers?` + `activeMatchLineNumber?`, pass booleans to `DiffLine`                                                                     |
+| `src/renderer/src/components/DiffView/SplitDiff.tsx`            | Modify | Same as UnifiedDiff                                                                                                                                      |
+| `src/renderer/src/components/DiffView/index.tsx`                | Modify | Accept + forward `matchedLineNumbers?` + `activeMatchLineNumber?` to UnifiedDiff/SplitDiff                                                               |
+| `src/renderer/src/components/DiffView/DiffSearchBar.tsx`        | Create | Search input, match count label, Prev/Next/Close buttons                                                                                                 |
+| `src/renderer/src/components/DiffView/DiffSearchBar.module.css` | Create | Styles for the search bar strip                                                                                                                          |
+| `src/renderer/src/screens/PR.tsx`                               | Modify | Search state, match computation, scroll effect, toolbar button, diffPane restructure, DiffSearchBar render, pass new props to DiffView                   |
+| `src/renderer/src/screens/PR.module.css`                        | Modify | Change `.diffPane` to flex column, add `.diffScrollContent`                                                                                              |
 
 ---
 
 ### Task 1: CSS variables and DiffLine highlight rules
 
 **Files:**
+
 - Modify: `src/renderer/src/App.css`
 - Modify: `src/renderer/src/components/DiffView/DiffLine.module.css`
 
@@ -38,17 +39,17 @@
 In `src/renderer/src/App.css`, inside the `[data-theme="dark"]` / `:root` block (around line 43, after `--selection-border`), add:
 
 ```css
-  --search-match-bg: rgba(255, 200, 0, 0.12);
-  --search-match-active-bg: rgba(255, 185, 0, 0.32);
-  --search-match-active-border: #c99700;
+--search-match-bg: rgba(255, 200, 0, 0.12);
+--search-match-active-bg: rgba(255, 185, 0, 0.32);
+--search-match-active-border: #c99700;
 ```
 
 In the `[data-theme="light"]` block (around line 127, after `--selection-border`), add:
 
 ```css
-  --search-match-bg: rgba(200, 150, 0, 0.12);
-  --search-match-active-bg: rgba(200, 140, 0, 0.28);
-  --search-match-active-border: #8a6200;
+--search-match-bg: rgba(200, 150, 0, 0.12);
+--search-match-active-bg: rgba(200, 140, 0, 0.28);
+--search-match-active-border: #8a6200;
 ```
 
 - [ ] **Step 2: Add search highlight rules to DiffLine.module.css**
@@ -86,6 +87,7 @@ git commit -m "feat: add search highlight CSS variables and DiffLine rules"
 ### Task 2: DiffLine — data attribute and new props
 
 **Files:**
+
 - Modify: `src/renderer/src/components/DiffView/DiffLine.tsx`
 
 - [ ] **Step 1: Add `isSearchMatch` and `isActiveSearchMatch` props and `data-diff-line-number` attribute**
@@ -133,13 +135,15 @@ export default function DiffLine({
 Update the `lineClass` computation (replace lines 60–65):
 
 ```tsx
-  const lineClass = [
-    styles.line,
-    styles[line.type],
-    isInSelection ? styles.inSelection : '',
-    hasReviewComments ? styles.hasReviewComment : '',
-    isActiveSearchMatch ? styles.activeSearchMatch : isSearchMatch ? styles.searchMatch : '',
-  ].filter(Boolean).join(' ')
+const lineClass = [
+  styles.line,
+  styles[line.type],
+  isInSelection ? styles.inSelection : '',
+  hasReviewComments ? styles.hasReviewComment : '',
+  isActiveSearchMatch ? styles.activeSearchMatch : isSearchMatch ? styles.searchMatch : '',
+]
+  .filter(Boolean)
+  .join(' ')
 ```
 
 Add `data-diff-line-number` to the `<tr>` (replace the opening `<tr` tag at line 72):
@@ -174,6 +178,7 @@ git commit -m "feat: add search highlight props and data-diff-line-number to Dif
 ### Task 3: Thread search props through UnifiedDiff
 
 **Files:**
+
 - Modify: `src/renderer/src/components/DiffView/UnifiedDiff.tsx`
 
 - [ ] **Step 1: Add search props to UnifiedDiff's Props interface**
@@ -206,22 +211,24 @@ export default function UnifiedDiff({
 In the `<DiffLine>` render inside `.map` (around line 50), add two props:
 
 ```tsx
-            <DiffLine
-              key={`line-${line.diffLineNumber}`}
-              line={line}
-              language={language}
-              comments={comments.filter((c) => c.start_line <= line.diffLineNumber && c.end_line >= line.diffLineNumber)}
-              onStartComment={onStartComment}
-              onExtendComment={onExtendComment}
-              onHoverLine={onHoverLine}
-              isSelecting={isSelecting}
-              selectionStart={selectionStart}
-              selectionEnd={selectionEnd}
-              hoverLine={hoverLine}
-              side="right"
-              isSearchMatch={matchedLineNumbers?.has(line.diffLineNumber) ?? false}
-              isActiveSearchMatch={activeMatchLineNumber === line.diffLineNumber}
-            />
+<DiffLine
+  key={`line-${line.diffLineNumber}`}
+  line={line}
+  language={language}
+  comments={comments.filter(
+    (c) => c.start_line <= line.diffLineNumber && c.end_line >= line.diffLineNumber
+  )}
+  onStartComment={onStartComment}
+  onExtendComment={onExtendComment}
+  onHoverLine={onHoverLine}
+  isSelecting={isSelecting}
+  selectionStart={selectionStart}
+  selectionEnd={selectionEnd}
+  hoverLine={hoverLine}
+  side="right"
+  isSearchMatch={matchedLineNumbers?.has(line.diffLineNumber) ?? false}
+  isActiveSearchMatch={activeMatchLineNumber === line.diffLineNumber}
+/>
 ```
 
 - [ ] **Step 4: Verify TypeScript compiles**
@@ -244,6 +251,7 @@ git commit -m "feat: thread search highlight props through UnifiedDiff"
 ### Task 4: Thread search props through SplitDiff
 
 **Files:**
+
 - Modify: `src/renderer/src/components/DiffView/SplitDiff.tsx`
 
 - [ ] **Step 1: Add search props to SplitDiff's Props interface**
@@ -276,21 +284,21 @@ export default function SplitDiff({
 Find the left-side `<DiffLine>` (around line 96) and add the two props:
 
 ```tsx
-                      <DiffLine
-                        line={pair.left}
-                        language={language}
-                        comments={[]}
-                        onStartComment={onStartComment}
-                        onExtendComment={onExtendComment}
-                        onHoverLine={onHoverLine}
-                        isSelecting={isSelecting}
-                        selectionStart={selectionStart}
-                        selectionEnd={selectionEnd}
-                        hoverLine={hoverLine}
-                        side="left"
-                        isSearchMatch={matchedLineNumbers?.has(pair.left.diffLineNumber) ?? false}
-                        isActiveSearchMatch={activeMatchLineNumber === pair.left.diffLineNumber}
-                      />
+<DiffLine
+  line={pair.left}
+  language={language}
+  comments={[]}
+  onStartComment={onStartComment}
+  onExtendComment={onExtendComment}
+  onHoverLine={onHoverLine}
+  isSelecting={isSelecting}
+  selectionStart={selectionStart}
+  selectionEnd={selectionEnd}
+  hoverLine={hoverLine}
+  side="left"
+  isSearchMatch={matchedLineNumbers?.has(pair.left.diffLineNumber) ?? false}
+  isActiveSearchMatch={activeMatchLineNumber === pair.left.diffLineNumber}
+/>
 ```
 
 - [ ] **Step 4: Pass booleans to the right DiffLine**
@@ -298,21 +306,21 @@ Find the left-side `<DiffLine>` (around line 96) and add the two props:
 Find the right-side `<DiffLine>` (around line 115) and add the two props:
 
 ```tsx
-                      <DiffLine
-                        line={pair.right}
-                        language={language}
-                        comments={[]}
-                        onStartComment={onStartComment}
-                        onExtendComment={onExtendComment}
-                        onHoverLine={onHoverLine}
-                        isSelecting={isSelecting}
-                        selectionStart={selectionStart}
-                        selectionEnd={selectionEnd}
-                        hoverLine={hoverLine}
-                        side="right"
-                        isSearchMatch={matchedLineNumbers?.has(pair.right.diffLineNumber) ?? false}
-                        isActiveSearchMatch={activeMatchLineNumber === pair.right.diffLineNumber}
-                      />
+<DiffLine
+  line={pair.right}
+  language={language}
+  comments={[]}
+  onStartComment={onStartComment}
+  onExtendComment={onExtendComment}
+  onHoverLine={onHoverLine}
+  isSelecting={isSelecting}
+  selectionStart={selectionStart}
+  selectionEnd={selectionEnd}
+  hoverLine={hoverLine}
+  side="right"
+  isSearchMatch={matchedLineNumbers?.has(pair.right.diffLineNumber) ?? false}
+  isActiveSearchMatch={activeMatchLineNumber === pair.right.diffLineNumber}
+/>
 ```
 
 - [ ] **Step 5: Verify TypeScript compiles**
@@ -335,6 +343,7 @@ git commit -m "feat: thread search highlight props through SplitDiff"
 ### Task 5: Thread search props through DiffView/index.tsx
 
 **Files:**
+
 - Modify: `src/renderer/src/components/DiffView/index.tsx`
 
 - [ ] **Step 1: Add search props to the DiffView Props interface**
@@ -346,7 +355,9 @@ interface Props {
   file: ParsedFile
   comments: ReviewComment[]
   view: 'unified' | 'split'
-  onAddComment: (payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>) => Promise<void>
+  onAddComment: (
+    payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>
+  ) => Promise<void>
   readOnly?: boolean
   allowDeleteComment?: boolean
   onDeleteComment?: (commentId: string) => void
@@ -371,55 +382,63 @@ export default function DiffView({
 Pass the new props to `UnifiedDiff` (around line 149):
 
 ```tsx
-          <UnifiedDiff
-            file={file}
-            comments={comments}
-            language={language}
-            onStartComment={handleStartComment}
-            onExtendComment={handleExtendComment}
-            onHoverLine={handleHoverLine}
-            isSelecting={isSelecting}
-            selectionStart={selectionStart}
-            selectionEnd={selectionEnd}
-            hoverLine={hoverLine}
-            allowDeleteComment={allowDeleteComment}
-            onDeleteComment={onDeleteComment}
-            focusedCommentId={focusedCommentId}
-            showCommentBox={showCommentBox}
-            commentBoxEndLine={selectionStart !== null && selectionEnd !== null ? Math.max(selectionStart, selectionEnd) : null}
-            commentBoxStartLine={selectionStart !== null && selectionEnd !== null ? Math.min(selectionStart, selectionEnd) : null}
-            onCommentBoxSubmit={handleSubmitComment}
-            onCommentBoxCancel={handleCancelComment}
-            matchedLineNumbers={matchedLineNumbers}
-            activeMatchLineNumber={activeMatchLineNumber}
-          />
+<UnifiedDiff
+  file={file}
+  comments={comments}
+  language={language}
+  onStartComment={handleStartComment}
+  onExtendComment={handleExtendComment}
+  onHoverLine={handleHoverLine}
+  isSelecting={isSelecting}
+  selectionStart={selectionStart}
+  selectionEnd={selectionEnd}
+  hoverLine={hoverLine}
+  allowDeleteComment={allowDeleteComment}
+  onDeleteComment={onDeleteComment}
+  focusedCommentId={focusedCommentId}
+  showCommentBox={showCommentBox}
+  commentBoxEndLine={
+    selectionStart !== null && selectionEnd !== null ? Math.max(selectionStart, selectionEnd) : null
+  }
+  commentBoxStartLine={
+    selectionStart !== null && selectionEnd !== null ? Math.min(selectionStart, selectionEnd) : null
+  }
+  onCommentBoxSubmit={handleSubmitComment}
+  onCommentBoxCancel={handleCancelComment}
+  matchedLineNumbers={matchedLineNumbers}
+  activeMatchLineNumber={activeMatchLineNumber}
+/>
 ```
 
 Pass the new props to `SplitDiff` (around line 170):
 
 ```tsx
-          <SplitDiff
-            file={file}
-            comments={comments}
-            language={language}
-            onStartComment={handleStartComment}
-            onExtendComment={handleExtendComment}
-            onHoverLine={handleHoverLine}
-            isSelecting={isSelecting}
-            selectionStart={selectionStart}
-            selectionEnd={selectionEnd}
-            hoverLine={hoverLine}
-            allowDeleteComment={allowDeleteComment}
-            onDeleteComment={onDeleteComment}
-            focusedCommentId={focusedCommentId}
-            showCommentBox={showCommentBox}
-            commentBoxEndLine={selectionStart !== null && selectionEnd !== null ? Math.max(selectionStart, selectionEnd) : null}
-            commentBoxStartLine={selectionStart !== null && selectionEnd !== null ? Math.min(selectionStart, selectionEnd) : null}
-            onCommentBoxSubmit={handleSubmitComment}
-            onCommentBoxCancel={handleCancelComment}
-            matchedLineNumbers={matchedLineNumbers}
-            activeMatchLineNumber={activeMatchLineNumber}
-          />
+<SplitDiff
+  file={file}
+  comments={comments}
+  language={language}
+  onStartComment={handleStartComment}
+  onExtendComment={handleExtendComment}
+  onHoverLine={handleHoverLine}
+  isSelecting={isSelecting}
+  selectionStart={selectionStart}
+  selectionEnd={selectionEnd}
+  hoverLine={hoverLine}
+  allowDeleteComment={allowDeleteComment}
+  onDeleteComment={onDeleteComment}
+  focusedCommentId={focusedCommentId}
+  showCommentBox={showCommentBox}
+  commentBoxEndLine={
+    selectionStart !== null && selectionEnd !== null ? Math.max(selectionStart, selectionEnd) : null
+  }
+  commentBoxStartLine={
+    selectionStart !== null && selectionEnd !== null ? Math.min(selectionStart, selectionEnd) : null
+  }
+  onCommentBoxSubmit={handleSubmitComment}
+  onCommentBoxCancel={handleCancelComment}
+  matchedLineNumbers={matchedLineNumbers}
+  activeMatchLineNumber={activeMatchLineNumber}
+/>
 ```
 
 - [ ] **Step 3: Verify TypeScript compiles**
@@ -442,6 +461,7 @@ git commit -m "feat: thread search highlight props through DiffView"
 ### Task 6: Create DiffSearchBar component
 
 **Files:**
+
 - Create: `src/renderer/src/components/DiffView/DiffSearchBar.tsx`
 - Create: `src/renderer/src/components/DiffView/DiffSearchBar.module.css`
 
@@ -465,14 +485,30 @@ interface Props {
 
 function SearchIcon(): JSX.Element {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   )
 }
 
 export default function DiffSearchBar({
-  query, onQueryChange, matchCount, activeIndex, onPrev, onNext, onClose,
+  query,
+  onQueryChange,
+  matchCount,
+  activeIndex,
+  onPrev,
+  onNext,
+  onClose,
 }: Props): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -490,13 +526,13 @@ export default function DiffSearchBar({
   }
 
   const matchLabel =
-    query === '' ? '' :
-    matchCount === 0 ? 'No results' :
-    `${activeIndex + 1} of ${matchCount}`
+    query === '' ? '' : matchCount === 0 ? 'No results' : `${activeIndex + 1} of ${matchCount}`
 
   return (
     <div className={styles.bar}>
-      <span className={styles.icon}><SearchIcon /></span>
+      <span className={styles.icon}>
+        <SearchIcon />
+      </span>
       <input
         ref={inputRef}
         className={styles.input}
@@ -511,9 +547,25 @@ export default function DiffSearchBar({
           {matchLabel}
         </span>
       )}
-      <button className={styles.navBtn} onClick={onPrev} disabled={matchCount === 0} title="Previous match (Shift+Enter)">↑</button>
-      <button className={styles.navBtn} onClick={onNext} disabled={matchCount === 0} title="Next match (Enter)">↓</button>
-      <button className={styles.closeBtn} onClick={onClose} title="Close search">✕</button>
+      <button
+        className={styles.navBtn}
+        onClick={onPrev}
+        disabled={matchCount === 0}
+        title="Previous match (Shift+Enter)"
+      >
+        ↑
+      </button>
+      <button
+        className={styles.navBtn}
+        onClick={onNext}
+        disabled={matchCount === 0}
+        title="Next match (Enter)"
+      >
+        ↓
+      </button>
+      <button className={styles.closeBtn} onClick={onClose} title="Close search">
+        ✕
+      </button>
     </div>
   )
 }
@@ -583,7 +635,9 @@ Create `src/renderer/src/components/DiffView/DiffSearchBar.module.css` with this
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   cursor: pointer;
-  transition: background var(--transition), color var(--transition);
+  transition:
+    background var(--transition),
+    color var(--transition);
 }
 .navBtn:hover:not(:disabled) {
   background: var(--bg-surface-2);
@@ -609,7 +663,9 @@ Create `src/renderer/src/components/DiffView/DiffSearchBar.module.css` with this
   color: var(--text-muted);
   cursor: pointer;
   margin-left: 2px;
-  transition: background var(--transition), color var(--transition);
+  transition:
+    background var(--transition),
+    color var(--transition);
 }
 .closeBtn:hover {
   background: var(--bg-surface-2);
@@ -637,16 +693,20 @@ git commit -m "feat: create DiffSearchBar component"
 ### Task 7: Wire up search in PR.tsx and PR.module.css
 
 **Files:**
+
 - Modify: `src/renderer/src/screens/PR.tsx`
 - Modify: `src/renderer/src/screens/PR.module.css`
 
 - [ ] **Step 1: Add `useMemo` to the React import in PR.tsx**
 
 Change line 1 from:
+
 ```tsx
 import React, { useEffect, useRef, useState } from 'react'
 ```
+
 to:
+
 ```tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 ```
@@ -654,6 +714,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 - [ ] **Step 2: Import DiffSearchBar in PR.tsx**
 
 After the existing `import DiffView from '../components/DiffView'` line, add:
+
 ```tsx
 import DiffSearchBar from '../components/DiffView/DiffSearchBar'
 ```
@@ -665,8 +726,18 @@ After the existing `ReviewIcon` function (around line 49), add:
 ```tsx
 function SearchIcon(): JSX.Element {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   )
 }
@@ -677,9 +748,9 @@ function SearchIcon(): JSX.Element {
 In the `PR` function, after the existing state declarations (after the `dragStartWidth` ref around line 113), add:
 
 ```tsx
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchMatchIndex, setSearchMatchIndex] = useState(0)
+const [searchOpen, setSearchOpen] = useState(false)
+const [searchQuery, setSearchQuery] = useState('')
+const [searchMatchIndex, setSearchMatchIndex] = useState(0)
 ```
 
 - [ ] **Step 5: Add match computation**
@@ -687,49 +758,49 @@ In the `PR` function, after the existing state declarations (after the `dragStar
 After the search state declarations, add:
 
 ```tsx
-  const searchMatches = useMemo(() => {
-    if (!searchQuery || !prDetail) return []
-    const q = searchQuery.toLowerCase()
-    const matches: Array<{ diffLineNumber: number }> = []
-    for (const file of diff) {
-      for (const line of file.lines) {
-        if (line.type !== 'hunk-header' && line.content.toLowerCase().includes(q)) {
-          matches.push({ diffLineNumber: line.diffLineNumber })
-        }
+const searchMatches = useMemo(() => {
+  if (!searchQuery || !prDetail) return []
+  const q = searchQuery.toLowerCase()
+  const matches: Array<{ diffLineNumber: number }> = []
+  for (const file of diff) {
+    for (const line of file.lines) {
+      if (line.type !== 'hunk-header' && line.content.toLowerCase().includes(q)) {
+        matches.push({ diffLineNumber: line.diffLineNumber })
       }
     }
-    return matches
-  }, [searchQuery, prDetail])
+  }
+  return matches
+}, [searchQuery, prDetail])
 
-  const matchedLineNumbers = useMemo(
-    () => new Set(searchMatches.map((m) => m.diffLineNumber)),
-    [searchMatches]
-  )
-  const activeMatchLineNumber = searchMatches[searchMatchIndex]?.diffLineNumber ?? null
+const matchedLineNumbers = useMemo(
+  () => new Set(searchMatches.map((m) => m.diffLineNumber)),
+  [searchMatches]
+)
+const activeMatchLineNumber = searchMatches[searchMatchIndex]?.diffLineNumber ?? null
 ```
 
 Note: `diff` and `prDetail` are declared later in the component (around line 394). The `useMemo` depends on `prDetail` which covers `diff` — this is fine; `prDetail` is in scope at the point where this code is inserted (it's used throughout the component). Place this block just before the `useEffect` calls rather than immediately after the state declarations if TypeScript complains about `diff` not yet being in scope — `diff` is destructured from `prDetail` on line 394. Instead, reference `prDetail?.diff ?? []`:
 
 ```tsx
-  const searchMatches = useMemo(() => {
-    if (!searchQuery || !prDetail) return []
-    const q = searchQuery.toLowerCase()
-    const matches: Array<{ diffLineNumber: number }> = []
-    for (const file of (prDetail.diff ?? [])) {
-      for (const line of file.lines) {
-        if (line.type !== 'hunk-header' && line.content.toLowerCase().includes(q)) {
-          matches.push({ diffLineNumber: line.diffLineNumber })
-        }
+const searchMatches = useMemo(() => {
+  if (!searchQuery || !prDetail) return []
+  const q = searchQuery.toLowerCase()
+  const matches: Array<{ diffLineNumber: number }> = []
+  for (const file of prDetail.diff ?? []) {
+    for (const line of file.lines) {
+      if (line.type !== 'hunk-header' && line.content.toLowerCase().includes(q)) {
+        matches.push({ diffLineNumber: line.diffLineNumber })
       }
     }
-    return matches
-  }, [searchQuery, prDetail])
+  }
+  return matches
+}, [searchQuery, prDetail])
 
-  const matchedLineNumbers = useMemo(
-    () => new Set(searchMatches.map((m) => m.diffLineNumber)),
-    [searchMatches]
-  )
-  const activeMatchLineNumber = searchMatches[searchMatchIndex]?.diffLineNumber ?? null
+const matchedLineNumbers = useMemo(
+  () => new Set(searchMatches.map((m) => m.diffLineNumber)),
+  [searchMatches]
+)
+const activeMatchLineNumber = searchMatches[searchMatchIndex]?.diffLineNumber ?? null
 ```
 
 - [ ] **Step 6: Add reset and scroll effects**
@@ -737,15 +808,15 @@ Note: `diff` and `prDetail` are declared later in the component (around line 394
 After the match computation block, add two effects:
 
 ```tsx
-  useEffect(() => {
-    setSearchMatchIndex(0)
-  }, [searchQuery])
+useEffect(() => {
+  setSearchMatchIndex(0)
+}, [searchQuery])
 
-  useEffect(() => {
-    if (activeMatchLineNumber === null) return
-    const el = document.querySelector(`tr[data-diff-line-number="${activeMatchLineNumber}"]`)
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [activeMatchLineNumber])
+useEffect(() => {
+  if (activeMatchLineNumber === null) return
+  const el = document.querySelector(`tr[data-diff-line-number="${activeMatchLineNumber}"]`)
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}, [activeMatchLineNumber])
 ```
 
 - [ ] **Step 7: Add `handleSearchClose` helper**
@@ -753,10 +824,10 @@ After the match computation block, add two effects:
 After the existing `scrollToFile` function (around line 381), add:
 
 ```tsx
-  function handleSearchClose(): void {
-    setSearchOpen(false)
-    setSearchQuery('')
-  }
+function handleSearchClose(): void {
+  setSearchOpen(false)
+  setSearchQuery('')
+}
 ```
 
 - [ ] **Step 8: Add the search button to the toolbar**
@@ -764,31 +835,39 @@ After the existing `scrollToFile` function (around line 381), add:
 In the `viewToggle` div (around lines 496–514 in the `tab === 'files'` condition), add the search button after the split button:
 
 ```tsx
-        {tab === 'files' && (
-          <div className={styles.viewToggle}>
-            <CommentNav
-              total={navComments.length}
-              current={focusedCommentIndex}
-              onPrev={() => handleCommentNav(Math.max(0, focusedCommentIndex - 1))}
-              onNext={() => handleCommentNav(Math.min(navComments.length - 1, focusedCommentIndex + 1))}
-            />
-            <button
-              className={`${styles.toggleBtn} ${diffView === 'unified' ? styles.toggleActive : ''}`}
-              onClick={() => setDiffView('unified')}
-              title="Unified diff"
-            ><UnifiedIcon /></button>
-            <button
-              className={`${styles.toggleBtn} ${diffView === 'split' ? styles.toggleActive : ''}`}
-              onClick={() => setDiffView('split')}
-              title="Split diff"
-            ><SplitIcon /></button>
-            <button
-              className={`${styles.toggleBtn} ${searchOpen ? styles.toggleActive : ''}`}
-              onClick={() => setSearchOpen((o) => !o)}
-              title="Search in diff"
-            ><SearchIcon /></button>
-          </div>
-        )}
+{
+  tab === 'files' && (
+    <div className={styles.viewToggle}>
+      <CommentNav
+        total={navComments.length}
+        current={focusedCommentIndex}
+        onPrev={() => handleCommentNav(Math.max(0, focusedCommentIndex - 1))}
+        onNext={() => handleCommentNav(Math.min(navComments.length - 1, focusedCommentIndex + 1))}
+      />
+      <button
+        className={`${styles.toggleBtn} ${diffView === 'unified' ? styles.toggleActive : ''}`}
+        onClick={() => setDiffView('unified')}
+        title="Unified diff"
+      >
+        <UnifiedIcon />
+      </button>
+      <button
+        className={`${styles.toggleBtn} ${diffView === 'split' ? styles.toggleActive : ''}`}
+        onClick={() => setDiffView('split')}
+        title="Split diff"
+      >
+        <SplitIcon />
+      </button>
+      <button
+        className={`${styles.toggleBtn} ${searchOpen ? styles.toggleActive : ''}`}
+        onClick={() => setSearchOpen((o) => !o)}
+        title="Search in diff"
+      >
+        <SearchIcon />
+      </button>
+    </div>
+  )
+}
 ```
 
 - [ ] **Step 9: Restructure the files tab — diffPane becomes a flex column**
@@ -796,52 +875,68 @@ In the `viewToggle` div (around lines 496–514 in the `tab === 'files'` conditi
 In the `tab === 'files'` block (around lines 836–866), replace the `diffPane` div so it contains `DiffSearchBar` and an inner scroll wrapper:
 
 ```tsx
-      {tab === 'files' && (
-        <div className={`${styles.filesBody} ${reviewPanelOpen ? styles.bodyShifted : ''}`}>
-          <div ref={treePanelRef} className={styles.treePanel} style={{ width: treeWidth }}>
-            <FileTree files={diff} onSelect={scrollToFile} />
-          </div>
-          <div className={styles.resizeHandle} onMouseDown={handleResizeStart} />
-          <div ref={diffPaneRef} className={styles.diffPane}>
-            {searchOpen && (
-              <DiffSearchBar
-                query={searchQuery}
-                onQueryChange={(q) => setSearchQuery(q)}
-                matchCount={searchMatches.length}
-                activeIndex={searchMatchIndex}
-                onPrev={() => setSearchMatchIndex((i) => (i - 1 + Math.max(1, searchMatches.length)) % Math.max(1, searchMatches.length))}
-                onNext={() => setSearchMatchIndex((i) => (i + 1) % Math.max(1, searchMatches.length))}
-                onClose={handleSearchClose}
+{
+  tab === 'files' && (
+    <div className={`${styles.filesBody} ${reviewPanelOpen ? styles.bodyShifted : ''}`}>
+      <div ref={treePanelRef} className={styles.treePanel} style={{ width: treeWidth }}>
+        <FileTree files={diff} onSelect={scrollToFile} />
+      </div>
+      <div className={styles.resizeHandle} onMouseDown={handleResizeStart} />
+      <div ref={diffPaneRef} className={styles.diffPane}>
+        {searchOpen && (
+          <DiffSearchBar
+            query={searchQuery}
+            onQueryChange={(q) => setSearchQuery(q)}
+            matchCount={searchMatches.length}
+            activeIndex={searchMatchIndex}
+            onPrev={() =>
+              setSearchMatchIndex(
+                (i) =>
+                  (i - 1 + Math.max(1, searchMatches.length)) % Math.max(1, searchMatches.length)
+              )
+            }
+            onNext={() => setSearchMatchIndex((i) => (i + 1) % Math.max(1, searchMatches.length))}
+            onClose={handleSearchClose}
+          />
+        )}
+        <div className={styles.diffScrollContent}>
+          {diff.map((file) => (
+            <div
+              key={file.newPath}
+              ref={(el) => {
+                fileRefs.current[file.newPath] = el
+              }}
+            >
+              <DiffView
+                file={file}
+                comments={comments.filter((c) => c.file === file.newPath)}
+                view={diffView}
+                onAddComment={handleAddComment}
+                readOnly={
+                  workflow.phase === 'reviewed' ||
+                  workflow.phase === 'in_fix' ||
+                  workflow.phase === 'closed'
+                }
+                allowDeleteComment={review?.status === 'in_progress'}
+                onDeleteComment={handleDeleteComment}
+                focusedCommentId={navComments[focusedCommentIndex]?.id}
+                matchedLineNumbers={matchedLineNumbers}
+                activeMatchLineNumber={activeMatchLineNumber}
               />
-            )}
-            <div className={styles.diffScrollContent}>
-              {diff.map((file) => (
-                <div key={file.newPath} ref={(el) => { fileRefs.current[file.newPath] = el }}>
-                  <DiffView
-                    file={file}
-                    comments={comments.filter((c) => c.file === file.newPath)}
-                    view={diffView}
-                    onAddComment={handleAddComment}
-                    readOnly={workflow.phase === 'reviewed' || workflow.phase === 'in_fix' || workflow.phase === 'closed'}
-                    allowDeleteComment={review?.status === 'in_progress'}
-                    onDeleteComment={handleDeleteComment}
-                    focusedCommentId={navComments[focusedCommentIndex]?.id}
-                    matchedLineNumbers={matchedLineNumbers}
-                    activeMatchLineNumber={activeMatchLineNumber}
-                  />
-                </div>
-              ))}
             </div>
-          </div>
-          {!reviewPanelOpen && (
-            <CommentOutline
-              comments={navComments}
-              focusedIndex={focusedCommentIndex}
-              onSelect={handleCommentNav}
-            />
-          )}
+          ))}
         </div>
+      </div>
+      {!reviewPanelOpen && (
+        <CommentOutline
+          comments={navComments}
+          focusedIndex={focusedCommentIndex}
+          onSelect={handleCommentNav}
+        />
       )}
+    </div>
+  )
+}
 ```
 
 Note: `CommentOutline` stays as a flex sibling of `diffPane` inside `filesBody` (it has `width: 220px; flex-shrink: 0` and is not absolutely positioned — moving it inside `diffPane` would break the layout).

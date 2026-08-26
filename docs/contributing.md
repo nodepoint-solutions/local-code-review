@@ -2,14 +2,14 @@
 
 ## Tech stack
 
-| Layer | Choice |
-|---|---|
-| Desktop shell | Electron |
-| Build tooling | electron-vite |
-| Renderer | React + Vite |
-| State management | Zustand |
-| Database | SQLite (better-sqlite3, stored in platform userData) |
-| Git | System `git` binary — no git libraries |
+| Layer            | Choice                                               |
+| ---------------- | ---------------------------------------------------- |
+| Desktop shell    | Electron                                             |
+| Build tooling    | electron-vite                                        |
+| Renderer         | React + Vite                                         |
+| State management | Zustand                                              |
+| Database         | SQLite (better-sqlite3, stored in platform userData) |
+| Git              | System `git` binary — no git libraries               |
 
 ## Getting started
 

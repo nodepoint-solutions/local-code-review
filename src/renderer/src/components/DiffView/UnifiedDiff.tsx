@@ -29,13 +29,27 @@ interface Props {
 }
 
 export default function UnifiedDiff({
-  file, comments, language,
-  onStartComment, onExtendComment, onHoverLine,
-  isSelecting, selectionStart, selectionEnd, hoverLine,
-  allowDeleteComment, onDeleteComment, onResolveComment, focusedCommentId,
-  showCommentBox, commentBoxEndLine, commentBoxStartLine,
-  onCommentBoxSubmit, onCommentBoxCancel,
-  matchedLineNumbers, activeMatchLineNumber,
+  file,
+  comments,
+  language,
+  onStartComment,
+  onExtendComment,
+  onHoverLine,
+  isSelecting,
+  selectionStart,
+  selectionEnd,
+  hoverLine,
+  allowDeleteComment,
+  onDeleteComment,
+  onResolveComment,
+  focusedCommentId,
+  showCommentBox,
+  commentBoxEndLine,
+  commentBoxStartLine,
+  onCommentBoxSubmit,
+  onCommentBoxCancel,
+  matchedLineNumbers,
+  activeMatchLineNumber,
 }: Props): JSX.Element {
   const commentsByEndLine = new Map<number, ReviewComment[]>()
   for (const comment of comments) {
@@ -55,7 +69,9 @@ export default function UnifiedDiff({
               key={`line-${line.diffLineNumber}`}
               line={line}
               language={language}
-              comments={comments.filter((c) => c.start_line <= line.diffLineNumber && c.end_line >= line.diffLineNumber)}
+              comments={comments.filter(
+                (c) => c.start_line <= line.diffLineNumber && c.end_line >= line.diffLineNumber
+              )}
               onStartComment={onStartComment}
               onExtendComment={onExtendComment}
               onHoverLine={onHoverLine}
@@ -74,24 +90,31 @@ export default function UnifiedDiff({
                     comment={comment}
                     allowDelete={allowDeleteComment}
                     onDelete={onDeleteComment ? () => onDeleteComment(comment.id) : undefined}
-                    onResolve={onResolveComment ? (status) => onResolveComment(comment.id, status) : undefined}
+                    onResolve={
+                      onResolveComment
+                        ? (status) => onResolveComment(comment.id, status)
+                        : undefined
+                    }
                     focused={focusedCommentId === comment.id}
                   />
                 </td>
               </tr>
             ))}
-            {showCommentBox && commentBoxEndLine === line.diffLineNumber && onCommentBoxSubmit && onCommentBoxCancel && (
-              <tr key="comment-box">
-                <td colSpan={4}>
-                  <CommentBox
-                    startLine={commentBoxStartLine ?? commentBoxEndLine}
-                    endLine={commentBoxEndLine}
-                    onSubmit={onCommentBoxSubmit}
-                    onCancel={onCommentBoxCancel}
-                  />
-                </td>
-              </tr>
-            )}
+            {showCommentBox &&
+              commentBoxEndLine === line.diffLineNumber &&
+              onCommentBoxSubmit &&
+              onCommentBoxCancel && (
+                <tr key="comment-box">
+                  <td colSpan={4}>
+                    <CommentBox
+                      startLine={commentBoxStartLine ?? commentBoxEndLine}
+                      endLine={commentBoxEndLine}
+                      onSubmit={onCommentBoxSubmit}
+                      onCancel={onCommentBoxCancel}
+                    />
+                  </td>
+                </tr>
+              )}
           </>
         ))}
         {orphanedStale.map((comment) => (
@@ -101,7 +124,9 @@ export default function UnifiedDiff({
                 comment={comment}
                 allowDelete={allowDeleteComment}
                 onDelete={onDeleteComment ? () => onDeleteComment(comment.id) : undefined}
-                onResolve={onResolveComment ? (status) => onResolveComment(comment.id, status) : undefined}
+                onResolve={
+                  onResolveComment ? (status) => onResolveComment(comment.id, status) : undefined
+                }
                 focused={focusedCommentId === comment.id}
               />
             </td>

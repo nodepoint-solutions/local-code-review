@@ -42,14 +42,24 @@ describe('ReviewStore', () => {
     })
 
     it('getPR reads from disk', () => {
-      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      })
       const fetched = store.getPR(repoPath, pr.id)
       expect(fetched.id).toBe(pr.id)
       expect(fetched.title).toBe('T')
     })
 
     it('updatePRStatus changes status and updated_at', () => {
-      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      })
       const updated = store.updatePRStatus(repoPath, pr.id, 'closed')
       expect(updated.status).toBe('closed')
       expect(updated.updated_at).not.toBe(pr.updated_at)
@@ -60,20 +70,35 @@ describe('ReviewStore', () => {
     })
 
     it('listPRs silently skips corrupt files', () => {
-      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      })
       const indexPath = path.join(repoPath, '.reviews', pr.id, 'index.json')
       fs.writeFileSync(indexPath, 'not json')
       expect(store.listPRs(repoPath)).toHaveLength(0)
     })
 
     it('createPR sets assignee to null by default', () => {
-      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      })
       expect(pr.assignee).toBeNull()
       expect(pr.assigned_at).toBeNull()
     })
 
     it('assignPR sets and clears assignee', () => {
-      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      })
       const assigned = store.assignPR(repoPath, pr.id, 'claude')
       expect(assigned.assignee).toBe('claude')
       expect(assigned.assigned_at).toMatch(/^\d{4}-\d{2}-\d{2}T/)
@@ -101,7 +126,12 @@ describe('ReviewStore', () => {
     })
 
     it('existing index.json without assignee fields parses correctly', () => {
-      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      })
       // Write a file without the new fields (simulating a pre-migration file)
       const indexPath = path.join(repoPath, '.reviews', pr.id, 'index.json')
       const raw = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
@@ -118,7 +148,12 @@ describe('ReviewStore', () => {
     let prId: string
 
     beforeEach(() => {
-      prId = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' }).id
+      prId = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      }).id
     })
 
     it('creates a review and lists it', () => {
@@ -132,8 +167,14 @@ describe('ReviewStore', () => {
     })
 
     it('getOrCreateInProgressReview returns existing review on second call', () => {
-      const r1 = store.getOrCreateInProgressReview(repoPath, prId, { base_sha: 'a', compare_sha: 'b' })
-      const r2 = store.getOrCreateInProgressReview(repoPath, prId, { base_sha: 'a', compare_sha: 'b' })
+      const r1 = store.getOrCreateInProgressReview(repoPath, prId, {
+        base_sha: 'a',
+        compare_sha: 'b',
+      })
+      const r2 = store.getOrCreateInProgressReview(repoPath, prId, {
+        base_sha: 'a',
+        compare_sha: 'b',
+      })
       expect(r1.id).toBe(r2.id)
     })
 
@@ -156,7 +197,12 @@ describe('ReviewStore', () => {
     let reviewId: string
 
     beforeEach(() => {
-      prId = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' }).id
+      prId = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      }).id
       reviewId = store.createReview(repoPath, prId, { base_sha: 'a', compare_sha: 'b' }).id
     })
 
@@ -176,13 +222,34 @@ describe('ReviewStore', () => {
     })
 
     it('assigns sequential IDs for multiple comments', () => {
-      store.addComment(repoPath, prId, reviewId, { file: 'a.ts', start_line: 1, end_line: 1, side: 'right', body: 'c1', context: [] })
-      const updated = store.addComment(repoPath, prId, reviewId, { file: 'a.ts', start_line: 2, end_line: 2, side: 'right', body: 'c2', context: [] })
+      store.addComment(repoPath, prId, reviewId, {
+        file: 'a.ts',
+        start_line: 1,
+        end_line: 1,
+        side: 'right',
+        body: 'c1',
+        context: [],
+      })
+      const updated = store.addComment(repoPath, prId, reviewId, {
+        file: 'a.ts',
+        start_line: 2,
+        end_line: 2,
+        side: 'right',
+        body: 'c2',
+        context: [],
+      })
       expect(updated.comments[1].id).toBe('RVW-002')
     })
 
     it('resolveComment marks as resolved with resolution', () => {
-      store.addComment(repoPath, prId, reviewId, { file: 'a.ts', start_line: 1, end_line: 1, side: 'right', body: 'Fix me', context: [] })
+      store.addComment(repoPath, prId, reviewId, {
+        file: 'a.ts',
+        start_line: 1,
+        end_line: 1,
+        side: 'right',
+        body: 'Fix me',
+        context: [],
+      })
       const updated = store.resolveComment(repoPath, prId, reviewId, 'RVW-001', 'resolved', {
         comment: 'Fixed by using httpOnly',
         resolved_by: 'claude',
@@ -193,7 +260,14 @@ describe('ReviewStore', () => {
     })
 
     it('resolveComment supports wont_fix status', () => {
-      store.addComment(repoPath, prId, reviewId, { file: 'a.ts', start_line: 1, end_line: 1, side: 'right', body: 'Fix me', context: [] })
+      store.addComment(repoPath, prId, reviewId, {
+        file: 'a.ts',
+        start_line: 1,
+        end_line: 1,
+        side: 'right',
+        body: 'Fix me',
+        context: [],
+      })
       const updated = store.resolveComment(repoPath, prId, reviewId, 'RVW-001', 'wont_fix', {
         comment: 'Out of scope for this PR',
         resolved_by: 'claude',
@@ -203,14 +277,28 @@ describe('ReviewStore', () => {
     })
 
     it('markStale marks comments whose line range overlaps stale ranges', () => {
-      store.addComment(repoPath, prId, reviewId, { file: 'src/a.ts', start_line: 5, end_line: 7, side: 'right', body: 'old', context: [] })
+      store.addComment(repoPath, prId, reviewId, {
+        file: 'src/a.ts',
+        start_line: 5,
+        end_line: 7,
+        side: 'right',
+        body: 'old',
+        context: [],
+      })
       store.markStale(repoPath, prId, reviewId, 'src/a.ts', [{ startLine: 5, endLine: 7 }])
       const review = store.getReview(repoPath, prId, reviewId)
       expect(review.comments[0].is_stale).toBe(true)
     })
 
     it('markStale does not affect comments on other files', () => {
-      store.addComment(repoPath, prId, reviewId, { file: 'src/b.ts', start_line: 5, end_line: 7, side: 'right', body: 'ok', context: [] })
+      store.addComment(repoPath, prId, reviewId, {
+        file: 'src/b.ts',
+        start_line: 5,
+        end_line: 7,
+        side: 'right',
+        body: 'ok',
+        context: [],
+      })
       store.markStale(repoPath, prId, reviewId, 'src/a.ts', [{ startLine: 5, endLine: 7 }])
       const review = store.getReview(repoPath, prId, reviewId)
       expect(review.comments[0].is_stale).toBe(false)
@@ -222,34 +310,60 @@ describe('ReviewStore', () => {
     let dcReviewId: string
 
     beforeEach(() => {
-      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      })
       const review = store.createReview(repoPath, pr.id, { base_sha: 'a', compare_sha: 'b' })
       dcPrId = pr.id
       dcReviewId = review.id
     })
 
     it('removes the comment from the review', () => {
-      store.addComment(repoPath, dcPrId, dcReviewId, { file: 'src/a.ts', start_line: 1, end_line: 1, side: 'right', body: 'Fix this', context: [] })
+      store.addComment(repoPath, dcPrId, dcReviewId, {
+        file: 'src/a.ts',
+        start_line: 1,
+        end_line: 1,
+        side: 'right',
+        body: 'Fix this',
+        context: [],
+      })
       const commentId = store.getReview(repoPath, dcPrId, dcReviewId).comments[0].id
       const updated = store.deleteComment(repoPath, dcPrId, dcReviewId, commentId)
       expect(updated.comments).toHaveLength(0)
     })
 
     it('persists deletion to disk', () => {
-      store.addComment(repoPath, dcPrId, dcReviewId, { file: 'src/a.ts', start_line: 1, end_line: 1, side: 'right', body: 'Fix this', context: [] })
+      store.addComment(repoPath, dcPrId, dcReviewId, {
+        file: 'src/a.ts',
+        start_line: 1,
+        end_line: 1,
+        side: 'right',
+        body: 'Fix this',
+        context: [],
+      })
       const commentId = store.getReview(repoPath, dcPrId, dcReviewId).comments[0].id
       store.deleteComment(repoPath, dcPrId, dcReviewId, commentId)
       expect(store.getReview(repoPath, dcPrId, dcReviewId).comments).toHaveLength(0)
     })
 
     it('throws if comment does not exist', () => {
-      expect(() => store.deleteComment(repoPath, dcPrId, dcReviewId, 'RVW-999')).toThrow('Comment not found')
+      expect(() => store.deleteComment(repoPath, dcPrId, dcReviewId, 'RVW-999')).toThrow(
+        'Comment not found'
+      )
     })
   })
 
   describe('InvalidReviewFileError', () => {
     it('getPR throws InvalidReviewFileError for corrupt file', () => {
-      const pr = store.createPR(repoPath, { title: 'T', description: null, base_branch: 'main', compare_branch: 'f' })
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      })
       const indexPath = path.join(repoPath, '.reviews', pr.id, 'index.json')
       fs.writeFileSync(indexPath, '{"version":1,"id":"not-a-uuid"}')
       expect(() => store.getPR(repoPath, pr.id)).toThrow(InvalidReviewFileError)

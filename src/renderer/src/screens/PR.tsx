@@ -14,7 +14,14 @@ import CommentNav from '../components/CommentNav'
 import CommentOutline from '../components/CommentOutline'
 import { AgentIcon } from '../components/AgentAvatar'
 import { sortCommentsByPosition } from '../utils/sortComments'
-import type { AddCommentPayload, ReviewComment, Commit, ParsedFile, PrDetail, IntegrationStatus } from '../../../shared/types'
+import type {
+  AddCommentPayload,
+  ReviewComment,
+  Commit,
+  ParsedFile,
+  PrDetail,
+  IntegrationStatus,
+} from '../../../shared/types'
 import { PRWorkflow } from '../../../shared/pr-workflow'
 import { formatRelativeTime } from '../utils/formatTime'
 import styles from './PR.module.css'
@@ -27,23 +34,53 @@ function isPrDetail(val: PrDetail | { error: string } | null): val is PrDetail {
 
 function UnifiedIcon(): JSX.Element {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
     </svg>
   )
 }
 
 function SplitIcon(): JSX.Element {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="18" rx="1" /><rect x="14" y="3" width="7" height="18" rx="1" />
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="3" width="7" height="18" rx="1" />
+      <rect x="14" y="3" width="7" height="18" rx="1" />
     </svg>
   )
 }
 
 function ReviewIcon(): JSX.Element {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   )
@@ -51,12 +88,21 @@ function ReviewIcon(): JSX.Element {
 
 function SearchIcon(): JSX.Element {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   )
 }
-
 
 function formatCommitTime(timestamp: number): string {
   const date = new Date(timestamp * 1000)
@@ -70,7 +116,12 @@ function formatCommitTime(timestamp: number): string {
 }
 
 function getInitials(name: string): string {
-  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 }
 
 function getAssigneeStatus(
@@ -83,7 +134,11 @@ function getAssigneeStatus(
   return 'not-installed'
 }
 
-const ASSIGNEE_OPTIONS: { key: 'claude' | 'vscode'; label: string; ids: IntegrationStatus['id'][] }[] = [
+const ASSIGNEE_OPTIONS: {
+  key: 'claude' | 'vscode'
+  label: string
+  ids: IntegrationStatus['id'][]
+}[] = [
   { key: 'claude', label: 'Claude Code', ids: ['claudeCode', 'claudeDesktop'] },
   { key: 'vscode', label: 'Copilot (VS Code)', ids: ['vscode', 'cursor', 'windsurf'] },
 ]
@@ -91,7 +146,15 @@ const ASSIGNEE_OPTIONS: { key: 'claude' | 'vscode'; label: string; ids: Integrat
 export default function PR(): JSX.Element {
   const { repoId, prId } = useParams<{ repoId: string; prId: string }>()
   const navigate = useNavigate()
-  const { repos, prDetail, setPrDetail, diffView, setDiffView, reviewPanelOpen, setReviewPanelOpen } = useStore()
+  const {
+    repos,
+    prDetail,
+    setPrDetail,
+    diffView,
+    setDiffView,
+    reviewPanelOpen,
+    setReviewPanelOpen,
+  } = useStore()
   const repo = repos.find((r) => r.id === repoId)
   const [tab, setTab] = useState<Tab>('overview')
   const [refreshing, setRefreshing] = useState(false)
@@ -144,7 +207,10 @@ export default function PR(): JSX.Element {
     const map = new Map<string, Set<number>>()
     for (const match of searchMatches) {
       let set = map.get(match.filePath)
-      if (!set) { set = new Set(); map.set(match.filePath, set) }
+      if (!set) {
+        set = new Set()
+        map.set(match.filePath, set)
+      }
       set.add(match.diffLineNumber)
     }
     return map
@@ -158,8 +224,12 @@ export default function PR(): JSX.Element {
 
   useEffect(() => {
     if (!activeMatch) return
-    const fileEl = diffPaneRef.current?.querySelector(`[data-diff-file="${CSS.escape(activeMatch.filePath)}"]`)
-    const lineEl = fileEl?.querySelector(`tr[data-diff-line-number="${activeMatch.diffLineNumber}"]`)
+    const fileEl = diffPaneRef.current?.querySelector(
+      `[data-diff-file="${CSS.escape(activeMatch.filePath)}"]`
+    )
+    const lineEl = fileEl?.querySelector(
+      `tr[data-diff-line-number="${activeMatch.diffLineNumber}"]`
+    )
     lineEl?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [activeMatch])
 
@@ -290,7 +360,10 @@ export default function PR(): JSX.Element {
     if (commits === null && repo && prId) {
       setCommitsLoading(true)
       window.api.listCommits(prId, repo.path).then((result) => {
-        if (!Array.isArray(result)) { setCommits([]); return }
+        if (!Array.isArray(result)) {
+          setCommits([])
+          return
+        }
         setCommits(result)
         setCommitsLoading(false)
       })
@@ -307,7 +380,10 @@ export default function PR(): JSX.Element {
     setCommitDiff(null)
     setCommitDiffLoading(true)
     window.api.showCommit(repo!.path, commit.hash).then((result) => {
-      if ('error' in result) { setCommitDiffLoading(false); return }
+      if ('error' in result) {
+        setCommitDiffLoading(false)
+        return
+      }
       setCommitDiff(result.diff)
       setCommitDiffLoading(false)
     })
@@ -327,7 +403,12 @@ export default function PR(): JSX.Element {
 
   async function handleDeletePr(): Promise<void> {
     if (!repo || !prDetail) return
-    if (!window.confirm(`Delete "${prDetail.pr.title}"?\n\nThis will permanently remove all review data for this PR and cannot be undone.`)) return
+    if (
+      !window.confirm(
+        `Delete "${prDetail.pr.title}"?\n\nThis will permanently remove all review data for this PR and cannot be undone.`
+      )
+    )
+      return
     await window.api.deletePr(repo.path, prDetail.pr.id)
     navigate(`/repo/${repoId}`)
   }
@@ -336,7 +417,10 @@ export default function PR(): JSX.Element {
     if (!repo || !prId) return
     setRefreshing(true)
     const updated = await window.api.refreshPr(repo.path, prId)
-    if (!isPrDetail(updated)) { setRefreshing(false); return }
+    if (!isPrDetail(updated)) {
+      setRefreshing(false)
+      return
+    }
     setPrDetail(updated)
     setCommits(null) // invalidate commits cache on refresh
     setRefreshing(false)
@@ -394,21 +478,29 @@ export default function PR(): JSX.Element {
 
   async function handleSaveTitle(): Promise<void> {
     const trimmed = titleDraft.trim()
-    if (!repo || !prDetail || !trimmed) { setEditingTitle(false); return }
+    if (!repo || !prDetail || !trimmed) {
+      setEditingTitle(false)
+      return
+    }
     const result = await window.api.updatePr(repo.path, prDetail.pr.id, { title: trimmed })
     if (!('error' in result)) setPrDetail({ ...prDetail, pr: result })
     setEditingTitle(false)
   }
 
   async function handleSaveDescription(): Promise<void> {
-    if (!repo || !prDetail) { setEditingDescription(false); return }
+    if (!repo || !prDetail) {
+      setEditingDescription(false)
+      return
+    }
     const desc = descriptionDraft.trim() || null
     const result = await window.api.updatePr(repo.path, prDetail.pr.id, { description: desc })
     if (!('error' in result)) setPrDetail({ ...prDetail, pr: result })
     setEditingDescription(false)
   }
 
-  async function handleAddComment(payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>): Promise<boolean> {
+  async function handleAddComment(
+    payload: Omit<AddCommentPayload, 'repoPath' | 'prId' | 'reviewId'>
+  ): Promise<boolean> {
     if (!repo || !prId || !prDetail) return false
 
     // Auto-create a review on the first comment if none is in progress
@@ -434,7 +526,11 @@ export default function PR(): JSX.Element {
     return true
   }
 
-  async function handleResolveComment(reviewId: string, commentId: string, status: 'resolved' | 'wont_fix'): Promise<void> {
+  async function handleResolveComment(
+    reviewId: string,
+    commentId: string,
+    status: 'resolved' | 'wont_fix'
+  ): Promise<void> {
     if (!repo || !prId) return
     const result = await window.api.resolveComment(repo.path, prId, reviewId, commentId, status)
     if ('error' in result) {
@@ -491,10 +587,7 @@ export default function PR(): JSX.Element {
   return (
     <div className={styles.page}>
       <NavBar
-        crumbs={[
-          { label: repo?.name ?? 'Repo', to: `/repo/${repoId}` },
-          { label: pr.title },
-        ]}
+        crumbs={[{ label: repo?.name ?? 'Repo', to: `/repo/${repoId}` }, { label: pr.title }]}
         right={
           <button
             className={`${styles.reviewBtn} ${reviewPanelOpen ? styles.reviewBtnActive : ''}`}
@@ -536,17 +629,34 @@ export default function PR(): JSX.Element {
             <h1
               className={styles.prTitle}
               title="Click to edit title"
-              onClick={() => { setTitleDraft(pr.title); setEditingTitle(true) }}
+              onClick={() => {
+                setTitleDraft(pr.title)
+                setEditingTitle(true)
+              }}
             >
               {pr.title}
             </h1>
           )}
-          <span className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}>{pr.status === 'open' ? 'Open' : 'Closed'}</span>
+          <span
+            className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}
+          >
+            {pr.status === 'open' ? 'Open' : 'Closed'}
+          </span>
         </div>
         <div className={styles.prMeta}>
           <code className={styles.branch}>{pr.compare_branch}</code>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
           </svg>
           <code className={styles.branch}>{pr.base_branch}</code>
           <span className={styles.metaDot}>·</span>
@@ -557,14 +667,16 @@ export default function PR(): JSX.Element {
       {/* Tab bar */}
       <div className={styles.tabBar}>
         <div className={styles.tabs}>
-          {([
-            { key: 'overview', label: 'Overview' },
-            { key: 'commits', label: 'Commits' },
-            { key: 'files', label: 'Files changed', count: diff.length },
-            ...(prDetail.reviews.some((r) => r.status === 'complete')
-              ? [{ key: 'previous-reviews' as Tab, label: 'Previous reviews' }]
-              : []),
-          ] as { key: Tab; label: string; count?: number }[]).map(({ key, label, count }) => (
+          {(
+            [
+              { key: 'overview', label: 'Overview' },
+              { key: 'commits', label: 'Commits' },
+              { key: 'files', label: 'Files changed', count: diff.length },
+              ...(prDetail.reviews.some((r) => r.status === 'complete')
+                ? [{ key: 'previous-reviews' as Tab, label: 'Previous reviews' }]
+                : []),
+            ] as { key: Tab; label: string; count?: number }[]
+          ).map(({ key, label, count }) => (
             <button
               key={key}
               className={`${styles.tab} ${tab === key ? styles.tabActive : ''}`}
@@ -581,24 +693,32 @@ export default function PR(): JSX.Element {
               total={navComments.length}
               current={focusedCommentIndex}
               onPrev={() => handleCommentNav(Math.max(0, focusedCommentIndex - 1))}
-              onNext={() => handleCommentNav(Math.min(navComments.length - 1, focusedCommentIndex + 1))}
+              onNext={() =>
+                handleCommentNav(Math.min(navComments.length - 1, focusedCommentIndex + 1))
+              }
             />
             <button
               className={`${styles.toggleBtn} ${diffView === 'unified' ? styles.toggleActive : ''}`}
               onClick={() => setDiffView('unified')}
               title="Unified diff"
-            ><UnifiedIcon /></button>
+            >
+              <UnifiedIcon />
+            </button>
             <button
               className={`${styles.toggleBtn} ${diffView === 'split' ? styles.toggleActive : ''}`}
               onClick={() => setDiffView('split')}
               title="Split diff"
-            ><SplitIcon /></button>
+            >
+              <SplitIcon />
+            </button>
             <button
               className={`${styles.toggleBtn} ${searchOpen ? styles.toggleActive : ''}`}
               onClick={() => setSearchOpen((o) => !o)}
               title="Search in diff"
               aria-label="Search in diff"
-            ><SearchIcon /></button>
+            >
+              <SearchIcon />
+            </button>
           </div>
         )}
       </div>
@@ -613,7 +733,10 @@ export default function PR(): JSX.Element {
                 {!editingDescription && (
                   <button
                     className={styles.editBtn}
-                    onClick={() => { setDescriptionDraft(pr.description ?? ''); setEditingDescription(true) }}
+                    onClick={() => {
+                      setDescriptionDraft(pr.description ?? '')
+                      setEditingDescription(true)
+                    }}
                   >
                     Edit
                   </button>
@@ -633,8 +756,15 @@ export default function PR(): JSX.Element {
                     placeholder="Add a description…"
                   />
                   <div className={styles.editActions}>
-                    <button className={styles.editSaveBtn} onClick={handleSaveDescription}>Save</button>
-                    <button className={styles.editCancelBtn} onClick={() => setEditingDescription(false)}>Cancel</button>
+                    <button className={styles.editSaveBtn} onClick={handleSaveDescription}>
+                      Save
+                    </button>
+                    <button
+                      className={styles.editCancelBtn}
+                      onClick={() => setEditingDescription(false)}
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               ) : pr.description ? (
@@ -650,11 +780,11 @@ export default function PR(): JSX.Element {
                 <span className={styles.cardTitle}>Activity</span>
               </div>
               <ReviewTimeline
-                  pr={pr}
-                  reviews={prDetail.reviews}
-                  reviewCommitCounts={prDetail.reviewCommitCounts}
-                  onResolveComment={workflow.allowsManualResolve() ? handleResolveComment : undefined}
-                />
+                pr={pr}
+                reviews={prDetail.reviews}
+                reviewCommitCounts={prDetail.reviewCommitCounts}
+                onResolveComment={workflow.allowsManualResolve() ? handleResolveComment : undefined}
+              />
             </div>
           </div>
 
@@ -662,7 +792,9 @@ export default function PR(): JSX.Element {
             <div className={styles.sidebarSection}>
               <div className={styles.sidebarLabel}>Status</div>
               <div className={styles.sidebarValue}>
-                <span className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}>
+                <span
+                  className={`${styles.statusBadge} ${pr.status === 'open' ? styles.in_progress : styles.submitted}`}
+                >
                   {pr.status === 'open' ? 'Open' : 'Closed'}
                 </span>
               </div>
@@ -685,25 +817,49 @@ export default function PR(): JSX.Element {
             <div className={styles.sidebarSection}>
               <div className={styles.sidebarLabel}>Changes</div>
               <div className={styles.sidebarValue}>
-                <span className={styles.filesChanged}>{diff.length} file{diff.length !== 1 ? 's' : ''} changed</span>
+                <span className={styles.filesChanged}>
+                  {diff.length} file{diff.length !== 1 ? 's' : ''} changed
+                </span>
               </div>
               <div className={styles.diffStatBar}>
                 {(() => {
-                  const added = diff.reduce((n, f) => n + f.lines.filter((l) => l.type === 'added').length, 0)
-                  const removed = diff.reduce((n, f) => n + f.lines.filter((l) => l.type === 'removed').length, 0)
+                  const added = diff.reduce(
+                    (n, f) => n + f.lines.filter((l) => l.type === 'added').length,
+                    0
+                  )
+                  const removed = diff.reduce(
+                    (n, f) => n + f.lines.filter((l) => l.type === 'removed').length,
+                    0
+                  )
                   const total = added + removed || 1
                   return (
                     <>
-                      <span className={styles.diffStatAdded} style={{ width: `${(added / total) * 100}%` }} />
-                      <span className={styles.diffStatRemoved} style={{ width: `${(removed / total) * 100}%` }} />
-                      <span className={styles.diffStatNeutral} style={{ width: `${Math.max(0, 100 - (added / total) * 100 - (removed / total) * 100)}%` }} />
+                      <span
+                        className={styles.diffStatAdded}
+                        style={{ width: `${(added / total) * 100}%` }}
+                      />
+                      <span
+                        className={styles.diffStatRemoved}
+                        style={{ width: `${(removed / total) * 100}%` }}
+                      />
+                      <span
+                        className={styles.diffStatNeutral}
+                        style={{
+                          width: `${Math.max(0, 100 - (added / total) * 100 - (removed / total) * 100)}%`,
+                        }}
+                      />
                     </>
                   )
                 })()}
               </div>
               <div className={styles.diffStatNums}>
-                <span className={styles.additions}>+{diff.reduce((n, f) => n + f.lines.filter((l) => l.type === 'added').length, 0)}</span>
-                <span className={styles.deletions}>−{diff.reduce((n, f) => n + f.lines.filter((l) => l.type === 'removed').length, 0)}</span>
+                <span className={styles.additions}>
+                  +{diff.reduce((n, f) => n + f.lines.filter((l) => l.type === 'added').length, 0)}
+                </span>
+                <span className={styles.deletions}>
+                  −
+                  {diff.reduce((n, f) => n + f.lines.filter((l) => l.type === 'removed').length, 0)}
+                </span>
               </div>
             </div>
 
@@ -711,12 +867,20 @@ export default function PR(): JSX.Element {
               <div className={styles.sidebarSection}>
                 <div className={styles.sidebarLabel}>Review</div>
                 <div className={styles.sidebarValue}>
-                  <span className={`${styles.reviewStatus} ${review.status === 'submitted' ? styles.reviewSubmitted : review.status === 'complete' ? styles.reviewComplete : styles.reviewInProgress}`}>
-                    {review.status === 'submitted' ? 'Submitted' : review.status === 'complete' ? 'Complete' : 'In progress'}
+                  <span
+                    className={`${styles.reviewStatus} ${review.status === 'submitted' ? styles.reviewSubmitted : review.status === 'complete' ? styles.reviewComplete : styles.reviewInProgress}`}
+                  >
+                    {review.status === 'submitted'
+                      ? 'Submitted'
+                      : review.status === 'complete'
+                        ? 'Complete'
+                        : 'In progress'}
                   </span>
                 </div>
                 {activeComments.length > 0 && (
-                  <div className={styles.commentSummary}>{activeComments.length} comment{activeComments.length !== 1 ? 's' : ''}</div>
+                  <div className={styles.commentSummary}>
+                    {activeComments.length} comment{activeComments.length !== 1 ? 's' : ''}
+                  </div>
                 )}
               </div>
             )}
@@ -752,7 +916,9 @@ export default function PR(): JSX.Element {
                                   <span className={styles.assigneeStatusLabel}>Not installed</span>
                                 )}
                                 {status === 'not-configured' && (
-                                  <span className={styles.assigneeStatusLabel}>Not configured — see settings</span>
+                                  <span className={styles.assigneeStatusLabel}>
+                                    Not configured — see settings
+                                  </span>
                                 )}
                               </span>
                             </button>
@@ -817,14 +983,22 @@ export default function PR(): JSX.Element {
             <div className={styles.sidebarSection}>
               <div className={styles.sidebarLabel}>Commits</div>
               <div className={styles.sidebarValue}>
-                {commits === null ? '—' : `${commits.length} commit${commits.length !== 1 ? 's' : ''}`}
+                {commits === null
+                  ? '—'
+                  : `${commits.length} commit${commits.length !== 1 ? 's' : ''}`}
               </div>
             </div>
 
             <div className={styles.sidebarSection}>
               <div className={styles.sidebarLabel}>Created</div>
               <div className={styles.sidebarValue}>
-                <time className={styles.metaText}>{new Date(pr.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</time>
+                <time className={styles.metaText}>
+                  {new Date(pr.created_at).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </time>
               </div>
             </div>
 
@@ -832,19 +1006,37 @@ export default function PR(): JSX.Element {
               <div className={styles.sidebarLabel}>Actions</div>
               <div className={styles.sidebarActions}>
                 {githubInfo !== null && pr.status === 'open' && (
-                  <button className={`${styles.sidebarActionBtn} ${styles.sidebarActionGitHub}`} onClick={handleOpenWithGitHub}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+                  <button
+                    className={`${styles.sidebarActionBtn} ${styles.sidebarActionGitHub}`}
+                    onClick={handleOpenWithGitHub}
+                  >
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
                     </svg>
                     Transfer PR to GitHub
                   </button>
                 )}
                 {pr.status === 'open' ? (
-                  <button className={styles.sidebarActionBtn} onClick={handleClosePr}>Close PR</button>
+                  <button className={styles.sidebarActionBtn} onClick={handleClosePr}>
+                    Close PR
+                  </button>
                 ) : (
-                  <button className={styles.sidebarActionBtn} onClick={handleReopenPr}>Reopen PR</button>
+                  <button className={styles.sidebarActionBtn} onClick={handleReopenPr}>
+                    Reopen PR
+                  </button>
                 )}
-                <button className={`${styles.sidebarActionBtn} ${styles.sidebarActionDanger}`} onClick={handleDeletePr}>Delete PR</button>
+                <button
+                  className={`${styles.sidebarActionBtn} ${styles.sidebarActionDanger}`}
+                  onClick={handleDeletePr}
+                >
+                  Delete PR
+                </button>
               </div>
             </div>
           </div>
@@ -876,7 +1068,9 @@ export default function PR(): JSX.Element {
                       <div className={styles.commitMeta}>
                         <span className={styles.commitAuthor}>{commit.authorName}</span>
                         <span className={styles.metaDot}>·</span>
-                        <span className={styles.commitTime}>{formatCommitTime(commit.timestamp)}</span>
+                        <span className={styles.commitTime}>
+                          {formatCommitTime(commit.timestamp)}
+                        </span>
                         <span className={styles.metaDot}>·</span>
                         <code className={styles.commitHash}>{commit.shortHash}</code>
                       </div>
@@ -894,9 +1088,25 @@ export default function PR(): JSX.Element {
                   <code className={styles.commitHash}>{selectedCommit.shortHash}</code>
                   <span className={styles.commitSubjectSmall}>{selectedCommit.subject}</span>
                 </div>
-                <button className={styles.closeSidebarBtn} onClick={() => { setSelectedCommit(null); setCommitDiff(null) }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                <button
+                  className={styles.closeSidebarBtn}
+                  onClick={() => {
+                    setSelectedCommit(null)
+                    setCommitDiff(null)
+                  }}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </button>
               </div>
@@ -936,20 +1146,38 @@ export default function PR(): JSX.Element {
                 onQueryChange={(q) => setSearchQuery(q)}
                 matchCount={searchMatches.length}
                 activeIndex={searchMatchIndex}
-                onPrev={() => setSearchMatchIndex((i) => (i - 1 + Math.max(1, searchMatches.length)) % Math.max(1, searchMatches.length))}
-                onNext={() => setSearchMatchIndex((i) => (i + 1) % Math.max(1, searchMatches.length))}
+                onPrev={() =>
+                  setSearchMatchIndex(
+                    (i) =>
+                      (i - 1 + Math.max(1, searchMatches.length)) %
+                      Math.max(1, searchMatches.length)
+                  )
+                }
+                onNext={() =>
+                  setSearchMatchIndex((i) => (i + 1) % Math.max(1, searchMatches.length))
+                }
                 onClose={handleSearchClose}
               />
             )}
             <div className={styles.diffScrollContent}>
               {diff.map((file) => (
-                <div key={file.newPath} ref={(el) => { fileRefs.current[file.newPath] = el }} data-diff-file={file.newPath}>
+                <div
+                  key={file.newPath}
+                  ref={(el) => {
+                    fileRefs.current[file.newPath] = el
+                  }}
+                  data-diff-file={file.newPath}
+                >
                   <DiffView
                     file={file}
                     comments={comments.filter((c) => c.file === file.newPath)}
                     view={diffView}
                     onAddComment={handleAddComment}
-                    readOnly={workflow.phase === 'reviewed' || workflow.phase === 'in_fix' || workflow.phase === 'closed'}
+                    readOnly={
+                      workflow.phase === 'reviewed' ||
+                      workflow.phase === 'in_fix' ||
+                      workflow.phase === 'closed'
+                    }
                     allowDeleteComment={review?.status === 'in_progress'}
                     onDeleteComment={handleDeleteComment}
                     onResolveComment={
@@ -959,7 +1187,9 @@ export default function PR(): JSX.Element {
                     }
                     focusedCommentId={navComments[focusedCommentIndex]?.id}
                     matchedLineNumbers={matchedLineNumbersByFile.get(file.newPath)}
-                    activeMatchLineNumber={activeMatch?.filePath === file.newPath ? activeMatch.diffLineNumber : null}
+                    activeMatchLineNumber={
+                      activeMatch?.filePath === file.newPath ? activeMatch.diffLineNumber : null
+                    }
                   />
                 </div>
               ))}
@@ -997,16 +1227,15 @@ export default function PR(): JSX.Element {
         />
       )}
 
-      {notification && (
-        <div className={styles.notification}>{notification}</div>
-      )}
+      {notification && <div className={styles.notification}>{notification}</div>}
 
       {vscodePrompt && (
         <div className={styles.vscodePopupOverlay} onClick={() => setVscodePrompt(null)}>
           <div className={styles.vscodePopup} onClick={(e) => e.stopPropagation()}>
             <div className={styles.vscodePopupTitle}>Prompt copied to clipboard</div>
             <p className={styles.vscodePopupBody}>
-              VS Code is opening. Switch to the Copilot agent tab and paste the prompt to start the review fix.
+              VS Code is opening. Switch to the Copilot agent tab and paste the prompt to start the
+              review fix.
             </p>
             <div className={styles.vscodePopupActions}>
               <button

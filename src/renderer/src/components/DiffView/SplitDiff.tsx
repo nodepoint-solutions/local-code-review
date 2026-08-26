@@ -28,7 +28,9 @@ interface Props {
   activeMatchLineNumber?: number | null
 }
 
-function pairLines(lines: ParsedLine[]): Array<{ left: ParsedLine | null; right: ParsedLine | null }> {
+function pairLines(
+  lines: ParsedLine[]
+): Array<{ left: ParsedLine | null; right: ParsedLine | null }> {
   const pairs: Array<{ left: ParsedLine | null; right: ParsedLine | null }> = []
   let i = 0
   while (i < lines.length) {
@@ -56,13 +58,27 @@ function pairLines(lines: ParsedLine[]): Array<{ left: ParsedLine | null; right:
 }
 
 export default function SplitDiff({
-  file, comments, language,
-  onStartComment, onExtendComment, onHoverLine,
-  isSelecting, selectionStart, selectionEnd, hoverLine,
-  allowDeleteComment, onDeleteComment, onResolveComment, focusedCommentId,
-  showCommentBox, commentBoxEndLine, commentBoxStartLine,
-  onCommentBoxSubmit, onCommentBoxCancel,
-  matchedLineNumbers, activeMatchLineNumber,
+  file,
+  comments,
+  language,
+  onStartComment,
+  onExtendComment,
+  onHoverLine,
+  isSelecting,
+  selectionStart,
+  selectionEnd,
+  hoverLine,
+  allowDeleteComment,
+  onDeleteComment,
+  onResolveComment,
+  focusedCommentId,
+  showCommentBox,
+  commentBoxEndLine,
+  commentBoxStartLine,
+  onCommentBoxSubmit,
+  onCommentBoxCancel,
+  matchedLineNumbers,
+  activeMatchLineNumber,
 }: Props): JSX.Element {
   const pairs = pairLines(file.lines)
 
@@ -87,54 +103,72 @@ export default function SplitDiff({
             )
           }
 
-          const rightEndReviewComments = pair.right ? (commentsByEndLine.get(pair.right.diffLineNumber) ?? []) : []
-          const leftEndReviewComments = pair.left ? (commentsByEndLine.get(pair.left.diffLineNumber) ?? []) : []
-          const allEndReviewComments = [...new Map([...rightEndReviewComments, ...leftEndReviewComments].map((c) => [c.id, c])).values()]
+          const rightEndReviewComments = pair.right
+            ? (commentsByEndLine.get(pair.right.diffLineNumber) ?? [])
+            : []
+          const leftEndReviewComments = pair.left
+            ? (commentsByEndLine.get(pair.left.diffLineNumber) ?? [])
+            : []
+          const allEndReviewComments = [
+            ...new Map(
+              [...rightEndReviewComments, ...leftEndReviewComments].map((c) => [c.id, c])
+            ).values(),
+          ]
 
           return (
             <>
               <tr key={`pair-${idx}`} className={styles.pairRow}>
                 <td className={styles.side}>
                   {pair.left ? (
-                    <table className={styles.innerTable}><tbody>
-                      <DiffLine
-                        line={pair.left}
-                        language={language}
-                        comments={[]}
-                        onStartComment={onStartComment}
-                        onExtendComment={onExtendComment}
-                        onHoverLine={onHoverLine}
-                        isSelecting={isSelecting}
-                        selectionStart={selectionStart}
-                        selectionEnd={selectionEnd}
-                        hoverLine={hoverLine}
-                        side="left"
-                        isSearchMatch={matchedLineNumbers?.has(pair.left.diffLineNumber) ?? false}
-                        isActiveSearchMatch={activeMatchLineNumber === pair.left.diffLineNumber}
-                      />
-                    </tbody></table>
-                  ) : <div className={styles.emptyCell} />}
+                    <table className={styles.innerTable}>
+                      <tbody>
+                        <DiffLine
+                          line={pair.left}
+                          language={language}
+                          comments={[]}
+                          onStartComment={onStartComment}
+                          onExtendComment={onExtendComment}
+                          onHoverLine={onHoverLine}
+                          isSelecting={isSelecting}
+                          selectionStart={selectionStart}
+                          selectionEnd={selectionEnd}
+                          hoverLine={hoverLine}
+                          side="left"
+                          isSearchMatch={matchedLineNumbers?.has(pair.left.diffLineNumber) ?? false}
+                          isActiveSearchMatch={activeMatchLineNumber === pair.left.diffLineNumber}
+                        />
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className={styles.emptyCell} />
+                  )}
                 </td>
                 <td className={styles.side}>
                   {pair.right ? (
-                    <table className={styles.innerTable}><tbody>
-                      <DiffLine
-                        line={pair.right}
-                        language={language}
-                        comments={[]}
-                        onStartComment={onStartComment}
-                        onExtendComment={onExtendComment}
-                        onHoverLine={onHoverLine}
-                        isSelecting={isSelecting}
-                        selectionStart={selectionStart}
-                        selectionEnd={selectionEnd}
-                        hoverLine={hoverLine}
-                        side="right"
-                        isSearchMatch={matchedLineNumbers?.has(pair.right.diffLineNumber) ?? false}
-                        isActiveSearchMatch={activeMatchLineNumber === pair.right.diffLineNumber}
-                      />
-                    </tbody></table>
-                  ) : <div className={styles.emptyCell} />}
+                    <table className={styles.innerTable}>
+                      <tbody>
+                        <DiffLine
+                          line={pair.right}
+                          language={language}
+                          comments={[]}
+                          onStartComment={onStartComment}
+                          onExtendComment={onExtendComment}
+                          onHoverLine={onHoverLine}
+                          isSelecting={isSelecting}
+                          selectionStart={selectionStart}
+                          selectionEnd={selectionEnd}
+                          hoverLine={hoverLine}
+                          side="right"
+                          isSearchMatch={
+                            matchedLineNumbers?.has(pair.right.diffLineNumber) ?? false
+                          }
+                          isActiveSearchMatch={activeMatchLineNumber === pair.right.diffLineNumber}
+                        />
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className={styles.emptyCell} />
+                  )}
                 </td>
               </tr>
               {allEndReviewComments.map((comment) => (
@@ -144,25 +178,34 @@ export default function SplitDiff({
                       comment={comment}
                       allowDelete={allowDeleteComment}
                       onDelete={onDeleteComment ? () => onDeleteComment(comment.id) : undefined}
-                      onResolve={onResolveComment ? (status) => onResolveComment(comment.id, status) : undefined}
+                      onResolve={
+                        onResolveComment
+                          ? (status) => onResolveComment(comment.id, status)
+                          : undefined
+                      }
                       focused={focusedCommentId === comment.id}
                     />
                   </td>
                 </tr>
               ))}
-              {showCommentBox && onCommentBoxSubmit && onCommentBoxCancel && commentBoxEndLine !== null && commentBoxEndLine !== undefined &&
-                (pair.right?.diffLineNumber === commentBoxEndLine || pair.left?.diffLineNumber === commentBoxEndLine) && (
-                <tr key="comment-box">
-                  <td colSpan={2}>
-                    <CommentBox
-                      startLine={commentBoxStartLine ?? commentBoxEndLine}
-                      endLine={commentBoxEndLine}
-                      onSubmit={onCommentBoxSubmit}
-                      onCancel={onCommentBoxCancel}
-                    />
-                  </td>
-                </tr>
-              )}
+              {showCommentBox &&
+                onCommentBoxSubmit &&
+                onCommentBoxCancel &&
+                commentBoxEndLine !== null &&
+                commentBoxEndLine !== undefined &&
+                (pair.right?.diffLineNumber === commentBoxEndLine ||
+                  pair.left?.diffLineNumber === commentBoxEndLine) && (
+                  <tr key="comment-box">
+                    <td colSpan={2}>
+                      <CommentBox
+                        startLine={commentBoxStartLine ?? commentBoxEndLine}
+                        endLine={commentBoxEndLine}
+                        onSubmit={onCommentBoxSubmit}
+                        onCancel={onCommentBoxCancel}
+                      />
+                    </td>
+                  </tr>
+                )}
             </>
           )
         })}
@@ -173,7 +216,9 @@ export default function SplitDiff({
                 comment={comment}
                 allowDelete={allowDeleteComment}
                 onDelete={onDeleteComment ? () => onDeleteComment(comment.id) : undefined}
-                onResolve={onResolveComment ? (status) => onResolveComment(comment.id, status) : undefined}
+                onResolve={
+                  onResolveComment ? (status) => onResolveComment(comment.id, status) : undefined
+                }
                 focused={focusedCommentId === comment.id}
               />
             </td>

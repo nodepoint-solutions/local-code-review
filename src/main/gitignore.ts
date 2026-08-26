@@ -11,9 +11,7 @@ async function getGlobalExcludesFile(): Promise<string> {
     const { stdout } = await execFileAsync('git', ['config', '--global', 'core.excludesfile'])
     const configured = stdout.trim()
     if (configured) {
-      return configured.startsWith('~')
-        ? path.join(os.homedir(), configured.slice(1))
-        : configured
+      return configured.startsWith('~') ? path.join(os.homedir(), configured.slice(1)) : configured
     }
   } catch {
     // Not configured — fall through to default
@@ -33,7 +31,11 @@ export async function checkGlobalGitignore(): Promise<{ installed: boolean; file
   }
 }
 
-export async function installGlobalGitignore(): Promise<{ success: boolean; filePath?: string; error?: string }> {
+export async function installGlobalGitignore(): Promise<{
+  success: boolean
+  filePath?: string
+  error?: string
+}> {
   try {
     const filePath = await getGlobalExcludesFile()
 
