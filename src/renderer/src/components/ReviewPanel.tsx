@@ -34,6 +34,7 @@ function CheckIcon(): JSX.Element {
 export default function ReviewPanel({ pr, review, reviews, comments, prId, repoPath, onClose, onSubmitted }: Props): JSX.Element {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [exportError, setExportError] = useState('')
   const nonStale = comments.filter((c) => !c.is_stale)
   const workflow = new PRWorkflow(pr, review ?? null, reviews)
 
@@ -51,6 +52,15 @@ export default function ReviewPanel({ pr, review, reviews, comments, prId, repoP
     if (updated && 'error' in updated) { setSubmitting(false); return }
     onSubmitted(updated as PrDetail | null)
     setSubmitting(false)
+  }
+
+  async function handleExport(): Promise<void> {
+    if (!review) return
+    setExportError('')
+    const result = await window.api.downloadMarkdown(repoPath, prId, review.id)
+    if ('error' in result && result.error !== 'cancelled') {
+      setExportError('Export failed — see logs for details.')
+    }
   }
 
   function getFileName(path: string): string {
@@ -126,6 +136,15 @@ export default function ReviewPanel({ pr, review, reviews, comments, prId, repoP
           ))
         )}
       </div>
+
+      {review !== null && nonStale.length > 0 && (
+        <div className={styles.exportRow}>
+          <button className={styles.exportBtn} onClick={handleExport}>
+            Export as Markdown
+          </button>
+          {exportError && <span className={styles.exportError}>{exportError}</span>}
+        </div>
+      )}
 
       {workflow.allowsSubmit() && (
         <div className={styles.footer}>

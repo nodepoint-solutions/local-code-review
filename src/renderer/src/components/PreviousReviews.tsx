@@ -10,13 +10,15 @@ import styles from './PreviousReviews.module.css'
 interface Props {
   reviews: ReviewFile[]   // only complete reviews, oldest→newest
   repoPath: string
+  prId: string
 }
 
-export default function PreviousReviews({ reviews, repoPath }: Props): JSX.Element {
+export default function PreviousReviews({ reviews, repoPath, prId }: Props): JSX.Element {
   const [selectedReview, setSelectedReview] = useState<ReviewFile | null>(null)
   const [historicDiff, setHistoricDiff] = useState<ParsedFile[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [focusedCommentIndex, setFocusedCommentIndex] = useState(-1)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   // All non-stale comments for the selected review, sorted by file path then line
   const navComments: ReviewComment[] = selectedReview
@@ -33,6 +35,15 @@ export default function PreviousReviews({ reviews, repoPath }: Props): JSX.Eleme
     setLoading(false)
     if ('error' in result) return
     setHistoricDiff(result)
+  }
+
+  async function handleExport(): Promise<void> {
+    if (!selectedReview) return
+    setExportError(null)
+    const result = await window.api.downloadMarkdown(repoPath, prId, selectedReview.id)
+    if ('error' in result && result.error !== 'cancelled') {
+      setExportError('Export failed — see logs for details.')
+    }
   }
 
   const handleNav = useCallback((index: number) => {
@@ -77,6 +88,8 @@ export default function PreviousReviews({ reviews, repoPath }: Props): JSX.Eleme
               onPrev={() => handleNav(Math.max(0, focusedCommentIndex - 1))}
               onNext={() => handleNav(Math.min(navComments.length - 1, focusedCommentIndex + 1))}
             />
+            <button className={styles.exportBtn} onClick={handleExport}>Export as Markdown</button>
+            {exportError && <span className={styles.exportError}>{exportError}</span>}
           </div>
         )}
         <div className={styles.diffScroll}>

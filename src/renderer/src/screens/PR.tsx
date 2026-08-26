@@ -980,6 +980,7 @@ export default function PR(): JSX.Element {
         <PreviousReviews
           reviews={prDetail.reviews.filter((r) => r.status === 'complete')}
           repoPath={repo?.path ?? ''}
+          prId={prId!}
         />
       )}
 

@@ -195,3 +195,29 @@
   font-size: 12px;
   color: var(--removed-text);
 }
+
+.exportRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+}
+.exportBtn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  color: var(--text);
+}
+.exportBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.exportError {
+  font-size: 12px;
+  color: var(--danger, #e05c5c);
+}

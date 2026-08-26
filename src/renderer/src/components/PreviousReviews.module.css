@@ -87,3 +87,23 @@
   padding: 24px 0;
   text-align: center;
 }
+
+.exportBtn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  color: var(--text);
+  margin-left: auto;
+}
+.exportBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.exportError {
+  font-size: 12px;
+  color: var(--danger, #e05c5c);
+}
