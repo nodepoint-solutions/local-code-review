@@ -78,6 +78,14 @@ export class PRWorkflow {
     return this.phase === 'reviewed' || this.phase === 'in_fix'
   }
 
+  /**
+   * A submitted review can return to editing while no agent is assigned, so a
+   * premature submit can be amended rather than closed out.
+   */
+  allowsReopenReview(): boolean {
+    return this.phase === 'reviewed'
+  }
+
   /** A new review round can be started. */
   allowsNewReview(): boolean {
     return this.phase === 'fix_complete'

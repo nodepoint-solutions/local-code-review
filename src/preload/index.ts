@@ -100,6 +100,13 @@ const api = {
   ): Promise<ReviewFile | { error: string }> =>
     ipcRenderer.invoke('comments:resolve', repoPath, prId, reviewId, commentId, status, note),
 
+  reopenReview: (
+    repoPath: string,
+    prId: string,
+    reviewId: string
+  ): Promise<ReviewFile | { error: string }> =>
+    ipcRenderer.invoke('reviews:reopen', repoPath, prId, reviewId),
+
   // Commits
   listCommits: (prId: string, repoPath: string): Promise<Commit[] | { error: string }> =>
     ipcRenderer.invoke('commits:list', prId, repoPath),

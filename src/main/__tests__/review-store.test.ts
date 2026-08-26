@@ -185,6 +185,19 @@ describe('ReviewStore', () => {
       expect(submitted.submitted_at).not.toBeNull()
     })
 
+    it('reopenReview returns a submitted review to editing', () => {
+      const review = store.createReview(repoPath, prId, { base_sha: 'a', compare_sha: 'b' })
+      store.submitReview(repoPath, prId, review.id)
+      const reopened = store.reopenReview(repoPath, prId, review.id)
+      expect(reopened.status).toBe('in_progress')
+      expect(reopened.submitted_at).toBeNull()
+    })
+
+    it('reopenReview rejects reviews that are not submitted', () => {
+      const review = store.createReview(repoPath, prId, { base_sha: 'a', compare_sha: 'b' })
+      expect(() => store.reopenReview(repoPath, prId, review.id)).toThrow()
+    })
+
     it('allows multiple review rounds per PR', () => {
       store.createReview(repoPath, prId, { base_sha: 'a', compare_sha: 'b' })
       store.createReview(repoPath, prId, { base_sha: 'c', compare_sha: 'd' })

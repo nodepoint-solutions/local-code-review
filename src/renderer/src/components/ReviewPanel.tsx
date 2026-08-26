@@ -62,6 +62,7 @@ export default function ReviewPanel({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [exportError, setExportError] = useState('')
+  const [reopening, setReopening] = useState(false)
   const nonStale = comments.filter((c) => !c.is_stale)
   const workflow = new PRWorkflow(pr, review ?? null, reviews)
 
@@ -82,6 +83,21 @@ export default function ReviewPanel({
     }
     onSubmitted(updated as PrDetail | null)
     setSubmitting(false)
+  }
+
+  async function handleReopen(): Promise<void> {
+    if (!review) return
+    setReopening(true)
+    setError('')
+    const result = await window.api.reopenReview(repoPath, prId, review.id)
+    if ('error' in result) {
+      setError(result.error)
+      setReopening(false)
+      return
+    }
+    const updated = await window.api.getPr(repoPath, prId)
+    onSubmitted(updated && 'error' in updated ? null : (updated as PrDetail | null))
+    setReopening(false)
   }
 
   async function handleExport(): Promise<void> {
@@ -120,7 +136,12 @@ export default function ReviewPanel({
       {(workflow.phase === 'reviewed' || workflow.phase === 'in_fix') && (
         <div className={styles.submittedBanner}>
           <CheckIcon />
-          Review submitted
+          <span className={styles.submittedText}>Review submitted</span>
+          {workflow.allowsReopenReview() && (
+            <button className={styles.reopenBtn} onClick={handleReopen} disabled={reopening}>
+              {reopening ? 'Reopening…' : 'Return to editing'}
+            </button>
+          )}
         </div>
       )}
 
@@ -130,6 +151,8 @@ export default function ReviewPanel({
           All comments addressed
         </div>
       )}
+
+      {error && !workflow.allowsSubmit() && <div className={styles.bannerError}>{error}</div>}
 
       <div className={styles.list}>
         {nonStale.length === 0 ? (

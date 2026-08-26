@@ -195,6 +195,21 @@ export class ReviewStore {
     return updated
   }
 
+  /** Returns a submitted review to editing so the reviewer can amend it. */
+  reopenReview(repoPath: string, prId: string, reviewId: string): ReviewFile {
+    const review = readReview(repoPath, prId, reviewId)
+    if (review.status !== 'submitted') {
+      throw new Error('Only submitted reviews can be reopened')
+    }
+    const updated: ReviewFile = {
+      ...review,
+      status: 'in_progress',
+      submitted_at: null,
+    }
+    writeReview(repoPath, prId, updated)
+    return updated
+  }
+
   completeReview(repoPath: string, prId: string, reviewId: string): ReviewFile {
     const review = readReview(repoPath, prId, reviewId)
     const updated: ReviewFile = { ...review, status: 'complete' }

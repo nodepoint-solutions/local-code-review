@@ -94,6 +94,26 @@ export function registerReviewHandlers(db: Database.Database): void {
     }
   })
 
+  ipcMain.handle('reviews:reopen', (_e, repoPath: string, prId: string, reviewId: string) => {
+    try {
+      assertKnownRepo(db, repoPath)
+      const pr = store.getPR(repoPath, prId)
+      const activeReview = store.getActiveReview(repoPath, prId)
+      const workflow = new PRWorkflow(pr, activeReview)
+      if (!workflow.allowsReopenReview()) {
+        return {
+          error:
+            pr.assignee !== null
+              ? 'Unassign the agent before returning the review to editing.'
+              : 'Only a submitted review can be returned to editing.',
+        }
+      }
+      return store.reopenReview(repoPath, prId, reviewId)
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
+
   ipcMain.handle(
     'reviews:new',
     async (_e, repoPath: string, prId: string): Promise<PrDetail | { error: string }> => {

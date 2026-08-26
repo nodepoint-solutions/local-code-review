@@ -62,3 +62,24 @@ describe('PRWorkflow.allowsManualResolve', () => {
     expect(wf.allowsManualResolve()).toBe(false)
   })
 })
+
+describe('PRWorkflow.allowsReopenReview', () => {
+  it('allows reopening a submitted review with no assignee', () => {
+    const wf = new PRWorkflow(makePr(), makeReview('submitted'))
+    expect(wf.allowsReopenReview()).toBe(true)
+  })
+
+  it('denies reopening while an agent is assigned', () => {
+    const wf = new PRWorkflow(makePr({ assignee: 'claude' }), makeReview('submitted'))
+    expect(wf.allowsReopenReview()).toBe(false)
+  })
+
+  it('denies reopening in every other phase', () => {
+    expect(new PRWorkflow(makePr(), null).allowsReopenReview()).toBe(false)
+    expect(new PRWorkflow(makePr(), makeReview('in_progress')).allowsReopenReview()).toBe(false)
+    expect(new PRWorkflow(makePr(), makeReview('complete')).allowsReopenReview()).toBe(false)
+    expect(
+      new PRWorkflow(makePr({ status: 'closed' }), makeReview('submitted')).allowsReopenReview()
+    ).toBe(false)
+  })
+})

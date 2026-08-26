@@ -221,3 +221,31 @@
   font-size: 12px;
   color: var(--danger, #e05c5c);
 }
+
+.submittedText {
+  flex: 1;
+}
+.reopenBtn {
+  background: transparent;
+  border: 1px solid var(--status-submitted-border);
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.reopenBtn:hover {
+  background: var(--bg);
+}
+.reopenBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.bannerError {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--removed-text);
+  border-bottom: 1px solid var(--border);
+}
