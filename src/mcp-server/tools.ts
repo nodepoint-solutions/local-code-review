@@ -1,15 +1,29 @@
 // src/mcp-server/tools.ts
+import fs from 'fs'
+import path from 'path'
+import { execFileSync } from 'child_process'
 import { ReviewStore, InvalidReviewFileError } from '../shared/review-store'
 import type { SocketClient } from './socket-client'
 
 const store = new ReviewStore()
 
 function ok(data: unknown) {
-  return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
+  // `isError` is present (as undefined) so callers can read it off either
+  // branch of callTool's result without a type guard.
+  return {
+    content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+    isError: undefined,
+  }
 }
 
 function err(message: string) {
   return { content: [{ type: 'text' as const, text: `Error: ${message}` }], isError: true }
+}
+
+// Claude Code / Claude Desktop identities own PRs as 'claude'; every VS
+// Code-family tool maps to 'vscode' (the widest launcher currently modelled).
+function identityToAssignee(identity: string): 'claude' | 'vscode' {
+  return identity.startsWith('Claude') ? 'claude' : 'vscode'
 }
 
 export function buildTools() {
@@ -101,6 +115,25 @@ export function buildTools() {
           },
         },
         required: ['repo_path', 'pr_id', 'review_id', 'comment_id', 'resolution_comment'],
+      },
+    },
+    {
+      name: 'create_pr',
+      description:
+        'Create a pull request in Local Code Review for two local branches. The repository must already be managed by the app. You become the PR assignee: after each review round is submitted you will be asked to fix the comments.',
+      inputSchema: {
+        type: 'object' as const,
+        properties: {
+          repo_path: { type: 'string', description: 'Absolute path to the repository' },
+          title: { type: 'string', description: 'Imperative summary of the change' },
+          description: {
+            type: 'string',
+            description: 'Optional. What changed and why, derived from the branch commits.',
+          },
+          base_branch: { type: 'string', description: 'Branch to merge into' },
+          compare_branch: { type: 'string', description: 'Branch with the changes' },
+        },
+        required: ['repo_path', 'title', 'base_branch', 'compare_branch'],
       },
     },
     {
@@ -218,6 +251,35 @@ export async function callTool(
           success: true,
           comment: updated.comments.find((c) => c.id === args.comment_id),
         })
+      }
+
+      case 'create_pr': {
+        // The .reviews/ directory is the file-side signal that the app
+        // manages this repository — the MCP server cannot reach the app's
+        // repo registry.
+        if (!fs.existsSync(path.join(args.repo_path, '.reviews'))) {
+          return err('This repository is not set up in Local Code Review. Add it in the app first.')
+        }
+        for (const branch of [args.base_branch, args.compare_branch]) {
+          try {
+            execFileSync('git', ['rev-parse', '--verify', `${branch}^{commit}`], {
+              cwd: args.repo_path,
+              stdio: 'pipe',
+            })
+          } catch {
+            return err(`Branch not found: ${branch}`)
+          }
+        }
+        const assignee = identityToAssignee(resolvedBy)
+        const pr = store.createPR(args.repo_path, {
+          title: args.title,
+          description: args.description ?? null,
+          base_branch: args.base_branch,
+          compare_branch: args.compare_branch,
+          assignee,
+        })
+        socketClient.emit({ event: 'pr:updated', repoPath: args.repo_path, prId: pr.id })
+        return ok({ success: true, pr_id: pr.id, assignee })
       }
 
       case 'complete_assignment': {
