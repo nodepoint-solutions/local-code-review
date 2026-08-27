@@ -124,10 +124,6 @@ export async function getPrDetail(
         nonStale.every((c) => c.status === 'resolved' || c.status === 'wont_fix')
       ) {
         store.completeReview(repoPath, prId, activeReview.id)
-        // Auto-unassign the agent now that the review cycle is complete
-        if (pr.assignee !== null) {
-          pr = store.assignPR(repoPath, prId, null)
-        }
         activeReview = null
       }
     }

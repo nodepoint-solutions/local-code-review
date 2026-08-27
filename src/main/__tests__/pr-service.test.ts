@@ -152,6 +152,7 @@ describe('pr-service', () => {
       const commentId = addComment(reviewId, 2)
       store.submitReview(repoPath, prId, reviewId)
       store.assignPR(repoPath, prId, 'claude')
+      store.startFix(repoPath, prId, reviewId)
       store.resolveComment(repoPath, prId, reviewId, commentId, 'resolved', {
         comment: 'done',
         resolved_by: 'agent',
@@ -161,7 +162,7 @@ describe('pr-service', () => {
       const detail = await getPrDetail(store, repoPath, prId)
 
       expect(detail.review).toBeNull()
-      expect(detail.pr.assignee).toBeNull()
+      expect(detail.pr.assignee).toBe('claude')
       expect(store.getReview(repoPath, prId, reviewId).status).toBe('complete')
     })
   })
