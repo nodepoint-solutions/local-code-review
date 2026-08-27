@@ -28,8 +28,13 @@ export default function SubmitFixDialog({
   const [error, setError] = useState('')
 
   async function refresh(): Promise<void> {
+    // The launch/copy itself already succeeded by the time this runs, so a
+    // failed or missing refresh just leaves the parent's PR detail as-is
+    // rather than wiping it out from under the success UI.
     const updated = await window.api.getPr(repoPath, prId)
-    onUpdated(updated && 'error' in updated ? null : updated)
+    if (updated && !('error' in updated)) {
+      onUpdated(updated)
+    }
   }
 
   async function handleStart(): Promise<void> {
