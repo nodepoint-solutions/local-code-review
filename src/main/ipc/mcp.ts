@@ -3,10 +3,15 @@ import { ipcMain, clipboard } from 'electron'
 import { spawn } from 'child_process'
 import type { BrowserWindow } from 'electron'
 import type Database from 'better-sqlite3'
-import { setSetting } from '../db/settings'
+import { getSetting, setSetting } from '../db/settings'
 import { getIntegrations, installIntegrations } from '../integrations'
 import type { McpManager } from '../mcp-manager'
 import { assertKnownRepo } from './_guard'
+import { ReviewStore } from '../../shared/review-store'
+import { buildFixPrompt, buildLaunchCommand, detectTerminals } from '../fix-launcher'
+import type { TerminalApp } from '../fix-launcher'
+
+const store = new ReviewStore()
 
 export function registerMcpHandlers(
   db: Database.Database,
@@ -33,7 +38,12 @@ export function registerMcpHandlers(
   ipcMain.handle('integrations:get', () => getIntegrations())
   ipcMain.handle('integrations:install', () => installIntegrations())
 
-  // "Fix with" launcher — opens the agent tool in Terminal / VS Code
+  ipcMain.handle('terminals:list', () => detectTerminals())
+
+  // "Fix with" launcher — starts the assignee's fix session. Stamping
+  // fix_started_at here (idempotently) keeps the phase and the action in
+  // one place, so they can never disagree; a nudge re-launches without
+  // moving the original start time.
   ipcMain.handle(
     'fix:launch',
     (_e, tool: string, repoPath: string, prId: string, reviewId: string) => {
@@ -43,44 +53,45 @@ export function registerMcpHandlers(
         return { error: (err as Error).message }
       }
 
-      const prompt = `/local-code-review repo_path="${repoPath}" pr_id="${prId}" review_id="${reviewId}"`
+      const prompt = buildFixPrompt(repoPath, prId, reviewId)
 
       if (tool === 'claude') {
-        // Pass repoPath and prompt as separate osascript argv items so the shell
-        // never tokenises them — AppleScript's `quoted form of` handles quoting
-        // for the final `do script` call using OS-provided rules. No string
-        // escaping required on our side.
-        spawn(
-          'osascript',
-          [
-            '-e',
-            'on run argv',
-            '-e',
-            '  tell application "Terminal" to do script ("cd " & quoted form of item 1 of argv & " && claude " & quoted form of item 2 of argv)',
-            '-e',
-            'end run',
-            '--',
-            repoPath,
-            prompt,
-          ],
-          { detached: true, stdio: 'ignore' }
-        ).unref()
+        const saved = getSetting(db, 'terminal_app') as TerminalApp | null
+        const terminal: TerminalApp = saved ?? 'Terminal'
+        const { command, args } = buildLaunchCommand(terminal, repoPath, prompt)
+        spawn(command, args, { detached: true, stdio: 'ignore' }).unref()
+        store.startFix(repoPath, prId, reviewId)
         return {}
       }
 
       if (tool === 'vscode') {
         clipboard.writeText(prompt)
-        // Delay opening VS Code by 10 s so the user has time to read the modal
+        // Delay opening VS Code so the user has time to read the dialog
         setTimeout(() => {
           spawn('open', ['-a', 'Visual Studio Code', repoPath], {
             detached: true,
             stdio: 'ignore',
           }).unref()
         }, 5_000)
+        store.startFix(repoPath, prId, reviewId)
         return { prompt }
       }
 
       return { error: `Unknown tool: ${tool}` }
     }
   )
+
+  // Manual path: the user drives the same fix from their own agent session,
+  // so copying counts as starting.
+  ipcMain.handle('fix:copy-prompt', (_e, repoPath: string, prId: string, reviewId: string) => {
+    try {
+      assertKnownRepo(db, repoPath)
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+    const prompt = buildFixPrompt(repoPath, prId, reviewId)
+    clipboard.writeText(prompt)
+    store.startFix(repoPath, prId, reviewId)
+    return { prompt }
+  })
 }

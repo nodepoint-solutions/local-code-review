@@ -136,6 +136,15 @@ const api = {
   ): Promise<{ error?: string; notification?: string; prompt?: string }> =>
     ipcRenderer.invoke('fix:launch', tool, repoPath, prId, reviewId),
 
+  copyFixPrompt: (
+    repoPath: string,
+    prId: string,
+    reviewId: string
+  ): Promise<{ prompt?: string; error?: string }> =>
+    ipcRenderer.invoke('fix:copy-prompt', repoPath, prId, reviewId),
+
+  listTerminals: (): Promise<string[]> => ipcRenderer.invoke('terminals:list'),
+
   assignPr: (
     repoPath: string,
     prId: string,

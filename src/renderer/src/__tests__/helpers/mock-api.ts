@@ -48,6 +48,8 @@ export function installMockApi(overrides: Record<string, unknown> = {}) {
     getIntegrations: vi.fn().mockResolvedValue([]),
     installIntegrations: vi.fn().mockResolvedValue(undefined),
     launchFix: vi.fn().mockResolvedValue({}),
+    copyFixPrompt: vi.fn().mockResolvedValue({ prompt: '/local-code-review …' }),
+    listTerminals: vi.fn().mockResolvedValue(['Terminal']),
     assignPr: vi.fn().mockResolvedValue({ error: 'not-mocked' }),
     getRemoteInfo: vi.fn().mockResolvedValue(null),
     isWorkingDirClean: vi.fn().mockResolvedValue({ clean: true }),
