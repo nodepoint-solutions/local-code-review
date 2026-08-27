@@ -893,13 +893,12 @@ export default function PR(): JSX.Element {
                   <div className={styles.assigneeDropdownWrap}>
                     <button
                       className={styles.assigneeUnset}
-                      onClick={() =>
-                        workflow.allowsAssignee() && setAssigneeDropdownOpen((o) => !o)
-                      }
+                      disabled={!workflow.allowsAssignee()}
+                      onClick={() => setAssigneeDropdownOpen((o) => !o)}
                     >
                       Click to assign
                     </button>
-                    {assigneeDropdownOpen && (
+                    {workflow.allowsAssignee() && assigneeDropdownOpen && (
                       <div className={styles.assigneeDropdownMenu}>
                         {ASSIGNEE_OPTIONS.map(({ key, label, ids }) => {
                           const status = getAssigneeStatus(integrations, ids)
@@ -934,9 +933,8 @@ export default function PR(): JSX.Element {
                   <div className={styles.assigneeDropdownWrap}>
                     <button
                       className={styles.assigneeChip}
-                      onClick={() =>
-                        workflow.allowsAssignee() && setAssigneeDropdownOpen((o) => !o)
-                      }
+                      disabled={!workflow.allowsAssignee()}
+                      onClick={() => setAssigneeDropdownOpen((o) => !o)}
                     >
                       <AgentIcon assignee={pr.assignee!} size={18} />
                       <span>{pr.assignee === 'claude' ? 'Claude Code' : 'Copilot (VS Code)'}</span>
@@ -949,7 +947,7 @@ export default function PR(): JSX.Element {
                         Nudge
                       </button>
                     )}
-                    {assigneeDropdownOpen && (
+                    {workflow.allowsAssignee() && assigneeDropdownOpen && (
                       <div className={styles.assigneeDropdownMenu}>
                         <button className={styles.assigneeDropdownItem} onClick={handleUnassign}>
                           Me (fix manually)

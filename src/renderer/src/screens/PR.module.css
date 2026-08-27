@@ -898,7 +898,7 @@
   cursor: pointer;
   text-decoration: underline dotted;
 }
-.assigneeUnset:hover {
+.assigneeUnset:hover:not(:disabled) {
   color: var(--text);
 }
 
@@ -948,7 +948,7 @@
   text-align: left;
 }
 
-.assigneeChip:hover {
+.assigneeChip:hover:not(:disabled) {
   color: var(--text);
   opacity: 0.8;
 }
