@@ -96,13 +96,13 @@ describe('review-service', () => {
       expect((result as ReviewFile).submitted_at).toBeNull()
     })
 
-    it('refuses while an agent is assigned, and says why', () => {
+    it('refuses while a fix is in progress, and says why', () => {
       store.submitReview(repoPath, prId, reviewId)
       store.assignPR(repoPath, prId, 'claude')
       store.startFix(repoPath, prId, reviewId)
       const result = reopenSubmittedReview(store, repoPath, prId, reviewId)
       expect(isError(result)).toBe(true)
-      expect((result as { error: string }).error).toMatch(/unassign/i)
+      expect((result as { error: string }).error).toMatch(/being fixed/i)
     })
 
     it('refuses for a review that has not been submitted', () => {

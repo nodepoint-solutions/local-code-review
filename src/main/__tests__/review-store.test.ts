@@ -318,6 +318,13 @@ describe('ReviewStore', () => {
         const [review] = store.listReviews(repoPath, prId)
         expect(review.fix_started_at).toBeNull()
       })
+
+      it('startFix rejects reviews that are not submitted', () => {
+        const review = store.createReview(repoPath, prId, { base_sha: 'a', compare_sha: 'b' })
+        expect(() => store.startFix(repoPath, prId, review.id)).toThrow(
+          'Only submitted reviews can start a fix'
+        )
+      })
     })
   })
 

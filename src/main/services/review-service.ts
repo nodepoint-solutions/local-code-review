@@ -36,7 +36,7 @@ export function resolveReviewComment(
   })
 }
 
-/** Returns a submitted review to editing while no agent is assigned. */
+/** Returns a submitted review to editing while no fix has started. */
 export function reopenSubmittedReview(
   store: ReviewStore,
   repoPath: string,
@@ -49,8 +49,8 @@ export function reopenSubmittedReview(
   if (!workflow.allowsReopenReview()) {
     return {
       error:
-        pr.assignee !== null
-          ? 'Unassign the agent before returning the review to editing.'
+        activeReview?.fix_started_at != null
+          ? 'The review is being fixed. Wait for the fix session to end before returning it to editing.'
           : 'Only a submitted review can be returned to editing.',
     }
   }

@@ -19,8 +19,8 @@ import type { PRFile, ReviewFile } from './review-store'
 export type WorkflowPhase =
   | 'awaiting_review' // PR open, no review created yet
   | 'reviewing' // in_progress review exists
-  | 'reviewed' // review submitted, no agent assigned
-  | 'in_fix' // review submitted, agent assigned
+  | 'reviewed' // review submitted, no fix started
+  | 'in_fix' // review submitted, fix started
   | 'fix_complete' // review complete (all comments resolved)
   | 'closed' // PR closed
 

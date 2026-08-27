@@ -257,6 +257,9 @@ export class ReviewStore {
    */
   startFix(repoPath: string, prId: string, reviewId: string): ReviewFile {
     const review = readReview(repoPath, prId, reviewId)
+    if (review.status !== 'submitted') {
+      throw new Error('Only submitted reviews can start a fix')
+    }
     if (review.fix_started_at !== null) return review
     const updated: ReviewFile = { ...review, fix_started_at: new Date().toISOString() }
     writeReview(repoPath, prId, updated)

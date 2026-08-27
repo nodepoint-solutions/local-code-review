@@ -46,7 +46,7 @@ For a `submitted` review:
 
 ### Migration for PRs mid-fix at upgrade
 
-Legacy `in_fix` PRs have `assignee` set with `assigned_at` _after_ `submitted_at` (assignment used to happen post-submit); new-model PRs are assigned at creation, before any submit. When the store reads a `submitted` review with `fix_started_at === null` whose PR has `assigned_at > submitted_at`, it stamps `fix_started_at = assigned_at` and persists. Old data lands in the same phase it was in; new data never matches the condition.
+Every write path on this branch serializes `fix_started_at` (even when null), so a review file whose raw JSON lacks the key was written before the upgrade — key absence is the legacy discriminator. On read, the store migrates such a file once: if the review is `submitted` and the PR's `assigned_at` is after `submitted_at` (the legacy signal for an active fix), it stamps `fix_started_at = assigned_at`; either way it persists the file so the key exists and the migration never re-fires. Key-present files are never touched, whatever their timestamps.
 
 ## PR creation
 

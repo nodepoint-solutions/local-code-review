@@ -329,7 +329,11 @@ export default function PR(): JSX.Element {
   async function handleUnassign(): Promise<void> {
     if (!repo || !prId) return
     setAssigneeDropdownOpen(false)
-    await window.api.assignPr(repo.path, prId, null)
+    const result = await window.api.assignPr(repo.path, prId, null)
+    if ('error' in result) {
+      showNotification(result.error)
+      return
+    }
     const updated = await window.api.getPr(repo.path, prId)
     if (isPrDetail(updated)) setPrDetail(updated)
   }
