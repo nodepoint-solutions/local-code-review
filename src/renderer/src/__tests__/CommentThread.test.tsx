@@ -90,3 +90,34 @@ describe('CommentThread', () => {
     expect((container.firstChild as HTMLElement)?.className).toContain('focused')
   })
 })
+
+describe('CommentThread reviewer resolution', () => {
+  it("offers Resolve and Won't fix for an open comment when a handler is given", async () => {
+    const onResolve = vi.fn()
+    render(<CommentThread comment={base} onResolve={onResolve} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Resolve' }))
+    expect(onResolve).toHaveBeenCalledWith('resolved')
+    await userEvent.click(screen.getByRole('button', { name: "Won't fix" }))
+    expect(onResolve).toHaveBeenCalledWith('wont_fix')
+  })
+
+  it('offers no actions without a handler', () => {
+    render(<CommentThread comment={base} />)
+    expect(screen.queryByRole('button', { name: 'Resolve' })).not.toBeInTheDocument()
+  })
+
+  it('offers no actions once the comment is resolved', () => {
+    render(<CommentThread comment={{ ...base, status: 'resolved' }} onResolve={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Resolve' })).not.toBeInTheDocument()
+  })
+
+  it('offers no actions on stale comments', () => {
+    render(<CommentThread comment={{ ...base, is_stale: true }} onResolve={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Resolve' })).not.toBeInTheDocument()
+  })
+
+  it('prefixes the line reference with the file path when asked', () => {
+    render(<CommentThread comment={base} showFile />)
+    expect(screen.getByText('src/foo.ts · Line 3')).toBeInTheDocument()
+  })
+})
