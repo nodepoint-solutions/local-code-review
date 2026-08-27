@@ -110,7 +110,7 @@ function UpdateBanner({
     return (
       <div style={bannerStyle}>
         <span>
-          Update failed —{' '}
+          Update failed ({error}) —{' '}
           <span style={linkStyle} onClick={openUrl}>
             download manually
           </span>

@@ -6,6 +6,7 @@ import os from 'os'
 import { execFile, spawn } from 'child_process'
 import { promisify } from 'util'
 import { app } from 'electron'
+import { buildAttachArgs, parseMountPoint } from './dmg-mount'
 
 const execFileAsync = promisify(execFile)
 
@@ -17,16 +18,6 @@ function findAppBundle(): string {
     p = path.dirname(p)
   }
   return p
-}
-
-function parseMountPoint(hdiutilOutput: string): string | null {
-  // hdiutil output lines: /dev/disk4s1 \t Apple_HFS \t /Volumes/Name
-  for (const line of hdiutilOutput.split('\n')) {
-    const parts = line.split('\t')
-    const mountPt = parts[parts.length - 1]?.trim()
-    if (mountPt?.startsWith('/Volumes/')) return mountPt
-  }
-  return null
 }
 
 function downloadFile(url: string, dest: string, onProgress: (pct: number) => void): Promise<void> {
@@ -101,13 +92,7 @@ export async function installUpdate(
 
   // 2. Mount DMG
   onProgress('Installing…', 60)
-  const { stdout: attachOutput } = await execFileAsync('hdiutil', [
-    'attach',
-    '-nobrowse',
-    '-quiet',
-    '-noverify',
-    dmgPath,
-  ])
+  const { stdout: attachOutput } = await execFileAsync('hdiutil', buildAttachArgs(dmgPath))
   const mountPoint = parseMountPoint(attachOutput)
   if (!mountPoint) throw new Error('Could not mount update DMG')
 
