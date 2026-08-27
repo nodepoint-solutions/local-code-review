@@ -1,7 +1,7 @@
 # Assignee-from-birth and auto-fix on submit — Design Spec
 
 **Date:** 2026-08-27
-**Status:** Draft — awaiting review
+**Status:** Approved
 
 ## Overview
 
