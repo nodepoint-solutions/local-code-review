@@ -13,6 +13,7 @@ import PreviousReviews from '../components/PreviousReviews'
 import CommentNav from '../components/CommentNav'
 import CommentOutline from '../components/CommentOutline'
 import { AgentIcon } from '../components/AgentAvatar'
+import SubmitFixDialog from '../components/SubmitFixDialog'
 import { sortCommentsByPosition } from '../utils/sortComments'
 import type {
   AddCommentPayload,
@@ -167,7 +168,7 @@ export default function PR(): JSX.Element {
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false)
   const [integrations, setIntegrations] = useState<IntegrationStatus[]>([])
   const [notification, setNotification] = useState<string | null>(null)
-  const [vscodePrompt, setVscodePrompt] = useState<string | null>(null)
+  const [showFixDialog, setShowFixDialog] = useState(false)
   const [githubInfo, setGithubInfo] = useState<{ owner: string; repo: string } | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
@@ -316,14 +317,13 @@ export default function PR(): JSX.Element {
   async function handleAssign(tool: 'claude' | 'vscode'): Promise<void> {
     if (!repo || !prId) return
     setAssigneeDropdownOpen(false)
-    await window.api.assignPr(repo.path, prId, tool)
+    const result = await window.api.assignPr(repo.path, prId, tool)
+    if ('error' in result) {
+      showNotification(result.error)
+      return
+    }
     const updated = await window.api.getPr(repo.path, prId)
     if (isPrDetail(updated)) setPrDetail(updated)
-    if (prDetail?.review) {
-      const result = await window.api.launchFix(tool, repo.path, prId, prDetail.review.id)
-      if (result?.prompt) setVscodePrompt(result.prompt)
-      else if (result?.notification) showNotification(result.notification)
-    }
   }
 
   async function handleUnassign(): Promise<void> {
@@ -342,7 +342,8 @@ export default function PR(): JSX.Element {
       prId,
       prDetail.review.id
     )
-    if (result?.prompt) setVscodePrompt(result.prompt)
+    if (result?.prompt)
+      showNotification('Prompt copied — paste it into the agent to nudge the fix.')
     else if (result?.notification) showNotification(result.notification)
   }
 
@@ -885,14 +886,16 @@ export default function PR(): JSX.Element {
               </div>
             )}
 
-            {workflow.allowsAssignee() && (
+            {pr.status === 'open' && (
               <div className={styles.sidebarSection}>
                 <div className={styles.sidebarLabel}>Assignees</div>
                 {!pr.assignee ? (
                   <div className={styles.assigneeDropdownWrap}>
                     <button
                       className={styles.assigneeUnset}
-                      onClick={() => setAssigneeDropdownOpen((o) => !o)}
+                      onClick={() =>
+                        workflow.allowsAssignee() && setAssigneeDropdownOpen((o) => !o)
+                      }
                     >
                       Click to assign
                     </button>
@@ -931,19 +934,25 @@ export default function PR(): JSX.Element {
                   <div className={styles.assigneeDropdownWrap}>
                     <button
                       className={styles.assigneeChip}
-                      onClick={() => setAssigneeDropdownOpen((o) => !o)}
+                      onClick={() =>
+                        workflow.allowsAssignee() && setAssigneeDropdownOpen((o) => !o)
+                      }
                     >
                       <AgentIcon assignee={pr.assignee!} size={18} />
                       <span>{pr.assignee === 'claude' ? 'Claude Code' : 'Copilot (VS Code)'}</span>
-                      <span className={styles.assigneeChipCaret}>▾</span>
+                      {workflow.allowsAssignee() && (
+                        <span className={styles.assigneeChipCaret}>▾</span>
+                      )}
                     </button>
-                    <button className={styles.nudgeBtn} onClick={handleNudge}>
-                      Nudge
-                    </button>
+                    {workflow.phase === 'in_fix' && (
+                      <button className={styles.nudgeBtn} onClick={handleNudge}>
+                        Nudge
+                      </button>
+                    )}
                     {assigneeDropdownOpen && (
                       <div className={styles.assigneeDropdownMenu}>
                         <button className={styles.assigneeDropdownItem} onClick={handleUnassign}>
-                          Unassign
+                          Me (fix manually)
                         </button>
                         <div className={styles.assigneeDropdownDivider} />
                         {ASSIGNEE_OPTIONS.map(({ key, label, ids }) => {
@@ -976,6 +985,14 @@ export default function PR(): JSX.Element {
                       </div>
                     )}
                   </div>
+                )}
+                {workflow.phase === 'reviewed' && pr.assignee && prDetail.review && (
+                  <button
+                    className={`primary ${styles.startFixBtn}`}
+                    onClick={() => setShowFixDialog(true)}
+                  >
+                    Start fix
+                  </button>
                 )}
               </div>
             )}
@@ -1229,27 +1246,16 @@ export default function PR(): JSX.Element {
 
       {notification && <div className={styles.notification}>{notification}</div>}
 
-      {vscodePrompt && (
-        <div className={styles.vscodePopupOverlay} onClick={() => setVscodePrompt(null)}>
-          <div className={styles.vscodePopup} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.vscodePopupTitle}>Prompt copied to clipboard</div>
-            <p className={styles.vscodePopupBody}>
-              VS Code is opening. Switch to the Copilot agent tab and paste the prompt to start the
-              review fix.
-            </p>
-            <div className={styles.vscodePopupActions}>
-              <button
-                className={styles.vscodePopupCopy}
-                onClick={() => navigator.clipboard.writeText(vscodePrompt)}
-              >
-                Copy again
-              </button>
-              <button className={styles.vscodePopupConfirm} onClick={() => setVscodePrompt(null)}>
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
+      {showFixDialog && pr.assignee && prDetail.review && (
+        <SubmitFixDialog
+          assignee={pr.assignee}
+          commentCount={activeComments.filter((c) => c.status === 'open').length}
+          repoPath={repo?.path ?? ''}
+          prId={pr.id}
+          reviewId={prDetail.review.id}
+          onClose={() => setShowFixDialog(false)}
+          onUpdated={(detail) => detail && setPrDetail(detail)}
+        />
       )}
     </div>
   )
