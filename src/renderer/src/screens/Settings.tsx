@@ -31,10 +31,16 @@ export default function Settings(): JSX.Element {
   const [gitignoreInstalled, setGitignoreInstalled] = useState<boolean | null>(null)
   const [gitignoreInstalling, setGitignoreInstalling] = useState(false)
   const [gitignoreError, setGitignoreError] = useState<string | null>(null)
+  const [terminals, setTerminals] = useState<string[]>([])
+  const [terminalApp, setTerminalApp] = useState('Terminal')
 
   useEffect(() => {
     window.api.getSetting('scan_base_dir').then(setScanDir)
     window.api.checkGlobalGitignore().then(({ installed }) => setGitignoreInstalled(installed))
+    window.api.listTerminals().then(setTerminals)
+    window.api.getSetting('terminal_app').then((v) => {
+      if (v) setTerminalApp(v)
+    })
   }, [])
 
   useEffect(() => {
@@ -77,6 +83,11 @@ export default function Settings(): JSX.Element {
       setGitignoreError(result.error ?? 'Unknown error')
     }
     setGitignoreInstalling(false)
+  }
+
+  async function handleChangeTerminal(app: string): Promise<void> {
+    setTerminalApp(app)
+    await window.api.setSetting('terminal_app', app)
   }
 
   async function handleReset(): Promise<void> {
@@ -190,6 +201,29 @@ export default function Settings(): JSX.Element {
           >
             {installing ? 'Installing…' : 'Install / Repair All'}
           </button>
+        </section>
+
+        {/* Terminal */}
+        <section style={{ marginTop: 32 }}>
+          <h2>Terminal</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+            Where “Start fix” opens Claude Code. Ghostty always opens a new window — use “Copy
+            prompt” to reuse an existing session.
+          </p>
+          <select
+            aria-label="Terminal"
+            value={terminalApp}
+            onChange={(e) => {
+              void handleChangeTerminal(e.target.value)
+            }}
+            style={{ marginTop: 12 }}
+          >
+            {terminals.map((t) => (
+              <option key={t} value={t}>
+                {t === 'Terminal' ? 'Terminal.app' : t === 'iTerm' ? 'iTerm2' : t}
+              </option>
+            ))}
+          </select>
         </section>
 
         {/* Global .gitignore */}
