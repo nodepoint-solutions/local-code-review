@@ -99,6 +99,7 @@ describe('review-service', () => {
     it('refuses while an agent is assigned, and says why', () => {
       store.submitReview(repoPath, prId, reviewId)
       store.assignPR(repoPath, prId, 'claude')
+      store.startFix(repoPath, prId, reviewId)
       const result = reopenSubmittedReview(store, repoPath, prId, reviewId)
       expect(isError(result)).toBe(true)
       expect((result as { error: string }).error).toMatch(/unassign/i)
