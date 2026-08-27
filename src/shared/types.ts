@@ -57,6 +57,7 @@ export interface CreatePrPayload {
   description: string | null
   baseBranch: string
   compareBranch: string
+  assignee: 'claude' | 'vscode' | null
 }
 
 export interface AddCommentPayload {

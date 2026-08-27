@@ -19,6 +19,7 @@ export interface CreatePRArgs {
   description: string | null
   base_branch: string
   compare_branch: string
+  assignee?: 'claude' | 'vscode' | null
 }
 
 export interface CreateReviewArgs {
@@ -65,8 +66,8 @@ export class ReviewStore {
       base_branch: args.base_branch,
       compare_branch: args.compare_branch,
       status: 'open',
-      assignee: null,
-      assigned_at: null,
+      assignee: args.assignee ?? null,
+      assigned_at: args.assignee ? now : null,
       merged_at: null,
       created_at: now,
       updated_at: now,

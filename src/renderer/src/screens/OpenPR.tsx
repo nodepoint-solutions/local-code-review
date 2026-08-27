@@ -49,6 +49,7 @@ export default function OpenPR(): JSX.Element {
         description: description || null,
         baseBranch,
         compareBranch,
+        assignee: null,
       })
       if ('error' in pr) {
         const failure = pr as { error: string; message?: string }

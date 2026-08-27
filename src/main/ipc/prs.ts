@@ -55,6 +55,7 @@ export function registerPrHandlers(db: Database.Database): void {
         description: payload.description,
         base_branch: payload.baseBranch,
         compare_branch: payload.compareBranch,
+        assignee: payload.assignee ?? null,
       })
       // SHAs are resolved but stored on the first review, not on the PR itself
     } catch (err) {

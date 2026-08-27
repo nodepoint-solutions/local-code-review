@@ -92,6 +92,27 @@ describe('ReviewStore', () => {
       expect(pr.assigned_at).toBeNull()
     })
 
+    it('createPR stores the assignee chosen at creation', () => {
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+        assignee: 'claude',
+      })
+      expect(pr.assignee).toBe('claude')
+      expect(pr.assigned_at).toBe(pr.created_at)
+
+      const unassigned = store.createPR(repoPath, {
+        title: 'U',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'g',
+      })
+      expect(unassigned.assignee).toBeNull()
+      expect(unassigned.assigned_at).toBeNull()
+    })
+
     it('assignPR sets and clears assignee', () => {
       const pr = store.createPR(repoPath, {
         title: 'T',
@@ -259,10 +280,9 @@ describe('ReviewStore', () => {
       })
 
       it('does not migrate a new-model review: assignment at creation predates the submit', () => {
-        const pr0 = store.createPR(repoPath, {
-          title: 'T', description: null, base_branch: 'main', compare_branch: 'f',
+        const pr = store.createPR(repoPath, {
+          title: 'T', description: null, base_branch: 'main', compare_branch: 'f', assignee: 'claude',
         })
-        const pr = store.assignPR(repoPath, pr0.id, 'claude')
         const review = store.createReview(repoPath, pr.id, {
           base_sha: 'a'.repeat(40),
           compare_sha: 'b'.repeat(40),
