@@ -159,12 +159,10 @@ export function registerPrHandlers(db: Database.Database): void {
     (_e, repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null) => {
       try {
         assertKnownRepo(db, repoPath)
-        if (assignee !== null) {
-          const pr = store.getPR(repoPath, prId)
-          const workflow = new PRWorkflow(pr, store.getActiveReview(repoPath, prId))
-          if (!workflow.allowsAssignee()) {
-            return { error: PRWorkflow.assignDeniedReason(workflow.phase) }
-          }
+        const pr = store.getPR(repoPath, prId)
+        const workflow = new PRWorkflow(pr, store.getActiveReview(repoPath, prId))
+        if (!workflow.allowsAssignee()) {
+          return { error: PRWorkflow.assignDeniedReason(workflow.phase) }
         }
         return store.assignPR(repoPath, prId, assignee)
       } catch (err) {

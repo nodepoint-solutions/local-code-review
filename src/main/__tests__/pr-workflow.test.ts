@@ -21,7 +21,10 @@ function makePr(overrides: Partial<PRFile> = {}): PRFile {
   } as PRFile
 }
 
-function makeReview(status: ReviewFile['status']): ReviewFile {
+function makeReview(
+  status: ReviewFile['status'],
+  overrides: Partial<ReviewFile> = {}
+): ReviewFile {
   return {
     version: 1,
     id: '00000000-0000-4000-8000-000000000000',
@@ -32,6 +35,7 @@ function makeReview(status: ReviewFile['status']): ReviewFile {
     submitted_at: status === 'in_progress' ? null : new Date().toISOString(),
     fix_started_at: null,
     comments: [],
+    ...overrides,
   } as ReviewFile
 }
 
@@ -43,7 +47,10 @@ describe('PRWorkflow.allowsManualResolve', () => {
   })
 
   it('allows resolving while an agent is assigned (in_fix)', () => {
-    const wf = new PRWorkflow(makePr({ assignee: 'claude' }), makeReview('submitted'))
+    const wf = new PRWorkflow(
+      makePr({ assignee: 'claude' }),
+      makeReview('submitted', { fix_started_at: new Date().toISOString() })
+    )
     expect(wf.phase).toBe('in_fix')
     expect(wf.allowsManualResolve()).toBe(true)
   })
@@ -71,7 +78,10 @@ describe('PRWorkflow.allowsReopenReview', () => {
   })
 
   it('denies reopening while an agent is assigned', () => {
-    const wf = new PRWorkflow(makePr({ assignee: 'claude' }), makeReview('submitted'))
+    const wf = new PRWorkflow(
+      makePr({ assignee: 'claude' }),
+      makeReview('submitted', { fix_started_at: new Date().toISOString() })
+    )
     expect(wf.allowsReopenReview()).toBe(false)
   })
 
@@ -81,6 +91,41 @@ describe('PRWorkflow.allowsReopenReview', () => {
     expect(new PRWorkflow(makePr(), makeReview('complete')).allowsReopenReview()).toBe(false)
     expect(
       new PRWorkflow(makePr({ status: 'closed' }), makeReview('submitted')).allowsReopenReview()
+    ).toBe(false)
+  })
+})
+
+describe('PRWorkflow phase from fix_started_at', () => {
+  it('a submitted review with an assignee but no started fix is reviewed', () => {
+    const wf = new PRWorkflow(makePr({ assignee: 'claude' }), makeReview('submitted'))
+    expect(wf.phase).toBe('reviewed')
+  })
+
+  it('a submitted review with a started fix is in_fix', () => {
+    const wf = new PRWorkflow(
+      makePr({ assignee: 'claude' }),
+      makeReview('submitted', { fix_started_at: new Date().toISOString() })
+    )
+    expect(wf.phase).toBe('in_fix')
+  })
+})
+
+describe('PRWorkflow.allowsAssignee', () => {
+  it('allows changing the assignee before and during review', () => {
+    expect(new PRWorkflow(makePr(), null).allowsAssignee()).toBe(true)
+    expect(new PRWorkflow(makePr(), makeReview('in_progress')).allowsAssignee()).toBe(true)
+    expect(new PRWorkflow(makePr(), makeReview('submitted')).allowsAssignee()).toBe(true)
+    expect(new PRWorkflow(makePr(), makeReview('complete')).allowsAssignee()).toBe(true)
+  })
+
+  it('denies changing the assignee mid-fix and on closed PRs', () => {
+    const midFix = new PRWorkflow(
+      makePr({ assignee: 'claude' }),
+      makeReview('submitted', { fix_started_at: new Date().toISOString() })
+    )
+    expect(midFix.allowsAssignee()).toBe(false)
+    expect(
+      new PRWorkflow(makePr({ status: 'closed' }), makeReview('submitted')).allowsAssignee()
     ).toBe(false)
   })
 })

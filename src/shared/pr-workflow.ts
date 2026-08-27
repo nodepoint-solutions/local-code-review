@@ -50,7 +50,7 @@ export class PRWorkflow {
     if (review.status === 'in_progress') return 'reviewing'
     if (review.status === 'complete') return 'fix_complete'
     // review.status === 'submitted'
-    return pr.assignee ? 'in_fix' : 'reviewed'
+    return review.fix_started_at !== null ? 'in_fix' : 'reviewed'
   }
 
   // ── Capability queries ────────────────────────────────────────────────────
@@ -65,9 +65,9 @@ export class PRWorkflow {
     return this.phase === 'reviewing'
   }
 
-  /** An agent can be assigned (or changed/cleared). */
+  /** The assignee can be changed — except mid-fix, and never on a closed PR. */
   allowsAssignee(): boolean {
-    return this.phase === 'reviewed' || this.phase === 'in_fix'
+    return this.phase !== 'in_fix' && this.phase !== 'closed'
   }
 
   /**
@@ -119,11 +119,8 @@ export class PRWorkflow {
   }
 
   static assignDeniedReason(phase: WorkflowPhase): string {
-    if (phase === 'reviewing' || phase === 'awaiting_review') {
-      return 'Cannot assign until a review has been submitted.'
-    }
-    if (phase === 'fix_complete') {
-      return 'The review is already complete. Start a new review first.'
+    if (phase === 'in_fix') {
+      return 'The assignee is working on fixes. Wait for the fix round to finish before changing the assignee.'
     }
     if (phase === 'closed') {
       return 'This PR is closed.'
