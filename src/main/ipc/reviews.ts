@@ -8,6 +8,7 @@ import { getDiff } from '../git/diff-parser'
 import { buildReviewCommitCounts } from '../git/commits'
 import type { AddCommentPayload, PrDetail } from '../../shared/types'
 import { assertKnownRepo } from './_guard'
+import { resolveReviewComment, reopenSubmittedReview } from '../services/review-service'
 
 const store = new ReviewStore()
 
@@ -64,21 +65,7 @@ export function registerReviewHandlers(db: Database.Database): void {
     ) => {
       try {
         assertKnownRepo(db, repoPath)
-        const pr = store.getPR(repoPath, prId)
-        const activeReview = store.getActiveReview(repoPath, prId)
-        const workflow = new PRWorkflow(pr, activeReview)
-        if (!workflow.allowsManualResolve()) {
-          return { error: 'Comments can be resolved once the review has been submitted.' }
-        }
-        return store.resolveComment(repoPath, prId, reviewId, commentId, status, {
-          comment:
-            note?.trim() ||
-            (status === 'resolved'
-              ? 'Marked as resolved by the reviewer.'
-              : 'Declined by the reviewer.'),
-          resolved_by: 'reviewer',
-          resolved_at: new Date().toISOString(),
-        })
+        return resolveReviewComment(store, repoPath, prId, reviewId, commentId, status, note)
       } catch (err) {
         return { error: (err as Error).message }
       }
@@ -97,18 +84,7 @@ export function registerReviewHandlers(db: Database.Database): void {
   ipcMain.handle('reviews:reopen', (_e, repoPath: string, prId: string, reviewId: string) => {
     try {
       assertKnownRepo(db, repoPath)
-      const pr = store.getPR(repoPath, prId)
-      const activeReview = store.getActiveReview(repoPath, prId)
-      const workflow = new PRWorkflow(pr, activeReview)
-      if (!workflow.allowsReopenReview()) {
-        return {
-          error:
-            pr.assignee !== null
-              ? 'Unassign the agent before returning the review to editing.'
-              : 'Only a submitted review can be returned to editing.',
-        }
-      }
-      return store.reopenReview(repoPath, prId, reviewId)
+      return reopenSubmittedReview(store, repoPath, prId, reviewId)
     } catch (err) {
       return { error: (err as Error).message }
     }

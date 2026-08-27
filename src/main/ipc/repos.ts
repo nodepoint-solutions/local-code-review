@@ -1,14 +1,8 @@
 import { ipcMain, dialog } from 'electron'
 import path from 'path'
 import type Database from 'better-sqlite3'
-import {
-  insertRepo,
-  listRepos,
-  touchRepo,
-  removeRepo,
-  isRepoRemoved,
-  clearRemovedRepo,
-} from '../db/repos'
+import { insertRepo, listRepos, touchRepo, removeRepo, clearRemovedRepo } from '../db/repos'
+import { syncDiscoveredRepos } from '../services/repo-service'
 import { getSetting, setSetting } from '../db/settings'
 import { isGitRepo } from '../git/branches'
 import { scanForRepos, scanForReviewRepos } from '../git/scanner'
@@ -26,10 +20,7 @@ export function registerRepoHandlers(
       const baseDir = getSetting(db, 'scan_base_dir')
       if (baseDir) {
         const discovered = await scanForReviewRepos(baseDir)
-        for (const { path: repoPath, name } of discovered) {
-          // A repo the user removed stays removed until they add it back
-          if (isRepoRemoved(db, repoPath)) continue
-          insertRepo(db, repoPath, name)
+        for (const repoPath of syncDiscoveredRepos(db, discovered)) {
           onRepoAdded?.(repoPath)
         }
       }
