@@ -37,7 +37,9 @@ describe('buildAttachArgs', () => {
   })
 })
 
-describe('attach → parse pipeline against a real DMG', () => {
+// hdiutil exists only on macOS; the pipeline itself is reachable only there
+// too (the install button is darwin-gated), so skipping elsewhere loses nothing
+describe.runIf(process.platform === 'darwin')('attach → parse pipeline against a real DMG', () => {
   it('mounts with the production args and finds the app bundle', async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dmg-mount-test-'))
     const srcDir = path.join(tmpDir, 'src')

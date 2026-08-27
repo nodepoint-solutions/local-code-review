@@ -203,28 +203,31 @@ export default function Settings(): JSX.Element {
           </button>
         </section>
 
-        {/* Terminal */}
-        <section style={{ marginTop: 32 }}>
-          <h2>Terminal</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-            Where “Start fix” opens Claude Code. Ghostty always opens a new window — use “Copy
-            prompt” to reuse an existing session.
-          </p>
-          <select
-            aria-label="Terminal"
-            value={terminalApp}
-            onChange={(e) => {
-              void handleChangeTerminal(e.target.value)
-            }}
-            style={{ marginTop: 12 }}
-          >
-            {terminals.map((t) => (
-              <option key={t} value={t}>
-                {t === 'Terminal' ? 'Terminal.app' : t === 'iTerm' ? 'iTerm2' : t}
-              </option>
-            ))}
-          </select>
-        </section>
+        {/* Terminal — only rendered where a launchable terminal was detected,
+            so non-macOS platforms never show an empty picker */}
+        {terminals.length > 0 && (
+          <section style={{ marginTop: 32 }}>
+            <h2>Terminal</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+              Where “Start fix” opens Claude Code. Ghostty always opens a new window — use “Copy
+              prompt” to reuse an existing session.
+            </p>
+            <select
+              aria-label="Terminal"
+              value={terminalApp}
+              onChange={(e) => {
+                void handleChangeTerminal(e.target.value)
+              }}
+              style={{ marginTop: 12 }}
+            >
+              {terminals.map((t) => (
+                <option key={t} value={t}>
+                  {t === 'Terminal' ? 'Terminal.app' : t === 'iTerm' ? 'iTerm2' : t}
+                </option>
+              ))}
+            </select>
+          </section>
+        )}
 
         {/* Global .gitignore */}
         <section style={{ marginTop: 32 }}>
