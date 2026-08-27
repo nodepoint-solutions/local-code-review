@@ -239,6 +239,39 @@ describe('ReviewStore', () => {
         const cleared = store.clearFixStarted(repoPath, prId, reviewId)
         expect(cleared.fix_started_at).toBeNull()
       })
+
+      it('migrates a legacy mid-fix review: assignment after submit implies the fix started', () => {
+        const { prId, reviewId } = makeSubmittedReview()
+        // Legacy data was submitted well before the agent was assigned; backdate the
+        // submit so the two stamps are distinguishable at millisecond resolution.
+        const reviewPath = path.join(repoPath, '.reviews', prId, 'reviews', `${reviewId}.json`)
+        const raw = JSON.parse(fs.readFileSync(reviewPath, 'utf8'))
+        raw.submitted_at = new Date(Date.now() - 60_000).toISOString()
+        fs.writeFileSync(reviewPath, JSON.stringify(raw))
+
+        // Legacy flow: the agent was assigned after the review was submitted
+        const pr = store.assignPR(repoPath, prId, 'claude')
+
+        const [migrated] = store.listReviews(repoPath, prId)
+        expect(migrated.fix_started_at).toBe(pr.assigned_at)
+        // Persisted, not just derived
+        expect(store.getReview(repoPath, prId, reviewId).fix_started_at).toBe(pr.assigned_at)
+      })
+
+      it('does not migrate a new-model review: assignment at creation predates the submit', () => {
+        const pr0 = store.createPR(repoPath, {
+          title: 'T', description: null, base_branch: 'main', compare_branch: 'f',
+        })
+        const pr = store.assignPR(repoPath, pr0.id, 'claude')
+        const review = store.createReview(repoPath, pr.id, {
+          base_sha: 'a'.repeat(40),
+          compare_sha: 'b'.repeat(40),
+        })
+        store.submitReview(repoPath, pr.id, review.id)
+
+        const [fresh] = store.listReviews(repoPath, pr.id)
+        expect(fresh.fix_started_at).toBeNull()
+      })
     })
   })
 

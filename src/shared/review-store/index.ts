@@ -129,15 +129,46 @@ export class ReviewStore {
   // ── Reviews ───────────────────────────────────────────────────────────────
 
   listReviews(repoPath: string, prId: string): ReviewFile[] {
+    let pr: PRFile | null = null
+    try {
+      pr = readPR(repoPath, prId)
+    } catch {
+      pr = null
+    }
     return listReviewIds(repoPath, prId)
       .flatMap((reviewId) => {
         try {
-          return [readReview(repoPath, prId, reviewId)]
+          return [this.migrateFixStarted(repoPath, prId, pr, readReview(repoPath, prId, reviewId))]
         } catch {
           return []
         }
       })
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
+  }
+
+  /**
+   * Data written before fix_started_at existed signalled an active fix by
+   * assigning the agent after submission. Stamp those reviews once so the
+   * phase they were in survives the upgrade; new-model PRs are assigned at
+   * creation, before any submit, so they never match.
+   */
+  private migrateFixStarted(
+    repoPath: string,
+    prId: string,
+    pr: PRFile | null,
+    review: ReviewFile
+  ): ReviewFile {
+    const legacyMidFix =
+      review.status === 'submitted' &&
+      review.fix_started_at === null &&
+      review.submitted_at !== null &&
+      pr?.assignee != null &&
+      pr.assigned_at !== null &&
+      pr.assigned_at > review.submitted_at
+    if (!legacyMidFix) return review
+    const updated: ReviewFile = { ...review, fix_started_at: pr!.assigned_at }
+    writeReview(repoPath, prId, updated)
+    return updated
   }
 
   createReview(repoPath: string, prId: string, args: CreateReviewArgs): ReviewFile {
