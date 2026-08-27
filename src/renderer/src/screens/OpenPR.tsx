@@ -4,6 +4,15 @@ import { useStore } from '../store'
 import NavBar from '../components/NavBar'
 import styles from './OpenPR.module.css'
 
+type AssigneeChoice = 'claude' | 'vscode' | 'me'
+
+// Remembers the last assignee choice per machine, so repeat PR creation
+// doesn't require reselecting the same fixer every time
+function savedAssignee(): AssigneeChoice {
+  const saved = localStorage.getItem('newPrAssignee')
+  return saved === 'claude' || saved === 'vscode' || saved === 'me' ? saved : 'me'
+}
+
 export default function OpenPR(): JSX.Element {
   const { repoId } = useParams<{ repoId: string }>()
   const navigate = useNavigate()
@@ -15,6 +24,7 @@ export default function OpenPR(): JSX.Element {
   const [compareBranch, setCompareBranch] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [assignee, setAssignee] = useState<AssigneeChoice>(savedAssignee)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -49,7 +59,7 @@ export default function OpenPR(): JSX.Element {
         description: description || null,
         baseBranch,
         compareBranch,
-        assignee: null,
+        assignee: assignee === 'me' ? null : assignee,
       })
       if ('error' in pr) {
         const failure = pr as { error: string; message?: string }
@@ -87,7 +97,12 @@ export default function OpenPR(): JSX.Element {
             <div className={styles.branchRow}>
               <div className={styles.branchField}>
                 <label className={styles.label}>Base branch</label>
-                <select value={baseBranch} onChange={(e) => setBaseBranch(e.target.value)} required>
+                <select
+                  aria-label="Base branch"
+                  value={baseBranch}
+                  onChange={(e) => setBaseBranch(e.target.value)}
+                  required
+                >
                   <option value="">Select base…</option>
                   {branches.map((b) => (
                     <option key={b} value={b}>
@@ -117,6 +132,7 @@ export default function OpenPR(): JSX.Element {
               <div className={styles.branchField}>
                 <label className={styles.label}>Compare branch</label>
                 <select
+                  aria-label="Compare branch"
                   value={compareBranch}
                   onChange={(e) => setCompareBranch(e.target.value)}
                   required
@@ -133,6 +149,30 @@ export default function OpenPR(): JSX.Element {
             </div>
 
             <div className={styles.divider} />
+
+            {/* Assignee */}
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="pr-assignee">
+                Assignee
+              </label>
+              <select
+                id="pr-assignee"
+                aria-label="Assignee"
+                value={assignee}
+                onChange={(e) => {
+                  const choice = e.target.value as AssigneeChoice
+                  setAssignee(choice)
+                  localStorage.setItem('newPrAssignee', choice)
+                }}
+              >
+                <option value="me">Me — fix manually</option>
+                <option value="claude">Claude Code</option>
+                <option value="vscode">Copilot (VS Code)</option>
+              </select>
+              <span className={styles.fieldHint}>
+                Who fixes review comments on this pull request
+              </span>
+            </div>
 
             {/* Title */}
             <div className={styles.field}>
