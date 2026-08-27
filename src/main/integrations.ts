@@ -67,7 +67,7 @@ For each group in order:
 
 Once every open comment is marked, call \`complete_assignment(repo_path, pr_id)\`.
 
-This unassigns you from the PR and signals to the reviewer that the work is done.
+This signals to the reviewer that your fix session has ended.
 
 ## Rules
 
@@ -76,6 +76,48 @@ This unassigns you from the PR and signals to the reviewer that the work is done
 - If you are unsure how to fix a comment, implement the most conservative interpretation and note the uncertainty in resolution_comment
 - Do not reopen closed comments or modify comments from previous reviews
 `
+
+const CREATE_PR_SKILL_CONTENT = `---
+name: local-code-review-create-pr
+description: Open a pull request in Local Code Review for a local branch. Derives the title and description from the branch's commits and creates the PR via the local-code-review create_pr MCP tool. Use when asked to open or create a PR for local review.
+compatibility: Requires git and the local-code-review MCP server to be running.
+---
+
+You are opening a pull request in Local Code Review.
+
+## Workflow
+
+1. Identify the branches
+   - Compare branch: the current branch unless one is named
+   - Base branch: main (or master), unless one is named
+
+2. Understand the change
+   \`\`\`bash
+   git log --oneline <base>..<compare>
+   git diff --stat <base>...<compare>
+   \`\`\`
+
+3. Derive title and description
+   - Title: one imperative sentence summarising the change
+   - Description: what changed and why, from the commits — plain language, no filler
+
+4. Create the PR
+   Call \`create_pr(repo_path, title, description, base_branch, compare_branch)\`.
+   You become the PR's assignee: after each review is submitted you will be
+   asked to fix the comments.
+
+5. Report the created PR id and title.
+
+## Rules
+
+- Local branches only — never push, never touch remotes
+- If create_pr reports the repository is not set up, tell the user to add it in the Local Code Review app and stop
+`
+
+const SKILLS: { dirName: string; content: string }[] = [
+  { dirName: 'local-code-review', content: SKILL_CONTENT },
+  { dirName: 'local-code-review-create-pr', content: CREATE_PR_SKILL_CONTENT },
+]
 
 const home = os.homedir()
 const appdata = process.env['APPDATA'] ?? home
@@ -188,25 +230,29 @@ function toolEcosystem(id: IntegrationStatus['id']): 'claude' | 'copilot' {
   return id === 'claudeCode' || id === 'claudeDesktop' ? 'claude' : 'copilot'
 }
 
-function skillDir(ecosystem: 'claude' | 'copilot'): string {
+function skillDir(ecosystem: 'claude' | 'copilot', dirName: string): string {
   const base =
     ecosystem === 'claude'
       ? path.join(home, '.claude', 'skills')
       : path.join(home, '.copilot', 'skills') // per Agent Skills spec (agentskills.io)
-  return path.join(base, 'local-code-review')
+  return path.join(base, dirName)
 }
 
 function isSkillInstalled(ecosystem: 'claude' | 'copilot'): boolean {
-  return fs.existsSync(path.join(skillDir(ecosystem), 'SKILL.md'))
+  return SKILLS.every((skill) =>
+    fs.existsSync(path.join(skillDir(ecosystem, skill.dirName), 'SKILL.md'))
+  )
 }
 
 function installSkill(ecosystem: 'claude' | 'copilot'): void {
-  const dir = skillDir(ecosystem)
-  fs.mkdirSync(dir, { recursive: true })
-  const dest = path.join(dir, 'SKILL.md')
-  const tmp = dest + '.tmp'
-  fs.writeFileSync(tmp, SKILL_CONTENT, 'utf8')
-  fs.renameSync(tmp, dest)
+  for (const skill of SKILLS) {
+    const dir = skillDir(ecosystem, skill.dirName)
+    fs.mkdirSync(dir, { recursive: true })
+    const dest = path.join(dir, 'SKILL.md')
+    const tmp = dest + '.tmp'
+    fs.writeFileSync(tmp, skill.content, 'utf8')
+    fs.renameSync(tmp, dest)
+  }
 }
 
 function readJson(filePath: string): Record<string, unknown> {

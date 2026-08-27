@@ -60,7 +60,7 @@ Rules:
 - Never mark an issue without a resolution_comment
 - Work through all open issues before finishing
 - If an issue is already fixed by the time you get to it, mark_resolved() and explain what you observed
-- When all issues are addressed, call complete_assignment() to unassign yourself and signal that you are done`,
+- When all issues are addressed, call complete_assignment() to signal that your fix session is done`,
         },
       },
     ],
