@@ -215,3 +215,66 @@ describe('ReviewPanel markdown export', () => {
     expect(screen.queryByRole('button', { name: /export as markdown/i })).not.toBeInTheDocument()
   })
 })
+
+describe('ReviewPanel post-submit fix dialog', () => {
+  it('opens the fix dialog after submitting when an agent is assigned', async () => {
+    const assignedPr = { ...pr, assignee: 'claude' as const, assigned_at: pr.created_at }
+    installMockApi({
+      submitReview: vi.fn().mockResolvedValue({ ...review, status: 'submitted' }),
+      getPr: vi.fn().mockResolvedValue({
+        pr: assignedPr,
+        diff: [],
+        review: { ...review, status: 'submitted' },
+        reviews: [],
+        reviewCommitCounts: {},
+        isStale: false,
+      }),
+    })
+    render(
+      <ReviewPanel
+        pr={assignedPr}
+        review={review}
+        reviews={[review]}
+        comments={comments}
+        prId="pr1"
+        repoPath="/repo"
+        onClose={vi.fn()}
+        onSubmitted={vi.fn()}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /submit review/i }))
+    expect(
+      await screen.findByRole('dialog', { name: /start fixing review comments/i })
+    ).toBeInTheDocument()
+  })
+
+  it('does not open the dialog when the PR has no assignee', async () => {
+    installMockApi({
+      submitReview: vi.fn().mockResolvedValue({ ...review, status: 'submitted' }),
+      getPr: vi.fn().mockResolvedValue({
+        pr,
+        diff: [],
+        review: { ...review, status: 'submitted' },
+        reviews: [],
+        reviewCommitCounts: {},
+        isStale: false,
+      }),
+    })
+    render(
+      <ReviewPanel
+        pr={pr}
+        review={review}
+        reviews={[review]}
+        comments={comments}
+        prId="pr1"
+        repoPath="/repo"
+        onClose={vi.fn()}
+        onSubmitted={vi.fn()}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /submit review/i }))
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: /start fixing/i })).not.toBeInTheDocument()
+    )
+  })
+})

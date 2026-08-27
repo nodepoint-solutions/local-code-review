@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { PRFile, ReviewComment, PrDetail, ReviewFile } from '../../../shared/types'
 import { PRWorkflow } from '../../../shared/pr-workflow'
+import SubmitFixDialog from './SubmitFixDialog'
 import styles from './ReviewPanel.module.css'
 
 interface Props {
@@ -63,6 +64,11 @@ export default function ReviewPanel({
   const [error, setError] = useState('')
   const [exportError, setExportError] = useState('')
   const [reopening, setReopening] = useState(false)
+  const [fixDialog, setFixDialog] = useState<{
+    assignee: 'claude' | 'vscode'
+    reviewId: string
+    count: number
+  } | null>(null)
   const nonStale = comments.filter((c) => !c.is_stale)
   const workflow = new PRWorkflow(pr, review ?? null, reviews)
 
@@ -83,6 +89,10 @@ export default function ReviewPanel({
     }
     onSubmitted(updated as PrDetail | null)
     setSubmitting(false)
+    const submittedPr = (updated as PrDetail | null)?.pr
+    if (submittedPr?.assignee) {
+      setFixDialog({ assignee: submittedPr.assignee, reviewId: review.id, count: nonStale.length })
+    }
   }
 
   async function handleReopen(): Promise<void> {
@@ -251,6 +261,18 @@ export default function ReviewPanel({
               : `Submit review (${nonStale.length} comment${nonStale.length !== 1 ? 's' : ''})`}
           </button>
         </div>
+      )}
+
+      {fixDialog && (
+        <SubmitFixDialog
+          assignee={fixDialog.assignee}
+          commentCount={fixDialog.count}
+          repoPath={repoPath}
+          prId={prId}
+          reviewId={fixDialog.reviewId}
+          onClose={() => setFixDialog(null)}
+          onUpdated={onSubmitted}
+        />
       )}
     </div>
   )
