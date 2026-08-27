@@ -121,3 +121,39 @@ describe('create_pr', () => {
     expect(resultJson(result).assignee).toBe('vscode')
   })
 })
+
+describe('complete_assignment', () => {
+  it('ends the fix session without removing the assignee', async () => {
+    const repoPath = makeGitRepo()
+    fs.mkdirSync(path.join(repoPath, '.reviews'), { recursive: true })
+    const socket = { emit: vi.fn() } as unknown as SocketClient
+    const created = resultJson(
+      await callTool(
+        'create_pr',
+        { repo_path: repoPath, title: 'T', base_branch: 'main', compare_branch: 'feature/x' },
+        socket,
+        'Claude Code'
+      )
+    )
+    const prId = created.pr_id as string
+    const { ReviewStore } = await import('../../shared/review-store')
+    const store = new ReviewStore()
+    const review = store.createReview(repoPath, prId, {
+      base_sha: 'a'.repeat(40),
+      compare_sha: 'b'.repeat(40),
+    })
+    store.submitReview(repoPath, prId, review.id)
+    store.startFix(repoPath, prId, review.id)
+
+    const result = await callTool(
+      'complete_assignment',
+      { repo_path: repoPath, pr_id: prId },
+      socket,
+      'Claude Code'
+    )
+    expect(result.isError).toBeUndefined()
+    expect(store.getReview(repoPath, prId, review.id).fix_started_at).toBeNull()
+    expect(store.getPR(repoPath, prId).assignee).toBe('claude')
+    fs.rmSync(repoPath, { recursive: true, force: true })
+  })
+})

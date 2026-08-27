@@ -139,7 +139,7 @@ export function buildTools() {
     {
       name: 'complete_assignment',
       description:
-        'Call this when you have finished addressing all open review issues. Unassigns you from the PR so the reviewer knows the work is done.',
+        'Call this when you have finished addressing all open review issues. Signals to the reviewer that your fix session has ended.',
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -283,11 +283,18 @@ export async function callTool(
       }
 
       case 'complete_assignment': {
-        store.assignPR(args.repo_path, args.pr_id, null)
+        // Ends the fix session rather than removing the assignee — the
+        // assignee is a stable property of the PR. If open comments remain,
+        // the PR returns to "reviewed" so the fix can be restarted.
+        const reviews = store.listReviews(args.repo_path, args.pr_id)
+        const submitted = reviews.find((r) => r.status === 'submitted')
+        if (submitted) {
+          store.clearFixStarted(args.repo_path, args.pr_id, submitted.id)
+        }
         socketClient.emit({ event: 'pr:updated', repoPath: args.repo_path, prId: args.pr_id })
         return ok({
           success: true,
-          message: 'Assignment cleared. You have been unassigned from this PR.',
+          message: 'Assignment complete. The reviewer can see the work is done.',
         })
       }
 
