@@ -8,6 +8,7 @@ import {
   listPRIds,
   listReviewIds,
   deletePRDir,
+  reviewFileHasFixStarted,
 } from './serializer'
 import type { PRFile, ReviewFile, ReviewComment, Resolution, ContextLineEntry } from './schema'
 
@@ -148,10 +149,14 @@ export class ReviewStore {
   }
 
   /**
-   * Data written before fix_started_at existed signalled an active fix by
-   * assigning the agent after submission. Stamp those reviews once so the
-   * phase they were in survives the upgrade; new-model PRs are assigned at
-   * creation, before any submit, so they never match.
+   * One-shot migration for review files written before fix_started_at
+   * existed. Every current write path serializes the key (even when null), so
+   * a raw file without it is legacy by definition — key absence is the
+   * discriminator, and timestamps never touch key-present files. Legacy data
+   * signalled an active fix by assigning the agent after submission, so those
+   * reviews are stamped with the assignment time. Every key-absent file is
+   * persisted once, stamped or not, so the key exists on disk afterwards and
+   * the migration can never re-fire.
    */
   private migrateFixStarted(
     repoPath: string,
@@ -159,15 +164,17 @@ export class ReviewStore {
     pr: PRFile | null,
     review: ReviewFile
   ): ReviewFile {
+    if (reviewFileHasFixStarted(repoPath, prId, review.id)) return review
     const legacyMidFix =
       review.status === 'submitted' &&
-      review.fix_started_at === null &&
       review.submitted_at !== null &&
       pr?.assignee != null &&
       pr.assigned_at !== null &&
       pr.assigned_at > review.submitted_at
-    if (!legacyMidFix) return review
-    const updated: ReviewFile = { ...review, fix_started_at: pr!.assigned_at }
+    const updated: ReviewFile = {
+      ...review,
+      fix_started_at: legacyMidFix ? pr!.assigned_at : null,
+    }
     writeReview(repoPath, prId, updated)
     return updated
   }

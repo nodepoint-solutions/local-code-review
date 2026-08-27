@@ -156,4 +156,55 @@ describe('complete_assignment', () => {
     expect(store.getPR(repoPath, prId).assignee).toBe('claude')
     fs.rmSync(repoPath, { recursive: true, force: true })
   })
+
+  it('durably returns a legacy PR with open comments to reviewed', async () => {
+    const repoPath = makeGitRepo()
+    fs.mkdirSync(path.join(repoPath, '.reviews'), { recursive: true })
+    const socket = { emit: vi.fn() } as unknown as SocketClient
+    const { ReviewStore } = await import('../../shared/review-store')
+    const store = new ReviewStore()
+    const prId = store.createPR(repoPath, {
+      title: 'T',
+      description: null,
+      base_branch: 'main',
+      compare_branch: 'feature/x',
+    }).id
+    const review = store.createReview(repoPath, prId, {
+      base_sha: 'a'.repeat(40),
+      compare_sha: 'b'.repeat(40),
+    })
+    store.addComment(repoPath, prId, review.id, {
+      file: 'src/a.ts',
+      start_line: 1,
+      end_line: 1,
+      side: 'right',
+      body: 'Fix this',
+      context: [],
+    })
+    store.submitReview(repoPath, prId, review.id)
+    // Rewrite the review as a genuine legacy file: no fix_started_at key,
+    // submitted before the assignment that follows.
+    const reviewPath = path.join(repoPath, '.reviews', prId, 'reviews', `${review.id}.json`)
+    const raw = JSON.parse(fs.readFileSync(reviewPath, 'utf8'))
+    raw.submitted_at = new Date(Date.now() - 60_000).toISOString()
+    delete raw.fix_started_at
+    fs.writeFileSync(reviewPath, JSON.stringify(raw))
+    store.assignPR(repoPath, prId, 'claude')
+
+    // The one-shot migration stamps the legacy mid-fix review
+    expect(store.listReviews(repoPath, prId)[0].fix_started_at).not.toBeNull()
+
+    const result = await callTool(
+      'complete_assignment',
+      { repo_path: repoPath, pr_id: prId },
+      socket,
+      'Claude Code'
+    )
+    expect(result.isError).toBeUndefined()
+    // Cleared, and it stays cleared on subsequent reads — the migration
+    // cannot re-stamp a file that now carries the key.
+    expect(store.listReviews(repoPath, prId)[0].fix_started_at).toBeNull()
+    expect(store.listReviews(repoPath, prId)[0].fix_started_at).toBeNull()
+    fs.rmSync(repoPath, { recursive: true, force: true })
+  })
 })

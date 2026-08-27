@@ -55,6 +55,22 @@ export function readReview(repoPath: string, prId: string, reviewId: string): Re
   }
 }
 
+/**
+ * Reports whether the raw review JSON on disk contains the `fix_started_at`
+ * key. The schema defaults the field after parse, so only the raw file can
+ * tell a legacy write (key absent) from a new-model write (key present, even
+ * when null).
+ */
+export function reviewFileHasFixStarted(repoPath: string, prId: string, reviewId: string): boolean {
+  const filePath = path.join(reviewsDir(repoPath, prId), `${reviewId}.json`)
+  try {
+    const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    return typeof raw === 'object' && raw !== null && 'fix_started_at' in raw
+  } catch (err) {
+    throw new InvalidReviewFileError(filePath, err)
+  }
+}
+
 export function writeReview(repoPath: string, prId: string, review: ReviewFile): void {
   const dir = reviewsDir(repoPath, prId)
   ensureDir(dir)

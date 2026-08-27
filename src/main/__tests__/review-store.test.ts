@@ -261,14 +261,22 @@ describe('ReviewStore', () => {
         expect(cleared.fix_started_at).toBeNull()
       })
 
-      it('migrates a legacy mid-fix review: assignment after submit implies the fix started', () => {
-        const { prId, reviewId } = makeSubmittedReview()
-        // Legacy data was submitted well before the agent was assigned; backdate the
-        // submit so the two stamps are distinguishable at millisecond resolution.
+      /**
+       * Turns a review file into a genuine legacy write: raw JSON without the
+       * fix_started_at key, submitted a minute ago so a later assignment
+       * stamp is distinguishable at millisecond resolution.
+       */
+      function makeLegacyReviewFile(prId: string, reviewId: string): void {
         const reviewPath = path.join(repoPath, '.reviews', prId, 'reviews', `${reviewId}.json`)
         const raw = JSON.parse(fs.readFileSync(reviewPath, 'utf8'))
         raw.submitted_at = new Date(Date.now() - 60_000).toISOString()
+        delete raw.fix_started_at
         fs.writeFileSync(reviewPath, JSON.stringify(raw))
+      }
+
+      it('migrates a legacy mid-fix review: assignment after submit implies the fix started', () => {
+        const { prId, reviewId } = makeSubmittedReview()
+        makeLegacyReviewFile(prId, reviewId)
 
         // Legacy flow: the agent was assigned after the review was submitted
         const pr = store.assignPR(repoPath, prId, 'claude')
@@ -279,7 +287,7 @@ describe('ReviewStore', () => {
         expect(store.getReview(repoPath, prId, reviewId).fix_started_at).toBe(pr.assigned_at)
       })
 
-      it('does not migrate a new-model review: assignment at creation predates the submit', () => {
+      it('does not migrate a new-model review: the file carries the fix_started_at key', () => {
         const pr = store.createPR(repoPath, {
           title: 'T',
           description: null,
@@ -295,6 +303,20 @@ describe('ReviewStore', () => {
 
         const [fresh] = store.listReviews(repoPath, pr.id)
         expect(fresh.fix_started_at).toBeNull()
+      })
+
+      it('changing the assignee after submit does not enter in_fix', () => {
+        const { prId, reviewId } = makeSubmittedReview()
+        // Backdate the submit so the later assignment stamp is clearly after it
+        const reviewPath = path.join(repoPath, '.reviews', prId, 'reviews', `${reviewId}.json`)
+        const raw = JSON.parse(fs.readFileSync(reviewPath, 'utf8'))
+        raw.submitted_at = new Date(Date.now() - 60_000).toISOString()
+        fs.writeFileSync(reviewPath, JSON.stringify(raw))
+
+        store.assignPR(repoPath, prId, 'claude')
+
+        const [review] = store.listReviews(repoPath, prId)
+        expect(review.fix_started_at).toBeNull()
       })
     })
   })
