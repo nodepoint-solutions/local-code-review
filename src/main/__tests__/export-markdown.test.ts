@@ -26,6 +26,7 @@ const review: ReviewFile = {
   compare_sha: 'def',
   created_at: '2026-04-08T10:00:00Z',
   submitted_at: '2026-04-08T11:00:00Z',
+  fix_started_at: null,
   comments: [
     {
       id: 'RVW-001',

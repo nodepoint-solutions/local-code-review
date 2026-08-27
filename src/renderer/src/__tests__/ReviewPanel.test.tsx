@@ -25,6 +25,7 @@ const review: ReviewFile = {
   base_sha: 'abc123',
   compare_sha: 'def456',
   submitted_at: null,
+  fix_started_at: null,
   created_at: '2026-04-08T10:00:00Z',
   comments: [],
 }

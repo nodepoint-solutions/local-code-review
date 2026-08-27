@@ -149,6 +149,7 @@ export class ReviewStore {
       compare_sha: args.compare_sha,
       created_at: new Date().toISOString(),
       submitted_at: null,
+      fix_started_at: null,
       comments: [],
     }
     writeReview(repoPath, prId, review)
@@ -205,7 +206,28 @@ export class ReviewStore {
       ...review,
       status: 'in_progress',
       submitted_at: null,
+      fix_started_at: null,
     }
+    writeReview(repoPath, prId, updated)
+    return updated
+  }
+
+  /**
+   * Records that the assignee's fix session began. Idempotent — a nudge or a
+   * second copy of the prompt keeps the original start time.
+   */
+  startFix(repoPath: string, prId: string, reviewId: string): ReviewFile {
+    const review = readReview(repoPath, prId, reviewId)
+    if (review.fix_started_at !== null) return review
+    const updated: ReviewFile = { ...review, fix_started_at: new Date().toISOString() }
+    writeReview(repoPath, prId, updated)
+    return updated
+  }
+
+  /** Marks the fix session ended, so an abandoned fix can be restarted. */
+  clearFixStarted(repoPath: string, prId: string, reviewId: string): ReviewFile {
+    const review = readReview(repoPath, prId, reviewId)
+    const updated: ReviewFile = { ...review, fix_started_at: null }
     writeReview(repoPath, prId, updated)
     return updated
   }

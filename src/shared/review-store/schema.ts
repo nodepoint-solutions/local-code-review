@@ -35,6 +35,7 @@ export const ReviewFileSchema = z.object({
   compare_sha: z.string(),
   created_at: z.string(),
   submitted_at: z.string().nullable(),
+  fix_started_at: z.string().nullable().optional().default(null),
   comments: z.array(ReviewCommentSchema),
 })
 

@@ -203,6 +203,43 @@ describe('ReviewStore', () => {
       store.createReview(repoPath, prId, { base_sha: 'c', compare_sha: 'd' })
       expect(store.listReviews(repoPath, prId)).toHaveLength(2)
     })
+
+    describe('fix lifecycle', () => {
+      function makeSubmittedReview(): { prId: string; reviewId: string } {
+        const pr = store.createPR(repoPath, {
+          title: 'T',
+          description: null,
+          base_branch: 'main',
+          compare_branch: 'f',
+        })
+        const review = store.createReview(repoPath, pr.id, {
+          base_sha: 'a'.repeat(40),
+          compare_sha: 'b'.repeat(40),
+        })
+        store.submitReview(repoPath, pr.id, review.id)
+        return { prId: pr.id, reviewId: review.id }
+      }
+
+      it('new reviews start with fix_started_at null', () => {
+        const { prId, reviewId } = makeSubmittedReview()
+        expect(store.getReview(repoPath, prId, reviewId).fix_started_at).toBeNull()
+      })
+
+      it('startFix stamps the review once and is idempotent', () => {
+        const { prId, reviewId } = makeSubmittedReview()
+        const first = store.startFix(repoPath, prId, reviewId)
+        expect(first.fix_started_at).not.toBeNull()
+        const second = store.startFix(repoPath, prId, reviewId)
+        expect(second.fix_started_at).toBe(first.fix_started_at)
+      })
+
+      it('clearFixStarted returns the review to not-started', () => {
+        const { prId, reviewId } = makeSubmittedReview()
+        store.startFix(repoPath, prId, reviewId)
+        const cleared = store.clearFixStarted(repoPath, prId, reviewId)
+        expect(cleared.fix_started_at).toBeNull()
+      })
+    })
   })
 
   describe('Comments', () => {

@@ -30,6 +30,7 @@ function makeReview(status: ReviewFile['status']): ReviewFile {
     compare_sha: 'b'.repeat(40),
     created_at: new Date().toISOString(),
     submitted_at: status === 'in_progress' ? null : new Date().toISOString(),
+    fix_started_at: null,
     comments: [],
   } as ReviewFile
 }
