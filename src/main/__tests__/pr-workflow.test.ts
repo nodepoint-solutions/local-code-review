@@ -21,10 +21,7 @@ function makePr(overrides: Partial<PRFile> = {}): PRFile {
   } as PRFile
 }
 
-function makeReview(
-  status: ReviewFile['status'],
-  overrides: Partial<ReviewFile> = {}
-): ReviewFile {
+function makeReview(status: ReviewFile['status'], overrides: Partial<ReviewFile> = {}): ReviewFile {
   return {
     version: 1,
     id: '00000000-0000-4000-8000-000000000000',

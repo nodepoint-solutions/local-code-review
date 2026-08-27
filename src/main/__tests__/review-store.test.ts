@@ -281,7 +281,11 @@ describe('ReviewStore', () => {
 
       it('does not migrate a new-model review: assignment at creation predates the submit', () => {
         const pr = store.createPR(repoPath, {
-          title: 'T', description: null, base_branch: 'main', compare_branch: 'f', assignee: 'claude',
+          title: 'T',
+          description: null,
+          base_branch: 'main',
+          compare_branch: 'f',
+          assignee: 'claude',
         })
         const review = store.createReview(repoPath, pr.id, {
           base_sha: 'a'.repeat(40),

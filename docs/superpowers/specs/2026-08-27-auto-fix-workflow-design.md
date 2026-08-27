@@ -46,7 +46,7 @@ For a `submitted` review:
 
 ### Migration for PRs mid-fix at upgrade
 
-Legacy `in_fix` PRs have `assignee` set with `assigned_at` *after* `submitted_at` (assignment used to happen post-submit); new-model PRs are assigned at creation, before any submit. When the store reads a `submitted` review with `fix_started_at === null` whose PR has `assigned_at > submitted_at`, it stamps `fix_started_at = assigned_at` and persists. Old data lands in the same phase it was in; new data never matches the condition.
+Legacy `in_fix` PRs have `assignee` set with `assigned_at` _after_ `submitted_at` (assignment used to happen post-submit); new-model PRs are assigned at creation, before any submit. When the store reads a `submitted` review with `fix_started_at === null` whose PR has `assigned_at > submitted_at`, it stamps `fix_started_at = assigned_at` and persists. Old data lands in the same phase it was in; new data never matches the condition.
 
 ## PR creation
 
@@ -75,7 +75,7 @@ A second skill installed by `integrations.ts` next to the fix skill, in its own 
 
 After a successful submit in `ReviewPanel`:
 
-- **Assignee is an agent** → a dialog appears: "*Claude will start fixing these N comments.*" with three actions:
+- **Assignee is an agent** → a dialog appears: "_Claude will start fixing these N comments._" with three actions:
   - **Start fix** — launches the agent (see Launch mechanics), stamps `fix_started_at` → `in_fix`.
   - **Copy prompt** — puts the `/local-code-review repo_path=… pr_id=… review_id=…` line on the clipboard, stamps `fix_started_at` → `in_fix`. Covers Ghostty-in-existing-session and agents without CLI launch.
   - **Later** — closes the dialog; phase stays `reviewed`.
@@ -123,23 +123,23 @@ Tool description text updates to match. The socket `pr:updated` emit stays.
 
 ## Files changed
 
-| File | Change |
-| --- | --- |
-| `src/shared/review-store/schema.ts` | `fix_started_at` on `ReviewFileSchema` |
-| `src/shared/review-store/index.ts` | `startFix`, `clearFixStarted`, migration on read, assignee at creation |
-| `src/shared/pr-workflow.ts` | Phase from `fix_started_at`; `allowsAssignee` + copy |
-| `src/main/services/pr-service.ts` | Remove auto-unassign |
-| `src/main/ipc/prs.ts` | `prs:create` assignee; assign gating |
-| `src/main/ipc/mcp.ts` | Dialog-driven launch/copy handlers; stamp on launch |
-| `src/main/fix-launcher.ts` | New — pure per-terminal command construction |
-| `src/main/integrations.ts` | Install second skill (create PR) |
-| `src/mcp-server/tools.ts` | `create_pr`; `complete_assignment` change |
-| `src/renderer/src/screens/OpenPR.tsx` | Assignee picker |
-| `src/renderer/src/screens/PR.tsx` | Start fix button, dialog wiring, dropdown to change-only |
-| `src/renderer/src/screens/Settings.tsx` | Terminal picker |
-| `src/renderer/src/components/ReviewPanel.tsx` | Post-submit dialog trigger |
-| `src/renderer/src/components/SubmitFixDialog.tsx` | New — Start / Copy prompt / Later |
-| `src/preload/index.ts` | New/changed IPC surface |
+| File                                              | Change                                                                 |
+| ------------------------------------------------- | ---------------------------------------------------------------------- |
+| `src/shared/review-store/schema.ts`               | `fix_started_at` on `ReviewFileSchema`                                 |
+| `src/shared/review-store/index.ts`                | `startFix`, `clearFixStarted`, migration on read, assignee at creation |
+| `src/shared/pr-workflow.ts`                       | Phase from `fix_started_at`; `allowsAssignee` + copy                   |
+| `src/main/services/pr-service.ts`                 | Remove auto-unassign                                                   |
+| `src/main/ipc/prs.ts`                             | `prs:create` assignee; assign gating                                   |
+| `src/main/ipc/mcp.ts`                             | Dialog-driven launch/copy handlers; stamp on launch                    |
+| `src/main/fix-launcher.ts`                        | New — pure per-terminal command construction                           |
+| `src/main/integrations.ts`                        | Install second skill (create PR)                                       |
+| `src/mcp-server/tools.ts`                         | `create_pr`; `complete_assignment` change                              |
+| `src/renderer/src/screens/OpenPR.tsx`             | Assignee picker                                                        |
+| `src/renderer/src/screens/PR.tsx`                 | Start fix button, dialog wiring, dropdown to change-only               |
+| `src/renderer/src/screens/Settings.tsx`           | Terminal picker                                                        |
+| `src/renderer/src/components/ReviewPanel.tsx`     | Post-submit dialog trigger                                             |
+| `src/renderer/src/components/SubmitFixDialog.tsx` | New — Start / Copy prompt / Later                                      |
+| `src/preload/index.ts`                            | New/changed IPC surface                                                |
 
 ## Out of scope
 

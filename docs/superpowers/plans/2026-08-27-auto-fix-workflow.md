@@ -25,12 +25,14 @@
 ### Task 1: `fix_started_at` on the review schema + store lifecycle methods
 
 **Files:**
+
 - Modify: `src/shared/review-store/schema.ts:30-39` (ReviewFileSchema)
 - Modify: `src/shared/review-store/index.ts` (new methods after `reopenReview`, ~line 211)
 - Test: `src/main/__tests__/review-store.test.ts`
 - Modify (fixtures): `src/main/__tests__/pr-workflow.test.ts:24-35`, `src/renderer/src/__tests__/ReviewPanel.test.tsx:21-30` and any other `ReviewFile` literal `npm run typecheck` flags
 
 **Interfaces:**
+
 - Produces: `ReviewFile.fix_started_at: string | null`; `ReviewStore.startFix(repoPath, prId, reviewId): ReviewFile` (idempotent — stamps only when null, so Nudge re-launches never re-stamp); `ReviewStore.clearFixStarted(repoPath, prId, reviewId): ReviewFile`
 
 - [ ] **Step 1: Write the failing tests**
@@ -136,10 +138,12 @@ git commit -m "feat: record fix session start on the review"
 ### Task 2: legacy migration — stamp `fix_started_at` for PRs mid-fix at upgrade
 
 **Files:**
+
 - Modify: `src/shared/review-store/index.ts:131-141` (`listReviews`)
 - Test: `src/main/__tests__/review-store.test.ts`
 
 **Interfaces:**
+
 - Consumes: `startFix`/`fix_started_at` from Task 1
 - Produces: `listReviews` self-migrates old data; all phase-derivation paths (`getActiveReview`, `getInProgressReview`, pr-service) flow through it
 
@@ -148,44 +152,47 @@ git commit -m "feat: record fix session start on the review"
 Append to the `fix lifecycle` describe block:
 
 ```ts
-  it('migrates a legacy mid-fix review: assignment after submit implies the fix started', () => {
-    const { prId, reviewId } = makeSubmittedReview()
-    // Legacy flow: the agent was assigned after the review was submitted
-    const pr = store.assignPR(repoPath, prId, 'claude')
+it('migrates a legacy mid-fix review: assignment after submit implies the fix started', () => {
+  const { prId, reviewId } = makeSubmittedReview()
+  // Legacy flow: the agent was assigned after the review was submitted
+  const pr = store.assignPR(repoPath, prId, 'claude')
 
-    const [migrated] = store.listReviews(repoPath, prId)
-    expect(migrated.fix_started_at).toBe(pr.assigned_at)
-    // Persisted, not just derived
-    expect(store.getReview(repoPath, prId, reviewId).fix_started_at).toBe(pr.assigned_at)
+  const [migrated] = store.listReviews(repoPath, prId)
+  expect(migrated.fix_started_at).toBe(pr.assigned_at)
+  // Persisted, not just derived
+  expect(store.getReview(repoPath, prId, reviewId).fix_started_at).toBe(pr.assigned_at)
+})
+
+it('does not migrate a new-model review: assignment at creation predates the submit', () => {
+  const pr = store.createPR(repoPath, {
+    title: 'T',
+    description: null,
+    base_branch: 'main',
+    compare_branch: 'f',
+    assignee: 'claude',
   })
-
-  it('does not migrate a new-model review: assignment at creation predates the submit', () => {
-    const pr = store.createPR(repoPath, {
-      title: 'T',
-      description: null,
-      base_branch: 'main',
-      compare_branch: 'f',
-      assignee: 'claude',
-    })
-    const review = store.createReview(repoPath, pr.id, {
-      base_sha: 'a'.repeat(40),
-      compare_sha: 'b'.repeat(40),
-    })
-    store.submitReview(repoPath, pr.id, review.id)
-
-    const [fresh] = store.listReviews(repoPath, pr.id)
-    expect(fresh.fix_started_at).toBeNull()
+  const review = store.createReview(repoPath, pr.id, {
+    base_sha: 'a'.repeat(40),
+    compare_sha: 'b'.repeat(40),
   })
+  store.submitReview(repoPath, pr.id, review.id)
+
+  const [fresh] = store.listReviews(repoPath, pr.id)
+  expect(fresh.fix_started_at).toBeNull()
+})
 ```
 
 Note: the second test needs Task 3's `assignee` on `CreatePRArgs`. Write it now with the field; it drives Task 3's store change. If executing strictly task-by-task, temporarily use `store.createPR(...)` without `assignee` followed by `store.assignPR` **before** `createReview`+`submitReview` — but since `assignPR` stamps `assigned_at` at call time (before the submit), that also exercises "assigned before submit → no migration". Prefer the simpler pre-Task-3 variant:
 
 ```ts
-    const pr0 = store.createPR(repoPath, {
-      title: 'T', description: null, base_branch: 'main', compare_branch: 'f',
-    })
-    const pr = store.assignPR(repoPath, pr0.id, 'claude')
-    // ...createReview + submitReview as above, then expect null
+const pr0 = store.createPR(repoPath, {
+  title: 'T',
+  description: null,
+  base_branch: 'main',
+  compare_branch: 'f',
+})
+const pr = store.assignPR(repoPath, pr0.id, 'claude')
+// ...createReview + submitReview as above, then expect null
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -261,6 +268,7 @@ git commit -m "feat: migrate legacy mid-fix reviews to fix_started_at"
 ### Task 3: assignee at creation (store, types, IPC, preload, mock api)
 
 **Files:**
+
 - Modify: `src/shared/review-store/index.ts:17-22` (`CreatePRArgs`), `:58-76` (`createPR`)
 - Modify: `src/shared/types.ts:54-60` (`CreatePrPayload`)
 - Modify: `src/main/ipc/prs.ts:48-63` (`prs:create`)
@@ -269,6 +277,7 @@ git commit -m "feat: migrate legacy mid-fix reviews to fix_started_at"
 - Test: `src/main/__tests__/review-store.test.ts`
 
 **Interfaces:**
+
 - Produces: `CreatePRArgs.assignee?: 'claude' | 'vscode' | null`; `CreatePrPayload.assignee: 'claude' | 'vscode' | null`; `createPR` sets `assignee` and `assigned_at = created_at` when non-null
 
 - [ ] **Step 1: Write the failing test**
@@ -276,26 +285,26 @@ git commit -m "feat: migrate legacy mid-fix reviews to fix_started_at"
 In the `PRs` describe block of `review-store.test.ts`:
 
 ```ts
-    it('createPR stores the assignee chosen at creation', () => {
-      const pr = store.createPR(repoPath, {
-        title: 'T',
-        description: null,
-        base_branch: 'main',
-        compare_branch: 'f',
-        assignee: 'claude',
-      })
-      expect(pr.assignee).toBe('claude')
-      expect(pr.assigned_at).toBe(pr.created_at)
+it('createPR stores the assignee chosen at creation', () => {
+  const pr = store.createPR(repoPath, {
+    title: 'T',
+    description: null,
+    base_branch: 'main',
+    compare_branch: 'f',
+    assignee: 'claude',
+  })
+  expect(pr.assignee).toBe('claude')
+  expect(pr.assigned_at).toBe(pr.created_at)
 
-      const unassigned = store.createPR(repoPath, {
-        title: 'U',
-        description: null,
-        base_branch: 'main',
-        compare_branch: 'g',
-      })
-      expect(unassigned.assignee).toBeNull()
-      expect(unassigned.assigned_at).toBeNull()
-    })
+  const unassigned = store.createPR(repoPath, {
+    title: 'U',
+    description: null,
+    base_branch: 'main',
+    compare_branch: 'g',
+  })
+  expect(unassigned.assignee).toBeNull()
+  expect(unassigned.assigned_at).toBeNull()
+})
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -315,13 +324,13 @@ Expected: FAIL — `pr.assignee` is `null` (and typecheck of the literal flags `
 `CreatePrPayload` in `src/shared/types.ts` gains `assignee: 'claude' | 'vscode' | null`. In `prs:create` (`src/main/ipc/prs.ts`), pass it through:
 
 ```ts
-      return store.createPR(payload.repoPath, {
-        title: payload.title,
-        description: payload.description,
-        base_branch: payload.baseBranch,
-        compare_branch: payload.compareBranch,
-        assignee: payload.assignee ?? null,
-      })
+return store.createPR(payload.repoPath, {
+  title: payload.title,
+  description: payload.description,
+  base_branch: payload.baseBranch,
+  compare_branch: payload.compareBranch,
+  assignee: payload.assignee ?? null,
+})
 ```
 
 Preload needs no code change (`createPr` is typed by `CreatePrPayload`). Update Task 2's second test to the `assignee: 'claude'` creation form now that it compiles.
@@ -343,11 +352,13 @@ git commit -m "feat: choose the PR assignee at creation"
 ### Task 4: workflow — phase from `fix_started_at`, assignment gating inverts
 
 **Files:**
+
 - Modify: `src/shared/pr-workflow.ts:39-54` (`derive`), `:68-71` (`allowsAssignee`), `:121-132` (`assignDeniedReason`)
 - Modify: `src/main/ipc/prs.ts:156-173` (`prs:assign` — gate all changes, not only non-null)
 - Test: `src/main/__tests__/pr-workflow.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ReviewFile.fix_started_at` (Task 1)
 - Produces: `in_fix` ⇔ submitted review with `fix_started_at`; `allowsAssignee()` true in every phase except `in_fix` and `closed`
 
@@ -356,10 +367,7 @@ git commit -m "feat: choose the PR assignee at creation"
 In `pr-workflow.test.ts`, extend `makeReview` so tests can express a started fix:
 
 ```ts
-function makeReview(
-  status: ReviewFile['status'],
-  overrides: Partial<ReviewFile> = {}
-): ReviewFile {
+function makeReview(status: ReviewFile['status'], overrides: Partial<ReviewFile> = {}): ReviewFile {
   return {
     version: 1,
     id: '00000000-0000-4000-8000-000000000000',
@@ -376,6 +384,7 @@ function makeReview(
 ```
 
 Update the two existing tests that derive `in_fix` from an assignee:
+
 - `allowsManualResolve` › "allows resolving while an agent is assigned (in_fix)": use `makePr({ assignee: 'claude' })` with `makeReview('submitted', { fix_started_at: new Date().toISOString() })`.
 - `allowsReopenReview` › "denies reopening while an agent is assigned": same review override.
 
@@ -428,8 +437,8 @@ Expected: FAIL — phase derives from `pr.assignee`
 In `derive`, replace the final line:
 
 ```ts
-    // review.status === 'submitted'
-    return review.fix_started_at !== null ? 'in_fix' : 'reviewed'
+// review.status === 'submitted'
+return review.fix_started_at !== null ? 'in_fix' : 'reviewed'
 ```
 
 Replace `allowsAssignee` (the assignee is a property of the PR now, changeable except while a fix runs):
@@ -458,11 +467,11 @@ Replace `assignDeniedReason`:
 In `prs:assign` (`src/main/ipc/prs.ts`), gate every change including unassign — replace the `if (assignee !== null) { ... }` block with:
 
 ```ts
-        const pr = store.getPR(repoPath, prId)
-        const workflow = new PRWorkflow(pr, store.getActiveReview(repoPath, prId))
-        if (!workflow.allowsAssignee()) {
-          return { error: PRWorkflow.assignDeniedReason(workflow.phase) }
-        }
+const pr = store.getPR(repoPath, prId)
+const workflow = new PRWorkflow(pr, store.getActiveReview(repoPath, prId))
+if (!workflow.allowsAssignee()) {
+  return { error: PRWorkflow.assignDeniedReason(workflow.phase) }
+}
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -482,10 +491,12 @@ git commit -m "feat: derive in_fix from fix_started_at and regate assignment"
 ### Task 5: pr-service — assignee survives review completion
 
 **Files:**
+
 - Modify: `src/main/services/pr-service.ts:119-133`
 - Test: `src/main/__tests__/pr-service.test.ts:150-166`
 
 **Interfaces:**
+
 - Consumes: phase rules from Task 4
 - Produces: completing a review leaves `pr.assignee` untouched
 
@@ -494,14 +505,14 @@ git commit -m "feat: derive in_fix from fix_started_at and regate assignment"
 In "auto-completes a submitted review once every comment is addressed" (`pr-service.test.ts:150`): after `store.submitReview(...)` replace `store.assignPR(repoPath, prId, 'claude')` with:
 
 ```ts
-      store.assignPR(repoPath, prId, 'claude')
-      store.startFix(repoPath, prId, reviewId)
+store.assignPR(repoPath, prId, 'claude')
+store.startFix(repoPath, prId, reviewId)
 ```
 
 and replace `expect(detail.pr.assignee).toBeNull()` with:
 
 ```ts
-      expect(detail.pr.assignee).toBe('claude')
+expect(detail.pr.assignee).toBe('claude')
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -514,8 +525,8 @@ Expected: FAIL — auto-unassign still nulls the assignee
 In `getPrDetail` (`pr-service.ts`), delete the auto-unassign block inside the auto-complete branch:
 
 ```ts
-        store.completeReview(repoPath, prId, activeReview.id)
-        activeReview = null
+store.completeReview(repoPath, prId, activeReview.id)
+activeReview = null
 ```
 
 (remove the `if (pr.assignee !== null) { pr = store.assignPR(repoPath, prId, null) }` lines and their comment). The assignee stays for the next review round.
@@ -537,10 +548,12 @@ git commit -m "feat: keep the assignee when a review round completes"
 ### Task 6: `fix-launcher` — pure command construction + terminal detection
 
 **Files:**
+
 - Create: `src/main/fix-launcher.ts`
 - Test: `src/main/__tests__/fix-launcher.test.ts`
 
 **Interfaces:**
+
 - Produces: `type TerminalApp = 'Terminal' | 'iTerm' | 'Ghostty'`; `buildFixPrompt(repoPath, prId, reviewId): string`; `buildLaunchCommand(terminal, repoPath, prompt): { command: string; args: string[] }`; `detectTerminals(): TerminalApp[]`
 
 - [ ] **Step 1: Write the failing tests**
@@ -639,14 +652,22 @@ export function buildLaunchCommand(
     return {
       command: 'osascript',
       args: [
-        '-e', 'on run argv',
-        '-e', '  tell application "iTerm"',
-        '-e', '    set newWindow to (create window with default profile)',
-        '-e', '    tell current session of newWindow',
-        '-e', '      write text ("cd " & quoted form of item 1 of argv & " && claude " & quoted form of item 2 of argv)',
-        '-e', '    end tell',
-        '-e', '  end tell',
-        '-e', 'end run',
+        '-e',
+        'on run argv',
+        '-e',
+        '  tell application "iTerm"',
+        '-e',
+        '    set newWindow to (create window with default profile)',
+        '-e',
+        '    tell current session of newWindow',
+        '-e',
+        '      write text ("cd " & quoted form of item 1 of argv & " && claude " & quoted form of item 2 of argv)',
+        '-e',
+        '    end tell',
+        '-e',
+        '  end tell',
+        '-e',
+        'end run',
         '--',
         repoPath,
         prompt,
@@ -656,9 +677,12 @@ export function buildLaunchCommand(
   return {
     command: 'osascript',
     args: [
-      '-e', 'on run argv',
-      '-e', '  tell application "Terminal" to do script ("cd " & quoted form of item 1 of argv & " && claude " & quoted form of item 2 of argv)',
-      '-e', 'end run',
+      '-e',
+      'on run argv',
+      '-e',
+      '  tell application "Terminal" to do script ("cd " & quoted form of item 1 of argv & " && claude " & quoted form of item 2 of argv)',
+      '-e',
+      'end run',
       '--',
       repoPath,
       prompt,
@@ -667,10 +691,7 @@ export function buildLaunchCommand(
 }
 
 const TERMINAL_APP_PATHS: Record<TerminalApp, string[]> = {
-  Terminal: [
-    '/System/Applications/Utilities/Terminal.app',
-    '/Applications/Utilities/Terminal.app',
-  ],
+  Terminal: ['/System/Applications/Utilities/Terminal.app', '/Applications/Utilities/Terminal.app'],
   iTerm: ['/Applications/iTerm.app'],
   Ghostty: ['/Applications/Ghostty.app'],
 }
@@ -678,9 +699,10 @@ const TERMINAL_APP_PATHS: Record<TerminalApp, string[]> = {
 export function detectTerminals(): TerminalApp[] {
   const home = os.homedir()
   return (Object.keys(TERMINAL_APP_PATHS) as TerminalApp[]).filter((app) =>
-    [...TERMINAL_APP_PATHS[app], `${home}/Applications/${app === 'iTerm' ? 'iTerm' : app}.app`].some(
-      (p) => fs.existsSync(p)
-    )
+    [
+      ...TERMINAL_APP_PATHS[app],
+      `${home}/Applications/${app === 'iTerm' ? 'iTerm' : app}.app`,
+    ].some((p) => fs.existsSync(p))
   )
 }
 ```
@@ -712,11 +734,13 @@ git commit -m "feat: pure fix-launch command construction with terminal detectio
 ### Task 7: IPC — terminal-aware launch, copy-prompt, terminals list
 
 **Files:**
+
 - Modify: `src/main/ipc/mcp.ts`
 - Modify: `src/preload/index.ts` (new `copyFixPrompt`, `listTerminals`)
 - Modify: `src/renderer/src/__tests__/helpers/mock-api.ts` (stub the two new calls)
 
 **Interfaces:**
+
 - Consumes: `buildFixPrompt`/`buildLaunchCommand`/`detectTerminals`/`TerminalApp` (Task 6), `ReviewStore.startFix` (Task 1), `getSetting` (`src/main/db/settings.ts`)
 - Produces: `fix:launch` reads the `terminal_app` setting and stamps `startFix`; new channels `fix:copy-prompt` → `{ prompt?: string; error?: string }` and `terminals:list` → `TerminalApp[]`; preload `copyFixPrompt(repoPath, prId, reviewId)`, `listTerminals()`
 
@@ -740,62 +764,62 @@ const store = new ReviewStore()
 Replace the whole `fix:launch` handler and add the two new ones inside `registerMcpHandlers`:
 
 ```ts
-  ipcMain.handle('terminals:list', () => detectTerminals())
+ipcMain.handle('terminals:list', () => detectTerminals())
 
-  // "Fix with" launcher — starts the assignee's fix session. Stamping
-  // fix_started_at here (idempotently) keeps the phase and the action in
-  // one place, so they can never disagree; a nudge re-launches without
-  // moving the original start time.
-  ipcMain.handle(
-    'fix:launch',
-    (_e, tool: string, repoPath: string, prId: string, reviewId: string) => {
-      try {
-        assertKnownRepo(db, repoPath)
-      } catch (err) {
-        return { error: (err as Error).message }
-      }
-
-      const prompt = buildFixPrompt(repoPath, prId, reviewId)
-
-      if (tool === 'claude') {
-        const saved = getSetting(db, 'terminal_app') as TerminalApp | null
-        const terminal: TerminalApp = saved ?? 'Terminal'
-        const { command, args } = buildLaunchCommand(terminal, repoPath, prompt)
-        spawn(command, args, { detached: true, stdio: 'ignore' }).unref()
-        store.startFix(repoPath, prId, reviewId)
-        return {}
-      }
-
-      if (tool === 'vscode') {
-        clipboard.writeText(prompt)
-        // Delay opening VS Code so the user has time to read the dialog
-        setTimeout(() => {
-          spawn('open', ['-a', 'Visual Studio Code', repoPath], {
-            detached: true,
-            stdio: 'ignore',
-          }).unref()
-        }, 5_000)
-        store.startFix(repoPath, prId, reviewId)
-        return { prompt }
-      }
-
-      return { error: `Unknown tool: ${tool}` }
-    }
-  )
-
-  // Manual path: the user drives the same fix from their own agent session,
-  // so copying counts as starting.
-  ipcMain.handle('fix:copy-prompt', (_e, repoPath: string, prId: string, reviewId: string) => {
+// "Fix with" launcher — starts the assignee's fix session. Stamping
+// fix_started_at here (idempotently) keeps the phase and the action in
+// one place, so they can never disagree; a nudge re-launches without
+// moving the original start time.
+ipcMain.handle(
+  'fix:launch',
+  (_e, tool: string, repoPath: string, prId: string, reviewId: string) => {
     try {
       assertKnownRepo(db, repoPath)
     } catch (err) {
       return { error: (err as Error).message }
     }
+
     const prompt = buildFixPrompt(repoPath, prId, reviewId)
-    clipboard.writeText(prompt)
-    store.startFix(repoPath, prId, reviewId)
-    return { prompt }
-  })
+
+    if (tool === 'claude') {
+      const saved = getSetting(db, 'terminal_app') as TerminalApp | null
+      const terminal: TerminalApp = saved ?? 'Terminal'
+      const { command, args } = buildLaunchCommand(terminal, repoPath, prompt)
+      spawn(command, args, { detached: true, stdio: 'ignore' }).unref()
+      store.startFix(repoPath, prId, reviewId)
+      return {}
+    }
+
+    if (tool === 'vscode') {
+      clipboard.writeText(prompt)
+      // Delay opening VS Code so the user has time to read the dialog
+      setTimeout(() => {
+        spawn('open', ['-a', 'Visual Studio Code', repoPath], {
+          detached: true,
+          stdio: 'ignore',
+        }).unref()
+      }, 5_000)
+      store.startFix(repoPath, prId, reviewId)
+      return { prompt }
+    }
+
+    return { error: `Unknown tool: ${tool}` }
+  }
+)
+
+// Manual path: the user drives the same fix from their own agent session,
+// so copying counts as starting.
+ipcMain.handle('fix:copy-prompt', (_e, repoPath: string, prId: string, reviewId: string) => {
+  try {
+    assertKnownRepo(db, repoPath)
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+  const prompt = buildFixPrompt(repoPath, prId, reviewId)
+  clipboard.writeText(prompt)
+  store.startFix(repoPath, prId, reviewId)
+  return { prompt }
+})
 ```
 
 - [ ] **Step 2: Preload + mock api**
@@ -837,6 +861,7 @@ git commit -m "feat: terminal-aware fix launch with copy-prompt path"
 ### Task 8: `SubmitFixDialog` + ReviewPanel post-submit trigger
 
 **Files:**
+
 - Create: `src/renderer/src/components/SubmitFixDialog.tsx`
 - Create: `src/renderer/src/components/SubmitFixDialog.module.css`
 - Modify: `src/renderer/src/components/ReviewPanel.tsx`
@@ -844,6 +869,7 @@ git commit -m "feat: terminal-aware fix launch with copy-prompt path"
 - Test: `src/renderer/src/__tests__/ReviewPanel.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `window.api.launchFix`, `window.api.copyFixPrompt`, `window.api.getPr`
 - Produces: `SubmitFixDialog` props `{ assignee: 'claude' | 'vscode'; commentCount: number; repoPath: string; prId: string; reviewId: string; onClose: () => void; onUpdated: (detail: PrDetail | null) => void }` — Task 9 reuses it for the Start-fix button
 
@@ -1097,36 +1123,38 @@ import SubmitFixDialog from './SubmitFixDialog'
 ```
 
 ```tsx
-  const [fixDialog, setFixDialog] = useState<{
-    assignee: 'claude' | 'vscode'
-    reviewId: string
-    count: number
-  } | null>(null)
+const [fixDialog, setFixDialog] = useState<{
+  assignee: 'claude' | 'vscode'
+  reviewId: string
+  count: number
+} | null>(null)
 ```
 
 In `handleSubmit`, after `onSubmitted(updated as PrDetail | null)`:
 
 ```tsx
-    const submittedPr = (updated as PrDetail | null)?.pr
-    if (submittedPr?.assignee) {
-      setFixDialog({ assignee: submittedPr.assignee, reviewId: review.id, count: nonStale.length })
-    }
+const submittedPr = (updated as PrDetail | null)?.pr
+if (submittedPr?.assignee) {
+  setFixDialog({ assignee: submittedPr.assignee, reviewId: review.id, count: nonStale.length })
+}
 ```
 
 At the end of the panel JSX (before the closing `</div>`):
 
 ```tsx
-      {fixDialog && (
-        <SubmitFixDialog
-          assignee={fixDialog.assignee}
-          commentCount={fixDialog.count}
-          repoPath={repoPath}
-          prId={prId}
-          reviewId={fixDialog.reviewId}
-          onClose={() => setFixDialog(null)}
-          onUpdated={onSubmitted}
-        />
-      )}
+{
+  fixDialog && (
+    <SubmitFixDialog
+      assignee={fixDialog.assignee}
+      commentCount={fixDialog.count}
+      repoPath={repoPath}
+      prId={prId}
+      reviewId={fixDialog.reviewId}
+      onClose={() => setFixDialog(null)}
+      onUpdated={onSubmitted}
+    />
+  )
+}
 ```
 
 - [ ] **Step 5: Add the ReviewPanel behaviour test**
@@ -1215,9 +1243,11 @@ git commit -m "feat: post-submit dialog starts the assignee's fix"
 ### Task 9: PR screen — Start fix button, change-only assignee dropdown
 
 **Files:**
+
 - Modify: `src/renderer/src/screens/PR.tsx` (`handleAssign` ~316, `handleNudge` ~337, sidebar `Assignees` section ~888-981, `vscodePrompt` modal ~1232-1253 and its state at 170)
 
 **Interfaces:**
+
 - Consumes: `SubmitFixDialog` (Task 8), new `allowsAssignee` semantics (Task 4)
 
 - [ ] **Step 1: Rework the handlers**
@@ -1225,30 +1255,29 @@ git commit -m "feat: post-submit dialog starts the assignee's fix"
 `handleAssign` no longer launches (assigning is choosing the colleague, not starting work) and surfaces gate errors:
 
 ```tsx
-  async function handleAssign(tool: 'claude' | 'vscode'): Promise<void> {
-    if (!repo || !prId) return
-    setAssigneeDropdownOpen(false)
-    const result = await window.api.assignPr(repo.path, prId, tool)
-    if ('error' in result) {
-      showNotification(result.error)
-      return
-    }
-    const updated = await window.api.getPr(repo.path, prId)
-    if (isPrDetail(updated)) setPrDetail(updated)
+async function handleAssign(tool: 'claude' | 'vscode'): Promise<void> {
+  if (!repo || !prId) return
+  setAssigneeDropdownOpen(false)
+  const result = await window.api.assignPr(repo.path, prId, tool)
+  if ('error' in result) {
+    showNotification(result.error)
+    return
   }
+  const updated = await window.api.getPr(repo.path, prId)
+  if (isPrDetail(updated)) setPrDetail(updated)
+}
 ```
 
 `handleNudge`: replace `if (result?.prompt) setVscodePrompt(result.prompt)` with
 
 ```tsx
-    if (result?.prompt)
-      showNotification('Prompt copied — paste it into the agent to nudge the fix.')
+if (result?.prompt) showNotification('Prompt copied — paste it into the agent to nudge the fix.')
 ```
 
 Delete the `vscodePrompt` state (line ~170) and the `{vscodePrompt && (...)}` modal JSX (~1232-1253); the dialog's copied state replaced it. Add dialog state:
 
 ```tsx
-  const [showFixDialog, setShowFixDialog] = useState(false)
+const [showFixDialog, setShowFixDialog] = useState(false)
 ```
 
 and import `SubmitFixDialog`.
@@ -1263,14 +1292,13 @@ The section must stay visible during `in_fix` (it hosts the chip and Nudge), so 
 - Add the Start fix button after the dropdown wrap, shown when a submitted review awaits its assigned agent:
 
 ```tsx
-                {workflow.phase === 'reviewed' && pr.assignee && prDetail.review && (
-                  <button
-                    className={`primary ${styles.startFixBtn}`}
-                    onClick={() => setShowFixDialog(true)}
-                  >
-                    Start fix
-                  </button>
-                )}
+{
+  workflow.phase === 'reviewed' && pr.assignee && prDetail.review && (
+    <button className={`primary ${styles.startFixBtn}`} onClick={() => setShowFixDialog(true)}>
+      Start fix
+    </button>
+  )
+}
 ```
 
 Add `.startFixBtn { width: 100%; margin-top: 8px; }` to `PR.module.css` (delete the now-unused `.vscodePopup*` rules while there).
@@ -1278,17 +1306,19 @@ Add `.startFixBtn { width: 100%; margin-top: 8px; }` to `PR.module.css` (delete 
 Render the dialog near the notification JSX at the bottom:
 
 ```tsx
-      {showFixDialog && pr.assignee && prDetail.review && (
-        <SubmitFixDialog
-          assignee={pr.assignee}
-          commentCount={activeComments.filter((c) => c.status === 'open').length}
-          repoPath={repo?.path ?? ''}
-          prId={pr.id}
-          reviewId={prDetail.review.id}
-          onClose={() => setShowFixDialog(false)}
-          onUpdated={(detail) => detail && setPrDetail(detail)}
-        />
-      )}
+{
+  showFixDialog && pr.assignee && prDetail.review && (
+    <SubmitFixDialog
+      assignee={pr.assignee}
+      commentCount={activeComments.filter((c) => c.status === 'open').length}
+      repoPath={repo?.path ?? ''}
+      prId={pr.id}
+      reviewId={prDetail.review.id}
+      onClose={() => setShowFixDialog(false)}
+      onUpdated={(detail) => detail && setPrDetail(detail)}
+    />
+  )
+}
 ```
 
 - [ ] **Step 3: Typecheck and run renderer suites**
@@ -1308,10 +1338,12 @@ git commit -m "feat: start-fix button and change-only assignee dropdown on the P
 ### Task 10: New PR form — assignee picker
 
 **Files:**
+
 - Modify: `src/renderer/src/screens/OpenPR.tsx`
 - Test: `src/renderer/src/__tests__/OpenPR.test.tsx` (new)
 
 **Interfaces:**
+
 - Consumes: `CreatePrPayload.assignee` (Task 3)
 
 - [ ] **Step 1: Write the failing test**
@@ -1357,9 +1389,7 @@ describe('OpenPR assignee picker', () => {
     renderOpenPr()
     const picker = await screen.findByRole('combobox', { name: /assignee/i })
     expect(picker).toHaveValue('me')
-    expect(
-      screen.getByRole('option', { name: /claude code/i })
-    ).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /claude code/i })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: /copilot/i })).toBeInTheDocument()
   })
 
@@ -1381,9 +1411,7 @@ describe('OpenPR assignee picker', () => {
     await userEvent.type(screen.getByLabelText(/title/i), 'My PR')
     await userEvent.click(screen.getByRole('button', { name: /create pull request/i }))
     await waitFor(() =>
-      expect(api.createPr).toHaveBeenCalledWith(
-        expect.objectContaining({ assignee: 'claude' })
-      )
+      expect(api.createPr).toHaveBeenCalledWith(expect.objectContaining({ assignee: 'claude' }))
     )
     expect(localStorage.getItem('newPrAssignee')).toBe('claude')
   })
@@ -1411,34 +1439,32 @@ function savedAssignee(): AssigneeChoice {
 ```
 
 ```tsx
-  const [assignee, setAssignee] = useState<AssigneeChoice>(savedAssignee)
+const [assignee, setAssignee] = useState<AssigneeChoice>(savedAssignee)
 ```
 
 Field between the branch row and the title (inside the form, after the divider):
 
 ```tsx
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="pr-assignee">
-                Assignee
-              </label>
-              <select
-                id="pr-assignee"
-                aria-label="Assignee"
-                value={assignee}
-                onChange={(e) => {
-                  const choice = e.target.value as AssigneeChoice
-                  setAssignee(choice)
-                  localStorage.setItem('newPrAssignee', choice)
-                }}
-              >
-                <option value="me">Me — fix manually</option>
-                <option value="claude">Claude Code</option>
-                <option value="vscode">Copilot (VS Code)</option>
-              </select>
-              <span className={styles.fieldHint}>
-                Who fixes review comments on this pull request
-              </span>
-            </div>
+<div className={styles.field}>
+  <label className={styles.label} htmlFor="pr-assignee">
+    Assignee
+  </label>
+  <select
+    id="pr-assignee"
+    aria-label="Assignee"
+    value={assignee}
+    onChange={(e) => {
+      const choice = e.target.value as AssigneeChoice
+      setAssignee(choice)
+      localStorage.setItem('newPrAssignee', choice)
+    }}
+  >
+    <option value="me">Me — fix manually</option>
+    <option value="claude">Claude Code</option>
+    <option value="vscode">Copilot (VS Code)</option>
+  </select>
+  <span className={styles.fieldHint}>Who fixes review comments on this pull request</span>
+</div>
 ```
 
 In the `createPr` payload, replace the Task 3 placeholder `assignee: null` with:
@@ -1466,10 +1492,12 @@ git commit -m "feat: assignee picker on the new PR form"
 ### Task 11: Settings — terminal picker
 
 **Files:**
+
 - Modify: `src/renderer/src/screens/Settings.tsx` (new section after "MCP Integrations", ~line 195)
 - Test: `src/renderer/src/__tests__/Settings.test.tsx` (create if absent; if a Settings test already exists, extend it)
 
 **Interfaces:**
+
 - Consumes: `window.api.listTerminals`, `window.api.getSetting`/`setSetting` (Task 7); the `terminal_app` key read by `fix:launch`
 
 - [ ] **Step 1: Write the failing test**
@@ -1498,9 +1526,7 @@ describe('Settings terminal picker', () => {
     const picker = await screen.findByRole('combobox', { name: /terminal/i })
     expect(picker).toHaveValue('Terminal')
     await userEvent.selectOptions(picker, 'Ghostty')
-    await waitFor(() =>
-      expect(api.setSetting).toHaveBeenCalledWith('terminal_app', 'Ghostty')
-    )
+    await waitFor(() => expect(api.setSetting).toHaveBeenCalledWith('terminal_app', 'Ghostty'))
   })
 })
 ```
@@ -1517,41 +1543,41 @@ Expected: FAIL — no terminal combobox
 In `Settings.tsx` add state + effect:
 
 ```tsx
-  const [terminals, setTerminals] = useState<string[]>([])
-  const [terminalApp, setTerminalApp] = useState('Terminal')
+const [terminals, setTerminals] = useState<string[]>([])
+const [terminalApp, setTerminalApp] = useState('Terminal')
 
-  useEffect(() => {
-    window.api.listTerminals().then(setTerminals)
-    window.api.getSetting('terminal_app').then((v) => {
-      if (v) setTerminalApp(v)
-    })
-  }, [])
+useEffect(() => {
+  window.api.listTerminals().then(setTerminals)
+  window.api.getSetting('terminal_app').then((v) => {
+    if (v) setTerminalApp(v)
+  })
+}, [])
 ```
 
 New section (styled like the neighbouring `<h2>` sections):
 
 ```tsx
-        <section className={styles.section}>
-          <h2>Terminal</h2>
-          <p className={styles.sectionText}>
-            Where “Start fix” opens Claude Code. Ghostty always opens a new window — use “Copy
-            prompt” to reuse an existing session.
-          </p>
-          <select
-            aria-label="Terminal"
-            value={terminalApp}
-            onChange={async (e) => {
-              setTerminalApp(e.target.value)
-              await window.api.setSetting('terminal_app', e.target.value)
-            }}
-          >
-            {terminals.map((t) => (
-              <option key={t} value={t}>
-                {t === 'Terminal' ? 'Terminal.app' : t === 'iTerm' ? 'iTerm2' : t}
-              </option>
-            ))}
-          </select>
-        </section>
+<section className={styles.section}>
+  <h2>Terminal</h2>
+  <p className={styles.sectionText}>
+    Where “Start fix” opens Claude Code. Ghostty always opens a new window — use “Copy prompt” to
+    reuse an existing session.
+  </p>
+  <select
+    aria-label="Terminal"
+    value={terminalApp}
+    onChange={async (e) => {
+      setTerminalApp(e.target.value)
+      await window.api.setSetting('terminal_app', e.target.value)
+    }}
+  >
+    {terminals.map((t) => (
+      <option key={t} value={t}>
+        {t === 'Terminal' ? 'Terminal.app' : t === 'iTerm' ? 'iTerm2' : t}
+      </option>
+    ))}
+  </select>
+</section>
 ```
 
 (Match the actual section/class markup used by the surrounding sections in `Settings.tsx` — copy the wrapper structure of the "Scan directory" section.)
@@ -1573,10 +1599,12 @@ git commit -m "feat: terminal picker in settings"
 ### Task 12: MCP `create_pr` tool
 
 **Files:**
+
 - Modify: `src/mcp-server/tools.ts`
 - Test: `src/main/__tests__/mcp-tools.test.ts` (new — the `main` vitest project includes only `src/main/__tests__`, and `tools.ts` imports cleanly under node)
 
 **Interfaces:**
+
 - Consumes: `ReviewStore.createPR` with `assignee` (Task 3); `SocketClient.emit` (`pr:updated`)
 - Produces: MCP tool `create_pr(repo_path, title, description?, base_branch, compare_branch)` returning `{ success, pr_id, assignee }`
 
@@ -1686,7 +1714,12 @@ describe('create_pr', () => {
       expect.objectContaining({ event: 'pr:updated', repoPath, prId: data.pr_id })
     )
 
-    const listed = await callTool('get_pr', { repo_path: repoPath, pr_id: data.pr_id as string }, socket, 'Claude Code')
+    const listed = await callTool(
+      'get_pr',
+      { repo_path: repoPath, pr_id: data.pr_id as string },
+      socket,
+      'Claude Code'
+    )
     const pr = (resultJson(listed) as { pr: { assignee: string; assigned_at: string } }).pr
     expect(pr.assignee).toBe('claude')
     expect(pr.assigned_at).not.toBeNull()
@@ -1806,10 +1839,12 @@ git commit -m "feat: create_pr MCP tool assigns the creating agent"
 ### Task 13: `complete_assignment` ends the fix session
 
 **Files:**
+
 - Modify: `src/mcp-server/tools.ts:106-118` (description), `:223-230` (case)
 - Test: `src/main/__tests__/mcp-tools.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ReviewStore.clearFixStarted` (Task 1)
 - Produces: `complete_assignment` clears `fix_started_at` on the submitted review and leaves `pr.assignee` untouched
 
@@ -1906,9 +1941,11 @@ git commit -m "feat: complete_assignment ends the fix session, keeps the assigne
 ### Task 14: skills — install the create-PR skill, update fix-skill wording
 
 **Files:**
+
 - Modify: `src/main/integrations.ts`
 
 **Interfaces:**
+
 - Consumes: the `create_pr` tool contract (Task 12)
 - Produces: `~/.claude/skills/local-code-review-create-pr/SKILL.md` (and the copilot ecosystem equivalent) installed by `installIntegrations`; `skillInstalled` true only when both skills are present, so upgraders are prompted to reinstall
 
@@ -2027,6 +2064,7 @@ Expected: every command exits 0. Fix anything that fails before proceeding (lint
 - [ ] **Step 2: Manual end-to-end pass (app run)**
 
 Launch with `npm run dev` and walk the flow:
+
 1. Create a PR with assignee **Claude Code** → sidebar shows the assignee immediately.
 2. Add a comment, submit the review → dialog appears with Start fix / Copy prompt / Later.
 3. **Later** → phase stays "Review submitted"; sidebar shows **Start fix**.
