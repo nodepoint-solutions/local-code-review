@@ -175,10 +175,14 @@ describe('ReviewPanel return to editing', () => {
   })
 
   it('does not offer it while an agent is assigned', () => {
+    const inFixReview: ReviewFile = {
+      ...submittedReview,
+      fix_started_at: '2026-04-08T12:30:00Z',
+    }
     renderPanel({
       pr: { ...pr, assignee: 'claude', assigned_at: '2026-04-08T12:30:00Z' },
-      review: submittedReview,
-      reviews: [submittedReview],
+      review: inFixReview,
+      reviews: [inFixReview],
       comments,
     })
     expect(screen.queryByRole('button', { name: /return to editing/i })).not.toBeInTheDocument()
