@@ -55,26 +55,13 @@ export function registerMcpHandlers(
 
       const prompt = buildFixPrompt(repoPath, prId, reviewId)
 
-      if (tool === 'claude') {
+      if (tool === 'claude' || tool === 'copilot') {
         const saved = getSetting(db, 'terminal_app') as TerminalApp | null
         const terminal: TerminalApp = saved ?? 'Terminal'
-        const { command, args } = buildLaunchCommand(terminal, repoPath, prompt)
+        const { command, args } = buildLaunchCommand(tool, terminal, repoPath, prompt)
         spawn(command, args, { detached: true, stdio: 'ignore' }).unref()
         store.startFix(repoPath, prId, reviewId)
         return {}
-      }
-
-      if (tool === 'vscode') {
-        clipboard.writeText(prompt)
-        // Delay opening VS Code so the user has time to read the dialog
-        setTimeout(() => {
-          spawn('open', ['-a', 'Visual Studio Code', repoPath], {
-            detached: true,
-            stdio: 'ignore',
-          }).unref()
-        }, 5_000)
-        store.startFix(repoPath, prId, reviewId)
-        return { prompt }
       }
 
       return { error: `Unknown tool: ${tool}` }

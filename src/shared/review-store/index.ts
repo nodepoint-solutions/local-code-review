@@ -20,7 +20,7 @@ export interface CreatePRArgs {
   description: string | null
   base_branch: string
   compare_branch: string
-  assignee?: 'claude' | 'vscode' | null
+  assignee?: 'claude' | 'copilot' | null
 }
 
 export interface CreateReviewArgs {
@@ -116,7 +116,7 @@ export class ReviewStore {
     return updated
   }
 
-  assignPR(repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null): PRFile {
+  assignPR(repoPath: string, prId: string, assignee: 'claude' | 'copilot' | null): PRFile {
     const pr = readPR(repoPath, prId)
     const updated: PRFile = {
       ...pr,

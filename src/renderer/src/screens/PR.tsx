@@ -136,12 +136,12 @@ function getAssigneeStatus(
 }
 
 const ASSIGNEE_OPTIONS: {
-  key: 'claude' | 'vscode'
+  key: 'claude' | 'copilot'
   label: string
   ids: IntegrationStatus['id'][]
 }[] = [
   { key: 'claude', label: 'Claude Code', ids: ['claudeCode', 'claudeDesktop'] },
-  { key: 'vscode', label: 'Copilot (VS Code)', ids: ['vscode', 'cursor', 'windsurf'] },
+  { key: 'copilot', label: 'Copilot CLI', ids: ['copilotCli'] },
 ]
 
 export default function PR(): JSX.Element {
@@ -314,7 +314,7 @@ export default function PR(): JSX.Element {
     setTimeout(() => setNotification(null), 5000)
   }
 
-  async function handleAssign(tool: 'claude' | 'vscode'): Promise<void> {
+  async function handleAssign(tool: 'claude' | 'copilot'): Promise<void> {
     if (!repo || !prId) return
     setAssigneeDropdownOpen(false)
     const result = await window.api.assignPr(repo.path, prId, tool)
@@ -341,14 +341,12 @@ export default function PR(): JSX.Element {
   async function handleNudge(): Promise<void> {
     if (!repo || !prId || !prDetail?.pr.assignee || !prDetail?.review) return
     const result = await window.api.launchFix(
-      prDetail.pr.assignee as 'claude' | 'vscode',
+      prDetail.pr.assignee,
       repo.path,
       prId,
       prDetail.review.id
     )
-    if (result?.prompt)
-      showNotification('Prompt copied — paste it into the agent to nudge the fix.')
-    else if (result?.notification) showNotification(result.notification)
+    if (result?.error) showNotification(result.error)
   }
 
   useEffect(() => {
@@ -941,7 +939,7 @@ export default function PR(): JSX.Element {
                       onClick={() => setAssigneeDropdownOpen((o) => !o)}
                     >
                       <AgentIcon assignee={pr.assignee!} size={18} />
-                      <span>{pr.assignee === 'claude' ? 'Claude Code' : 'Copilot (VS Code)'}</span>
+                      <span>{pr.assignee === 'claude' ? 'Claude Code' : 'Copilot CLI'}</span>
                       {workflow.allowsAssignee() && (
                         <span className={styles.assigneeChipCaret}>▾</span>
                       )}

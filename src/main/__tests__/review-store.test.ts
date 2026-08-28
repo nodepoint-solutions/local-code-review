@@ -129,6 +129,22 @@ describe('ReviewStore', () => {
       expect(cleared.assigned_at).toBeNull()
     })
 
+    it('normalises the legacy vscode assignee to copilot on read', () => {
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      })
+      const indexPath = path.join(repoPath, '.reviews', pr.id, 'index.json')
+      const raw = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
+      raw.assignee = 'vscode'
+      raw.assigned_at = pr.created_at
+      fs.writeFileSync(indexPath, JSON.stringify(raw))
+
+      expect(store.getPR(repoPath, pr.id).assignee).toBe('copilot')
+    })
+
     it('mergePR sets status to closed and records merged_at', () => {
       const pr = store.createPR(repoPath, {
         title: 'T',

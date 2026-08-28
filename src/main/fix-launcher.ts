@@ -6,6 +6,15 @@ import fs from 'fs'
 import os from 'os'
 
 export type TerminalApp = 'Terminal' | 'iTerm' | 'Ghostty'
+export type FixTool = 'claude' | 'copilot'
+
+// Static argv for each agent CLI. claude opens an interactive session with
+// the prompt pre-submitted; copilot runs the prompt to completion via -p
+// (its programmatic mode — permission prompts still appear in the terminal).
+const AGENT_ARGV: Record<FixTool, string[]> = {
+  claude: ['claude'],
+  copilot: ['copilot', '-p'],
+}
 
 export function buildFixPrompt(repoPath: string, prId: string, reviewId: string): string {
   return `/local-code-review repo_path="${repoPath}" pr_id="${prId}" review_id="${reviewId}"`
@@ -14,19 +23,33 @@ export function buildFixPrompt(repoPath: string, prId: string, reviewId: string)
 /**
  * repoPath and prompt travel as separate argv items so no shell ever
  * tokenises them. osascript quoting uses AppleScript's `quoted form of`;
- * `open --args` passes argv to the app verbatim.
+ * `open --args` passes argv to the app verbatim. The agent argv itself is
+ * a static literal per tool, so it can sit inside the script text safely.
  */
 export function buildLaunchCommand(
+  tool: FixTool,
   terminal: TerminalApp,
   repoPath: string,
   prompt: string
 ): { command: string; args: string[] } {
+  const agentCall = AGENT_ARGV[tool].join(' ')
   if (terminal === 'Ghostty') {
     // Ghostty has no scripting interface for existing sessions — a new
-    // window with -e running claude directly is the supported invocation.
+    // window with -e running the agent directly is the supported invocation.
+    // copilot -p exits when the run completes, so that window waits for a
+    // keypress before closing and the user can read the output.
     return {
       command: 'open',
-      args: ['-na', 'Ghostty', '--args', `--working-directory=${repoPath}`, '-e', 'claude', prompt],
+      args: [
+        '-na',
+        'Ghostty',
+        '--args',
+        `--working-directory=${repoPath}`,
+        ...(tool === 'copilot' ? ['--wait-after-command=true'] : []),
+        '-e',
+        ...AGENT_ARGV[tool],
+        prompt,
+      ],
     }
   }
   if (terminal === 'iTerm') {
@@ -42,7 +65,7 @@ export function buildLaunchCommand(
         '-e',
         '    tell current session of newWindow',
         '-e',
-        '      write text ("cd " & quoted form of item 1 of argv & " && claude " & quoted form of item 2 of argv)',
+        `      write text ("cd " & quoted form of item 1 of argv & " && ${agentCall} " & quoted form of item 2 of argv)`,
         '-e',
         '    end tell',
         '-e',
@@ -61,7 +84,7 @@ export function buildLaunchCommand(
       '-e',
       'on run argv',
       '-e',
-      '  tell application "Terminal" to do script ("cd " & quoted form of item 1 of argv & " && claude " & quoted form of item 2 of argv)',
+      `  tell application "Terminal" to do script ("cd " & quoted form of item 1 of argv & " && ${agentCall} " & quoted form of item 2 of argv)`,
       '-e',
       'end run',
       '--',

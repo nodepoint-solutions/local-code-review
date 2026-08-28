@@ -37,7 +37,15 @@ describe('OpenPR assignee picker', () => {
     const picker = await screen.findByRole('combobox', { name: /assignee/i })
     expect(picker).toHaveValue('me')
     expect(screen.getByRole('option', { name: /claude code/i })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /copilot/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /copilot cli/i })).toHaveValue('copilot')
+  })
+
+  it('treats a remembered legacy vscode choice as copilot', async () => {
+    localStorage.setItem('newPrAssignee', 'vscode')
+    installMockApi({ listBranches: vi.fn().mockResolvedValue(['main', 'feature/x']) })
+    renderOpenPr()
+    const picker = await screen.findByRole('combobox', { name: /assignee/i })
+    expect(picker).toHaveValue('copilot')
   })
 
   it('sends the chosen assignee with the create payload and remembers it', async () => {

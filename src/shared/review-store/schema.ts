@@ -47,7 +47,15 @@ export const PRFileSchema = z.object({
   base_branch: z.string(),
   compare_branch: z.string(),
   status: z.enum(['open', 'closed']),
-  assignee: z.enum(['claude', 'vscode']).nullable().optional().default(null),
+  // 'vscode' is the stored form of the retired clipboard-based Copilot
+  // integration; parsing maps it to 'copilot' so existing PR files keep
+  // their assignee under the CLI-based integration.
+  assignee: z
+    .enum(['claude', 'vscode', 'copilot'])
+    .transform((value): 'claude' | 'copilot' => (value === 'vscode' ? 'copilot' : value))
+    .nullable()
+    .optional()
+    .default(null),
   assigned_at: z.string().nullable().optional().default(null),
   merged_at: z.string().nullable().optional().default(null),
   created_at: z.string(),

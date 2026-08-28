@@ -3,7 +3,7 @@ import type { PrDetail } from '../../../shared/types'
 import styles from './SubmitFixDialog.module.css'
 
 interface Props {
-  assignee: 'claude' | 'vscode'
+  assignee: 'claude' | 'copilot'
   commentCount: number
   repoPath: string
   prId: string
@@ -12,7 +12,7 @@ interface Props {
   onUpdated: (detail: PrDetail | null) => void
 }
 
-const AGENT_LABEL = { claude: 'Claude Code', vscode: 'Copilot (VS Code)' } as const
+const AGENT_LABEL = { claude: 'Claude Code', copilot: 'Copilot CLI' } as const
 
 export default function SubmitFixDialog({
   assignee,
@@ -47,13 +47,6 @@ export default function SubmitFixDialog({
       return
     }
     await refresh()
-    if (result.prompt) {
-      // VS Code path: the launch copies the prompt for pasting into the
-      // agent tab, so the dialog stays open with the instructions.
-      setCopiedPrompt(result.prompt)
-      setStarting(false)
-      return
-    }
     onClose()
   }
 
@@ -91,9 +84,7 @@ export default function SubmitFixDialog({
           <>
             <h3 className={styles.title}>Prompt copied to clipboard</h3>
             <p className={styles.body}>
-              {assignee === 'vscode'
-                ? 'VS Code is opening. Switch to the Copilot agent tab and paste the prompt to start the fix.'
-                : 'Paste it into a Claude Code session running in this repository to start the fix.'}
+              Paste it into an agent session running in this repository to start the fix.
             </p>
             <div className={styles.actions}>
               <button onClick={() => navigator.clipboard.writeText(copiedPrompt)}>

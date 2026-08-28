@@ -92,7 +92,7 @@ export function AgentIcon({
   assignee,
   size = 16,
 }: {
-  assignee: 'claude' | 'vscode'
+  assignee: 'claude' | 'copilot'
   size?: number
 }): JSX.Element {
   return assignee === 'claude' ? <ClaudeAvatar size={size} /> : <CopilotAvatar size={size} />

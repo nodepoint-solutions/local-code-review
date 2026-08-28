@@ -65,7 +65,7 @@ export default function ReviewPanel({
   const [exportError, setExportError] = useState('')
   const [reopening, setReopening] = useState(false)
   const [fixDialog, setFixDialog] = useState<{
-    assignee: 'claude' | 'vscode'
+    assignee: 'claude' | 'copilot'
     reviewId: string
     count: number
   } | null>(null)

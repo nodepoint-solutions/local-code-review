@@ -20,10 +20,10 @@ function err(message: string) {
   return { content: [{ type: 'text' as const, text: `Error: ${message}` }], isError: true }
 }
 
-// Claude Code / Claude Desktop identities own PRs as 'claude'; every VS
-// Code-family tool maps to 'vscode' (the widest launcher currently modelled).
-function identityToAssignee(identity: string): 'claude' | 'vscode' {
-  return identity.startsWith('Claude') ? 'claude' : 'vscode'
+// Claude Code / Claude Desktop identities own PRs as 'claude'; every other
+// client (Copilot CLI, VS Code, Cursor, Windsurf) maps to 'copilot'.
+function identityToAssignee(identity: string): 'claude' | 'copilot' {
+  return identity.startsWith('Claude') ? 'claude' : 'copilot'
 }
 
 export function buildTools() {

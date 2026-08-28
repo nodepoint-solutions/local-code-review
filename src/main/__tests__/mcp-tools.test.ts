@@ -110,7 +110,7 @@ describe('create_pr', () => {
     expect(pr.assigned_at).not.toBeNull()
   })
 
-  it('maps VS Code-family identities to the vscode assignee', async () => {
+  it('maps non-Claude identities to the copilot assignee', async () => {
     fs.mkdirSync(path.join(repoPath, '.reviews'))
     const result = await callTool(
       'create_pr',
@@ -118,7 +118,7 @@ describe('create_pr', () => {
       socket,
       'Copilot'
     )
-    expect(resultJson(result).assignee).toBe('vscode')
+    expect(resultJson(result).assignee).toBe('copilot')
   })
 })
 

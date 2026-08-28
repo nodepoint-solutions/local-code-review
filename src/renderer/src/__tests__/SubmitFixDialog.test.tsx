@@ -29,7 +29,7 @@ const detail: PrDetail = {
 
 function renderDialog(
   overrides: Record<string, unknown> = {},
-  props: Partial<{ assignee: 'claude' | 'vscode'; commentCount: number }> = {}
+  props: Partial<{ assignee: 'claude' | 'copilot'; commentCount: number }> = {}
 ) {
   const api = installMockApi(overrides)
   const onClose = vi.fn()
@@ -99,24 +99,21 @@ describe('SubmitFixDialog', () => {
     expect(api.copyFixPrompt).not.toHaveBeenCalled()
   })
 
-  it('vscode start fix stays open and shows paste instructions when launch returns a prompt', async () => {
-    const { api, onClose } = renderDialog(
+  it('copilot start fix launches the CLI, refreshes the PR, and closes', async () => {
+    const { api, onClose, onUpdated } = renderDialog(
       {
-        launchFix: vi.fn().mockResolvedValue({ prompt: '/local-code-review vscode-prompt' }),
+        launchFix: vi.fn().mockResolvedValue({}),
         getPr: vi.fn().mockResolvedValue(detail),
       },
-      { assignee: 'vscode' }
+      { assignee: 'copilot' }
     )
+    expect(screen.getByText(/copilot cli is assigned to fix 3 comments/i)).toBeInTheDocument()
     await act(async () => {
       await userEvent.click(screen.getByRole('button', { name: /start fix/i }))
     })
-    expect(await screen.findByText(/prompt copied to clipboard/i)).toBeInTheDocument()
-    expect(
-      screen.getByText(/switch to the copilot agent tab and paste the prompt/i)
-    ).toBeInTheDocument()
-    expect(api.launchFix).toHaveBeenCalledWith('vscode', '/repo', 'pr1', 'rev1')
-    expect(onClose).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: /done/i })).toBeInTheDocument()
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
+    expect(api.launchFix).toHaveBeenCalledWith('copilot', '/repo', 'pr1', 'rev1')
+    expect(onUpdated).toHaveBeenCalledWith(detail)
   })
 
   it('leaves the parent PR detail untouched when the post-action refresh fails', async () => {

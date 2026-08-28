@@ -156,7 +156,7 @@ export function registerPrHandlers(db: Database.Database): void {
 
   ipcMain.handle(
     'prs:assign',
-    (_e, repoPath: string, prId: string, assignee: 'claude' | 'vscode' | null) => {
+    (_e, repoPath: string, prId: string, assignee: 'claude' | 'copilot' | null) => {
       try {
         assertKnownRepo(db, repoPath)
         const pr = store.getPR(repoPath, prId)

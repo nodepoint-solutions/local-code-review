@@ -151,6 +151,7 @@ Supported tools:
 
 - Claude Code
 - Claude Desktop
+- GitHub Copilot CLI
 - VS Code (GitHub Copilot)
 - Cursor
 - Windsurf

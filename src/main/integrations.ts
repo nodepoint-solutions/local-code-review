@@ -225,6 +225,13 @@ function resolveConfigs(): ToolConfig[] {
       keyPath: ['mcpServers'],
     },
     {
+      id: 'copilotCli',
+      name: 'Copilot CLI',
+      // The CLI keeps its config under ~/.copilot on every platform
+      configPath: path.join(home, '.copilot', 'mcp-config.json'),
+      keyPath: ['mcpServers'],
+    },
+    {
       id: 'vscode',
       name: 'VS Code',
       configPath:
@@ -278,6 +285,7 @@ function resolveNodePath(): string {
 const TOOL_IDENTITY: Record<IntegrationStatus['id'], string> = {
   claudeCode: 'Claude Code',
   claudeDesktop: 'Claude Desktop',
+  copilotCli: 'Copilot CLI',
   vscode: 'Copilot',
   cursor: 'Cursor',
   windsurf: 'Windsurf',
@@ -287,11 +295,17 @@ function buildEntry(id: IntegrationStatus['id']) {
   const command = resolveNodePath()
   const args = [mcpBinaryPath()]
   const env = { LOCAL_REVIEW_IDENTITY: TOOL_IDENTITY[id] }
+  if (id === 'copilotCli') {
+    // Copilot CLI entries use type "local" plus an explicit tools allowlist;
+    // "*" enables every tool the server exposes.
+    return { type: 'local', command, args, env, tools: ['*'] }
+  }
   return { type: 'stdio', command, args, env }
 }
 
 function toolEcosystem(id: IntegrationStatus['id']): 'claude' | 'copilot' {
-  // claudeCode and claudeDesktop → claude ecosystem; all VS Code-family tools → copilot
+  // claudeCode and claudeDesktop → claude ecosystem; Copilot CLI and all
+  // VS Code-family tools → copilot
   return id === 'claudeCode' || id === 'claudeDesktop' ? 'claude' : 'copilot'
 }
 

@@ -62,7 +62,7 @@ export interface CreatePrPayload {
   description: string | null
   baseBranch: string
   compareBranch: string
-  assignee: 'claude' | 'vscode' | null
+  assignee: 'claude' | 'copilot' | null
 }
 
 export interface AddCommentPayload {
@@ -111,7 +111,7 @@ export interface Commit {
 // ── MCP / Integrations ────────────────────────────────────────────────────────
 
 export interface IntegrationStatus {
-  id: 'claudeCode' | 'claudeDesktop' | 'vscode' | 'cursor' | 'windsurf'
+  id: 'claudeCode' | 'claudeDesktop' | 'copilotCli' | 'vscode' | 'cursor' | 'windsurf'
   name: string
   detected: boolean
   installed: boolean

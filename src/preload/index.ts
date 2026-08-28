@@ -129,11 +129,11 @@ const api = {
 
   // "Fix with" launcher
   launchFix: (
-    tool: 'claude' | 'vscode',
+    tool: 'claude' | 'copilot',
     repoPath: string,
     prId: string,
     reviewId: string
-  ): Promise<{ error?: string; notification?: string; prompt?: string }> =>
+  ): Promise<{ error?: string }> =>
     ipcRenderer.invoke('fix:launch', tool, repoPath, prId, reviewId),
 
   copyFixPrompt: (
@@ -148,7 +148,7 @@ const api = {
   assignPr: (
     repoPath: string,
     prId: string,
-    assignee: 'claude' | 'vscode' | null
+    assignee: 'claude' | 'copilot' | null
   ): Promise<import('../shared/types').PRFile | { error: string }> =>
     ipcRenderer.invoke('prs:assign', repoPath, prId, assignee),
 

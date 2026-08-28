@@ -103,7 +103,7 @@ export default function ReviewTimeline({
                   <div className={styles.entryHeader}>
                     <AgentIcon assignee={pr.assignee} size={16} />
                     <span className={styles.entryTitle}>
-                      Assigned to {pr.assignee === 'claude' ? 'Claude Code' : 'Copilot (VS Code)'}
+                      Assigned to {pr.assignee === 'claude' ? 'Claude Code' : 'Copilot CLI'}
                     </span>
                     <span className={styles.entryTime}>{formatRelativeTime(pr.assigned_at)}</span>
                   </div>

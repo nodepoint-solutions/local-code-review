@@ -4,13 +4,16 @@ import { useStore } from '../store'
 import NavBar from '../components/NavBar'
 import styles from './OpenPR.module.css'
 
-type AssigneeChoice = 'claude' | 'vscode' | 'me'
+type AssigneeChoice = 'claude' | 'copilot' | 'me'
 
 // Remembers the last assignee choice per machine, so repeat PR creation
-// doesn't require reselecting the same fixer every time
+// doesn't require reselecting the same fixer every time. 'vscode' is the
+// stored form of the retired clipboard-based Copilot option — read it as
+// 'copilot' so the remembered choice survives the change.
 function savedAssignee(): AssigneeChoice {
   const saved = localStorage.getItem('newPrAssignee')
-  return saved === 'claude' || saved === 'vscode' || saved === 'me' ? saved : 'me'
+  if (saved === 'vscode') return 'copilot'
+  return saved === 'claude' || saved === 'copilot' || saved === 'me' ? saved : 'me'
 }
 
 export default function OpenPR(): JSX.Element {
@@ -167,7 +170,7 @@ export default function OpenPR(): JSX.Element {
               >
                 <option value="me">Me — fix manually</option>
                 <option value="claude">Claude Code</option>
-                <option value="vscode">Copilot (VS Code)</option>
+                <option value="copilot">Copilot CLI</option>
               </select>
               <span className={styles.fieldHint}>
                 Who fixes review comments on this pull request
