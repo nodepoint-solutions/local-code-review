@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import App from '../App'
 import { useStore } from '../store'
 import { installMockApi } from './helpers/mock-api'
+import { UPDATE_AUTH_DECLINED } from '../../../shared/types'
 import type { RepositoryWithMeta } from '../../../shared/types'
 
 const repo: RepositoryWithMeta = {
@@ -41,5 +43,52 @@ describe('App deep links', () => {
 
     // The repo resolves once App's own repo load lands — no Home visit involved
     expect(await screen.findByText('Pull Requests')).toBeInTheDocument()
+  })
+})
+
+describe('update banner', () => {
+  beforeEach(() => {
+    useStore.setState({ repos: [], selectedRepo: null })
+  })
+
+  function mockWithUpdate(installResult: { success: boolean } | { error: string }): void {
+    installMockApi({
+      getSetting: vi
+        .fn()
+        .mockImplementation((key: string) =>
+          Promise.resolve(key === 'setup_complete' ? 'true' : null)
+        ),
+      // A version no real release will ever reach, so the fixture stays
+      // unmistakably fake as the app's own version climbs
+      checkUpdate: vi.fn().mockResolvedValue({
+        version: '99.0.0',
+        url: 'https://example.com/releases',
+        dmgUrl: 'https://example.com/update.dmg',
+      }),
+      installUpdate: vi.fn().mockResolvedValue(installResult),
+    })
+  }
+
+  it('returns to an installable banner when the authorization dialog is declined', async () => {
+    mockWithUpdate({ error: UPDATE_AUTH_DECLINED })
+    render(<App />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Install & Relaunch' }))
+
+    expect(await screen.findByText(/Update cancelled/)).toBeInTheDocument()
+    // Declining is not a failure: the retry path stays, the failure copy does not
+    expect(screen.getByRole('button', { name: 'Install & Relaunch' })).toBeInTheDocument()
+    expect(screen.queryByText(/Update failed/)).not.toBeInTheDocument()
+  })
+
+  it('still reports other install errors as failures', async () => {
+    mockWithUpdate({ error: 'Could not mount update DMG' })
+    render(<App />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Install & Relaunch' }))
+
+    expect(
+      await screen.findByText(/Update failed \(Could not mount update DMG\)/)
+    ).toBeInTheDocument()
   })
 })

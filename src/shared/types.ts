@@ -9,6 +9,11 @@ export type {
 export { PRWorkflow } from './pr-workflow'
 export type { WorkflowPhase } from './pr-workflow'
 
+// Install error the main process raises when the user dismisses the macOS
+// authorization dialog. The renderer matches on it to show a calm
+// cancellation banner rather than a failure.
+export const UPDATE_AUTH_DECLINED = 'administrator authorization declined'
+
 // ── Repository types (SQLite-backed) ─────────────────────────────────────────
 
 export interface Repository {

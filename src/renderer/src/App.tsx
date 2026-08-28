@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store'
+import { UPDATE_AUTH_DECLINED } from '../../shared/types'
 import Home from './screens/Home'
 import Repo from './screens/Repo'
 import OpenPR from './screens/OpenPR'
@@ -67,6 +68,7 @@ function UpdateBanner({
   const [installing, setInstalling] = useState(false)
   const [progress, setProgress] = useState<{ stage: string; pct: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [cancelled, setCancelled] = useState(false)
   const unsubRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
@@ -82,11 +84,19 @@ function UpdateBanner({
     if (!info.dmgUrl) return
     setInstalling(true)
     setError(null)
+    setCancelled(false)
     const result = await window.api.installUpdate(info.dmgUrl)
     if ('error' in result) {
       unsubRef.current?.()
       setInstalling(false)
-      setError(result.error)
+      setProgress(null)
+      if (result.error === UPDATE_AUTH_DECLINED) {
+        // Declining the authorization dialog is a choice, not a failure —
+        // fall back to the installable banner so a retry is one click away
+        setCancelled(true)
+      } else {
+        setError(result.error)
+      }
     }
     // On success the app quits — nothing more to do
   }
@@ -125,7 +135,8 @@ function UpdateBanner({
   return (
     <div style={bannerStyle}>
       <span>
-        Version <strong>{info.version}</strong> is available
+        {cancelled ? 'Update cancelled — version ' : 'Version '}
+        <strong>{info.version}</strong> is {cancelled ? 'still ' : ''}available
       </span>
       {info.dmgUrl && window.api.platform === 'darwin' && (
         <button onClick={handleInstall} style={installBtnStyle}>

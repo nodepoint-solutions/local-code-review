@@ -13,6 +13,7 @@ import {
   isPermissionDenied,
   isUserCancelled,
 } from './elevated-swap'
+import { UPDATE_AUTH_DECLINED } from '../shared/types'
 
 const execFileAsync = promisify(execFile)
 
@@ -140,7 +141,7 @@ export async function installUpdate(
       )
     } catch (elevatedErr) {
       if (isUserCancelled(elevatedErr as Error)) {
-        throw new Error('administrator authorization declined')
+        throw new Error(UPDATE_AUTH_DECLINED)
       }
       throw elevatedErr
     }
