@@ -7,6 +7,12 @@ import { execFile, spawn } from 'child_process'
 import { promisify } from 'util'
 import { app } from 'electron'
 import { buildAttachArgs, parseMountPoint } from './dmg-mount'
+import {
+  buildElevatedArgs,
+  buildSwapCommand,
+  isPermissionDenied,
+  isUserCancelled,
+} from './elevated-swap'
 
 const execFileAsync = promisify(execFile)
 
@@ -84,7 +90,9 @@ export async function installUpdate(
 ): Promise<void> {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lcr-update-'))
   const dmgPath = path.join(tmpDir, 'update.dmg')
-  const stagingApp = '/Applications/Local Code Review (update).app'
+  // Staged inside the temp dir rather than /Applications, so staging never
+  // needs write access to the install location — only the final swap does.
+  const stagingApp = path.join(tmpDir, 'Local Code Review (update).app')
 
   // 1. Download
   onProgress('Downloading…', 0)
@@ -104,7 +112,6 @@ export async function installUpdate(
 
     // 4. Copy to staging location (separate from the running app)
     onProgress('Installing…', 70)
-    if (fs.existsSync(stagingApp)) await execFileAsync('rm', ['-rf', stagingApp])
     await execFileAsync('cp', ['-R', srcApp, stagingApp])
 
     // 5. Strip quarantine from staging copy
@@ -114,25 +121,38 @@ export async function installUpdate(
     await execFileAsync('hdiutil', ['detach', mountPoint, '-quiet']).catch(() => {})
   }
 
-  // 6. Write relaunch script — runs after this process exits
-  onProgress('Restarting…', 95)
+  // 6. Swap the staged app into place while this process is still alive, so
+  // a failure (or a declined authorization) can surface in the UI. macOS
+  // keeps the running bundle's open files valid across the rename.
+  onProgress('Installing…', 90)
   const currentApp = findAppBundle()
+  const swapCommand = buildSwapCommand(currentApp, stagingApp)
+  try {
+    await execFileAsync('bash', ['-c', swapCommand])
+  } catch (err) {
+    if (!isPermissionDenied(err as Error)) throw err
+    // The install location needs admin rights — rerun the same swap behind
+    // the native macOS authorization dialog.
+    try {
+      await execFileAsync(
+        'osascript',
+        buildElevatedArgs(swapCommand, 'Local Code Review needs permission to install the update.')
+      )
+    } catch (elevatedErr) {
+      if (isUserCancelled(elevatedErr as Error)) {
+        throw new Error('administrator authorization declined')
+      }
+      throw elevatedErr
+    }
+  }
+
+  // 7. Write relaunch script — runs after this process exits
+  onProgress('Restarting…', 95)
   const scriptPath = path.join(tmpDir, 'relaunch.sh')
-  const script = [
-    '#!/bin/bash',
-    'sleep 2',
-    // Atomic swap: rename current to .bak, move staging into place
-    `mv "${currentApp}" "${currentApp}.bak" 2>/dev/null`,
-    `mv "${stagingApp}" "${currentApp}"`,
-    // Belt-and-suspenders quarantine strip on the final path
-    `xattr -cr "${currentApp}" 2>/dev/null`,
-    `open "${currentApp}"`,
-    `rm -rf "${currentApp}.bak" 2>/dev/null`,
-    `rm -f "$0"`,
-  ].join('\n')
+  const script = ['#!/bin/bash', 'sleep 2', `open "${currentApp}"`, `rm -f "$0"`].join('\n')
   fs.writeFileSync(scriptPath, script, { mode: 0o755 })
 
-  // 7. Detach script from this process and quit
+  // 8. Detach script from this process and quit
   const child = spawn('bash', [scriptPath], { detached: true, stdio: 'ignore' })
   child.unref()
 
