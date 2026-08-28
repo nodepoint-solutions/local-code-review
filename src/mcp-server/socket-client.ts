@@ -1,26 +1,22 @@
 // src/mcp-server/socket-client.ts
 import net from 'net'
+import type { SocketEvent } from '../shared/agent-bridge'
 
-export interface ReviewUpdatedEvent {
-  event: 'review:updated'
-  repoPath: string
-  prId: string
-  reviewId: string
-}
-
-export interface PrUpdatedEvent {
-  event: 'pr:updated'
-  repoPath: string
-  prId: string
-}
-
-export type SocketEvent = ReviewUpdatedEvent | PrUpdatedEvent
+export type {
+  SocketEvent,
+  ReviewUpdatedEvent,
+  PrUpdatedEvent,
+  RepoRegisteredEvent,
+} from '../shared/agent-bridge'
 
 export class SocketClient {
   private client: net.Socket | null = null
 
   connect(socketPath: string): void {
     this.client = net.createConnection(socketPath)
+    // The connection is a side channel: it must never be the reason this
+    // process stays alive once its MCP client has gone.
+    this.client.unref()
     this.client.on('error', () => {
       // Silently ignore — Electron may not be listening (e.g. unit test context)
     })

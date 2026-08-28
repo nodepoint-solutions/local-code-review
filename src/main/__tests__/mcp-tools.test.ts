@@ -5,7 +5,24 @@ import os from 'os'
 import path from 'path'
 import { execFileSync } from 'child_process'
 import { callTool, buildTools } from '../../mcp-server/tools'
+import { drainPendingRepos } from '../../shared/agent-bridge'
 import type { SocketClient } from '../../mcp-server/socket-client'
+
+// create_pr records every repository it touches for the app to pick up, so
+// every test in this file needs its own state directory to write into.
+let stateDir: string
+const originalStateDir = process.env['LOCAL_REVIEW_STATE_DIR']
+
+beforeEach(() => {
+  stateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-tools-state-'))
+  process.env['LOCAL_REVIEW_STATE_DIR'] = stateDir
+})
+
+afterEach(() => {
+  if (originalStateDir === undefined) delete process.env['LOCAL_REVIEW_STATE_DIR']
+  else process.env['LOCAL_REVIEW_STATE_DIR'] = originalStateDir
+  fs.rmSync(stateDir, { recursive: true, force: true })
+})
 
 function makeGitRepo(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-tools-test-'))
@@ -45,7 +62,7 @@ describe('create_pr', () => {
     ])
   })
 
-  it('refuses a repository the app does not manage yet', async () => {
+  it('registers a repository the app does not manage yet, instead of refusing', async () => {
     const result = await callTool(
       'create_pr',
       {
@@ -57,12 +74,33 @@ describe('create_pr', () => {
       socket,
       'Claude Code'
     )
-    expect(result.isError).toBe(true)
-    expect(result.content[0].text).toContain('not set up in Local Code Review')
+
+    expect(result.isError).toBeUndefined()
+    expect(fs.existsSync(path.join(repoPath, '.reviews'))).toBe(true)
+    // Live channel for a running app…
+    expect(socket.emit).toHaveBeenCalledWith({ event: 'repo:registered', repoPath })
+    // …and a durable one for an app that was closed
+    expect(drainPendingRepos()).toEqual([repoPath])
   })
 
-  it('refuses an unknown branch', async () => {
-    fs.mkdirSync(path.join(repoPath, '.reviews'))
+  it('refuses a path that is not a git repository', async () => {
+    const notARepo = fs.mkdtempSync(path.join(os.tmpdir(), 'not-a-repo-'))
+
+    const result = await callTool(
+      'create_pr',
+      { repo_path: notARepo, title: 'T', base_branch: 'main', compare_branch: 'feature/x' },
+      socket,
+      'Claude Code'
+    )
+
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('Not a git repository')
+    expect(fs.existsSync(path.join(notARepo, '.reviews'))).toBe(false)
+
+    fs.rmSync(notARepo, { recursive: true, force: true })
+  })
+
+  it('refuses an unknown branch without registering the repository', async () => {
     const result = await callTool(
       'create_pr',
       {
@@ -76,6 +114,7 @@ describe('create_pr', () => {
     )
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('Branch not found: no-such-branch')
+    expect(drainPendingRepos()).toEqual([])
   })
 
   it('creates the PR owned by the calling agent and notifies the app', async () => {

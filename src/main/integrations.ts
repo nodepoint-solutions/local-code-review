@@ -4,6 +4,7 @@ import path from 'path'
 import os from 'os'
 import { execSync } from 'child_process'
 import { app } from 'electron'
+import { stateDir } from '../shared/agent-bridge'
 import type { IntegrationStatus } from '../shared/types'
 
 const SKILL_CONTENT = `---
@@ -176,7 +177,8 @@ Language
 
 - Local branches only — never push, and never write to a remote. The
   read-only fetch in step 2 is the only remote operation
-- If create_pr reports the repository is not set up, tell the user to add it in the Local Code Review app and stop
+- The repository needs no setup. create_pr adds it to the app on the first
+  PR, so never ask the user to add it by hand
 `
 
 const SKILLS: { dirName: string; content: string }[] = [
@@ -274,12 +276,20 @@ function mcpBinaryPath(): string {
   return path.join(app.getAppPath(), 'dist', 'mcp-server', 'index.js')
 }
 
-function resolveNodePath(): string {
+/**
+ * Absolute path to node, so the config works whatever PATH the agent's tool
+ * runs with. A launch from Finder gets a minimal PATH and may find nothing,
+ * so a path resolved by an earlier launch is kept in preference to the bare
+ * name.
+ */
+function resolveNodePath(existing?: string): string {
   try {
-    return execSync('which node', { encoding: 'utf8' }).trim()
+    const resolved = execSync('which node', { encoding: 'utf8' }).trim()
+    if (resolved) return resolved
   } catch {
-    return 'node'
+    // Not on this PATH — fall through
   }
+  return existing ?? 'node'
 }
 
 const TOOL_IDENTITY: Record<IntegrationStatus['id'], string> = {
@@ -291,10 +301,16 @@ const TOOL_IDENTITY: Record<IntegrationStatus['id'], string> = {
   windsurf: 'Windsurf',
 }
 
-function buildEntry(id: IntegrationStatus['id']) {
-  const command = resolveNodePath()
+function buildEntry(id: IntegrationStatus['id'], existingCommand?: string) {
+  const command = resolveNodePath(existingCommand)
   const args = [mcpBinaryPath()]
-  const env = { LOCAL_REVIEW_IDENTITY: TOOL_IDENTITY[id] }
+  // The state directory tells the agent's own MCP server where to reach this
+  // app. It matches the built-in default in production, and follows a dev
+  // instance to its own directory.
+  const env = {
+    LOCAL_REVIEW_IDENTITY: TOOL_IDENTITY[id],
+    LOCAL_REVIEW_STATE_DIR: stateDir(),
+  }
   if (id === 'copilotCli') {
     // Copilot CLI entries use type "local" plus an explicit tools allowlist;
     // "*" enables every tool the server exposes.
@@ -323,14 +339,30 @@ function isSkillInstalled(ecosystem: 'claude' | 'copilot'): boolean {
   )
 }
 
+/** True once the user has connected this ecosystem, even partly. */
+function hasAnySkill(ecosystem: 'claude' | 'copilot'): boolean {
+  return SKILLS.some((skill) =>
+    fs.existsSync(path.join(skillDir(ecosystem, skill.dirName), 'SKILL.md'))
+  )
+}
+
 function installSkill(ecosystem: 'claude' | 'copilot'): void {
   for (const skill of SKILLS) {
     const dir = skillDir(ecosystem, skill.dirName)
-    fs.mkdirSync(dir, { recursive: true })
     const dest = path.join(dir, 'SKILL.md')
+    if (readFileOrNull(dest) === skill.content) continue
+    fs.mkdirSync(dir, { recursive: true })
     const tmp = dest + '.tmp'
     fs.writeFileSync(tmp, skill.content, 'utf8')
     fs.renameSync(tmp, dest)
+  }
+}
+
+function readFileOrNull(filePath: string): string | null {
+  try {
+    return fs.readFileSync(filePath, 'utf8')
+  } catch {
+    return null
   }
 }
 
@@ -377,27 +409,54 @@ export function getIntegrations(): IntegrationStatus[] {
   }))
 }
 
+/**
+ * Writes our entry into a tool's config, leaving the rest of the file as it
+ * was. An entry that already matches is left alone: these files hold the
+ * user's own settings and may be open in the tool itself, so a rewrite that
+ * changes nothing is a risk with no upside.
+ */
+function writeEntry(config: ToolConfig): void {
+  const obj = readJson(config.configPath)
+  const servers = deepGet(obj, config.keyPath)
+  const current = servers['local-code-review'] as { command?: string } | undefined
+  const entry = buildEntry(config.id, current?.command)
+  if (JSON.stringify(current) === JSON.stringify(entry)) return
+
+  servers['local-code-review'] = entry
+  deepSet(obj, config.keyPath, servers)
+
+  fs.mkdirSync(path.dirname(config.configPath), { recursive: true })
+  const tmp = config.configPath + '.tmp'
+  fs.writeFileSync(tmp, JSON.stringify(obj, null, 2), 'utf8')
+  fs.renameSync(tmp, config.configPath)
+}
+
 export function installIntegrations(): void {
   const ecosystemsInstalled = new Set<'claude' | 'copilot'>()
 
   for (const config of resolveConfigs()) {
-    const dir = path.dirname(config.configPath)
-    if (!fs.existsSync(dir)) continue
-
-    const obj = readJson(config.configPath)
-    const servers = deepGet(obj, config.keyPath)
-    servers['local-code-review'] = buildEntry(config.id)
-    deepSet(obj, config.keyPath, servers)
-
-    fs.mkdirSync(dir, { recursive: true })
-    const tmp = config.configPath + '.tmp'
-    fs.writeFileSync(tmp, JSON.stringify(obj, null, 2), 'utf8')
-    fs.renameSync(tmp, config.configPath)
-
+    if (!fs.existsSync(path.dirname(config.configPath))) continue
+    writeEntry(config)
     ecosystemsInstalled.add(toolEcosystem(config.id))
   }
 
   for (const ecosystem of ecosystemsInstalled) {
     installSkill(ecosystem)
+  }
+}
+
+/**
+ * Rewrites the server entries and skills that are already installed, so an
+ * updated app reaches agents on launch rather than on the next visit to
+ * Settings. Tools the user never connected stay untouched.
+ */
+export function refreshInstalledIntegrations(): void {
+  for (const config of resolveConfigs()) {
+    if (!fs.existsSync(config.configPath) || !isInstalled(config)) continue
+    writeEntry(config)
+  }
+
+  for (const ecosystem of ['claude', 'copilot'] as const) {
+    if (hasAnySkill(ecosystem)) installSkill(ecosystem)
   }
 }

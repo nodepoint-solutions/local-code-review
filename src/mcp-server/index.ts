@@ -8,13 +8,15 @@ import {
   GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
 import { SocketClient } from './socket-client'
+import { socketPath } from '../shared/agent-bridge'
 import { buildTools, callTool } from './tools'
 
-const SOCKET_PATH = process.env['LOCAL_REVIEW_SOCKET'] ?? ''
 const RESOLVED_BY = process.env['LOCAL_REVIEW_IDENTITY'] ?? 'mcp'
 
+// The socket location follows a fixed rule, so a server an agent started for
+// itself reaches a running app without being configured with its address.
 const socketClient = new SocketClient()
-if (SOCKET_PATH) socketClient.connect(SOCKET_PATH)
+socketClient.connect(socketPath())
 
 const server = new Server(
   { name: 'local-code-review', version: '1.0.0' },

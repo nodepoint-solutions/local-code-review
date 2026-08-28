@@ -1,11 +1,23 @@
 // src/mcp-server/tools.ts
-import fs from 'fs'
-import path from 'path'
 import { execFileSync } from 'child_process'
 import { ReviewStore, InvalidReviewFileError } from '../shared/review-store'
+import { recordPendingRepo } from '../shared/agent-bridge'
 import type { SocketClient } from './socket-client'
 
 const store = new ReviewStore()
+
+function isGitWorkTree(repoPath: string): boolean {
+  try {
+    const out = execFileSync('git', ['rev-parse', '--is-inside-work-tree'], {
+      cwd: repoPath,
+      stdio: 'pipe',
+      encoding: 'utf8',
+    })
+    return out.trim() === 'true'
+  } catch {
+    return false
+  }
+}
 
 function ok(data: unknown) {
   // `isError` is present (as undefined) so callers can read it off either
@@ -120,7 +132,7 @@ export function buildTools() {
     {
       name: 'create_pr',
       description:
-        'Create a pull request in Local Code Review for two local branches. The repository must already be managed by the app. You become the PR assignee: after each review round is submitted you will be asked to fix the comments.',
+        'Create a pull request in Local Code Review for two local branches. The repository is added to the app on the first PR, so it needs no setup. You become the PR assignee: after each review round is submitted you will be asked to fix the comments.',
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -254,11 +266,8 @@ export async function callTool(
       }
 
       case 'create_pr': {
-        // The .reviews/ directory is the file-side signal that the app
-        // manages this repository — the MCP server cannot reach the app's
-        // repo registry.
-        if (!fs.existsSync(path.join(args.repo_path, '.reviews'))) {
-          return err('This repository is not set up in Local Code Review. Add it in the app first.')
+        if (!isGitWorkTree(args.repo_path)) {
+          return err(`Not a git repository: ${args.repo_path}`)
         }
         for (const branch of [args.base_branch, args.compare_branch]) {
           try {
@@ -271,6 +280,10 @@ export async function callTool(
           }
         }
         const assignee = identityToAssignee(resolvedBy)
+        // Writing the PR creates the repository's .reviews directory, which
+        // is the file-side half of being managed. The event and the handoff
+        // file give the app the other half, so the PR shows up whether or not
+        // the app was running when the agent called.
         const pr = store.createPR(args.repo_path, {
           title: args.title,
           description: args.description ?? null,
@@ -278,6 +291,8 @@ export async function callTool(
           compare_branch: args.compare_branch,
           assignee,
         })
+        recordPendingRepo(args.repo_path)
+        socketClient.emit({ event: 'repo:registered', repoPath: args.repo_path })
         socketClient.emit({ event: 'pr:updated', repoPath: args.repo_path, prId: pr.id })
         return ok({ success: true, pr_id: pr.id, assignee })
       }

@@ -170,6 +170,13 @@ const api = {
     return () => ipcRenderer.removeListener('mcp:status-changed', listener)
   },
 
+  // Fires when the app adopts a repository an agent opened a PR in
+  onReposChanged: (callback: () => void): (() => void) => {
+    const listener = () => callback()
+    ipcRenderer.on('repos:changed', listener)
+    return () => ipcRenderer.removeListener('repos:changed', listener)
+  },
+
   onPrUpdated: (callback: (data: { repoPath: string; prId: string }) => void): (() => void) => {
     const listener = (_e: IpcRendererEvent, data: { repoPath: string; prId: string }) =>
       callback(data)

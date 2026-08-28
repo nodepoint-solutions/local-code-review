@@ -153,6 +153,11 @@ export default function Home(): JSX.Element {
         })
       }
     })
+
+    // A repository an agent opened its first PR in appears here straight away
+    return window.api.onReposChanged(() => {
+      window.api.listRepos().then(setRepos)
+    })
   }, [])
 
   const knownPaths = new Set(repos.map((r) => r.path))

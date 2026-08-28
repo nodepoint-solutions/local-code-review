@@ -1,16 +1,12 @@
 // src/main/mcp-manager.ts
 import { spawn, type ChildProcess } from 'child_process'
+import fs from 'fs'
 import net from 'net'
-import os from 'os'
 import path from 'path'
 import { app } from 'electron'
+import { socketPath, stateDir, type SocketEvent } from '../shared/agent-bridge'
 
-export interface McpEvent {
-  event: string
-  repoPath: string
-  prId: string
-  reviewId?: string
-}
+export type McpEvent = SocketEvent
 
 export class McpManager {
   private child: ChildProcess | null = null
@@ -21,12 +17,9 @@ export class McpManager {
   onStderr?: (line: string) => void
 
   constructor(private onEvent: (event: McpEvent) => void) {
-    const suffix =
-      process.platform === 'win32'
-        ? `local-review-${process.pid}`
-        : `local-review-${process.pid}.sock`
-    this.socketPath =
-      process.platform === 'win32' ? `\\\\.\\pipe\\${suffix}` : path.join(os.tmpdir(), suffix)
+    // A fixed address, so every MCP server an agent starts for itself can
+    // find the app — not just the one the app spawns.
+    this.socketPath = socketPath()
   }
 
   get running(): boolean {
@@ -105,6 +98,13 @@ export class McpManager {
         }
       })
     })
+
+    if (process.platform !== 'win32') {
+      fs.mkdirSync(stateDir(), { recursive: true })
+      // A single instance holds the lock for this state directory, so a
+      // socket file already here was left by an instance that crashed.
+      fs.rmSync(this.socketPath, { force: true })
+    }
 
     this.socketServer.listen(this.socketPath)
   }

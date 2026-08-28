@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import Home from '../screens/Home'
@@ -51,6 +51,29 @@ describe('Home repo removal', () => {
 
     expect(api.removeRepo).toHaveBeenCalledWith('/work/sample-repo')
     await waitFor(() => expect(screen.queryByText('sample-repo')).not.toBeInTheDocument())
+  })
+
+  it('shows a repository the app adopts while the screen is open', async () => {
+    let notify = (): void => {}
+    installMockApi({
+      listRepos: vi.fn().mockResolvedValueOnce([]).mockResolvedValue([repo]),
+      getSetting: vi
+        .fn()
+        .mockImplementation((key: string) =>
+          Promise.resolve(key === 'onboarding_complete' ? 'true' : null)
+        ),
+      onReposChanged: vi.fn().mockImplementation((callback: () => void) => {
+        notify = callback
+        return () => {}
+      }),
+    })
+
+    renderHome()
+    await waitFor(() => expect(screen.queryByText('sample-repo')).not.toBeInTheDocument())
+
+    await act(async () => notify())
+
+    expect(await screen.findByText('sample-repo')).toBeInTheDocument()
   })
 
   it('removes nothing when the confirmation is declined', async () => {

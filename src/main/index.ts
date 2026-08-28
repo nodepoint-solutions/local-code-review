@@ -7,6 +7,7 @@ globalScope.__non_webpack_require__ = require
 
 import { app, BrowserWindow, Tray, Menu, nativeImage, shell, ipcMain } from 'electron'
 import { join } from 'path'
+import { homedir } from 'os'
 import { writeFileSync, mkdirSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { getDb } from './db'
@@ -19,6 +20,9 @@ import { McpManager } from './mcp-manager'
 import { ReviewWatcher } from './review-watcher'
 import { getSetting, setSetting } from './db/settings'
 import { listRepos } from './db/repos'
+import { registerAgentRepo } from './services/repo-service'
+import { drainPendingRepos } from '../shared/agent-bridge'
+import { refreshInstalledIntegrations } from './integrations'
 import { checkForUpdate } from './update-check'
 
 let mainWindow: BrowserWindow | null = null
@@ -184,9 +188,12 @@ function createWindow(): BrowserWindow {
 }
 
 // In dev, use a separate userData dir so the dev instance doesn't conflict
-// with the installed production app's single-instance lock and database
+// with the installed production app's single-instance lock and database.
+// The agent bridge moves with it, so a dev instance owns its own socket and
+// repo handoff file and the installed app keeps serving real agents.
 if (is.dev) {
   app.setPath('userData', `${app.getPath('userData')}-dev`)
+  process.env['LOCAL_REVIEW_STATE_DIR'] = join(homedir(), '.local-code-review-dev')
 }
 
 // Enforce single instance — prevents second launch from spawning a ghost dock icon
@@ -209,16 +216,53 @@ app.whenReady().then(() => {
 
     const db = getDb()
 
+    // Bring the installed MCP config and skills up to this version's content,
+    // so agents pick up new behaviour on launch instead of waiting for a trip
+    // to Settings. Never fatal — a read-only config must not block start.
+    // Production only: a dev instance points at its own build and state
+    // directory, which the user's real tools must not be redirected to.
+    if (!is.dev) {
+      try {
+        refreshInstalledIntegrations()
+      } catch (err) {
+        writeErrorLog(err)
+      }
+    }
+
     reviewWatcher = new ReviewWatcher()
-    mcpManager = new McpManager((event) => {
-      if (event.event === 'pr:updated') {
-        mainWindow?.webContents.send('pr:updated', { repoPath: event.repoPath, prId: event.prId })
-      } else {
+
+    const watchRepo = (repoPath: string): void => {
+      reviewWatcher?.watch(repoPath, (changedRepoPath) => {
         mainWindow?.webContents.send('review:updated', {
-          repoPath: event.repoPath,
-          prId: event.prId,
-          reviewId: event.reviewId,
+          repoPath: changedRepoPath,
+          prId: null,
+          reviewId: null,
         })
+      })
+    }
+
+    /** Adds a repository an agent has just opened a PR in to the app. */
+    const adoptAgentRepo = (repoPath: string): void => {
+      if (!registerAgentRepo(db, repoPath)) return
+      watchRepo(repoPath)
+      mainWindow?.webContents.send('repos:changed')
+    }
+
+    mcpManager = new McpManager((event) => {
+      switch (event.event) {
+        case 'repo:registered':
+          adoptAgentRepo(event.repoPath)
+          break
+        case 'pr:updated':
+          mainWindow?.webContents.send('pr:updated', { repoPath: event.repoPath, prId: event.prId })
+          break
+        case 'review:updated':
+          mainWindow?.webContents.send('review:updated', {
+            repoPath: event.repoPath,
+            prId: event.prId,
+            reviewId: event.reviewId,
+          })
+          break
       }
     })
     mcpManager.onChildStart = () => {
@@ -235,27 +279,18 @@ app.whenReady().then(() => {
       mcpManager.start()
     }
 
+    // Repos an agent opened a PR in while the app was closed
+    for (const repoPath of drainPendingRepos()) {
+      registerAgentRepo(db, repoPath)
+    }
+
     for (const repo of listRepos(db)) {
-      reviewWatcher.watch(repo.path, (repoPath) => {
-        mainWindow?.webContents.send('review:updated', { repoPath, prId: null, reviewId: null })
-      })
+      watchRepo(repo.path)
     }
 
     // Watch every repo, including ones added later in the session, so review
     // changes written by agents surface in the UI without a restart
-    registerRepoHandlers(
-      db,
-      (repoPath) => {
-        reviewWatcher?.watch(repoPath, (changedRepoPath) => {
-          mainWindow?.webContents.send('review:updated', {
-            repoPath: changedRepoPath,
-            prId: null,
-            reviewId: null,
-          })
-        })
-      },
-      (repoPath) => reviewWatcher?.unwatch(repoPath)
-    )
+    registerRepoHandlers(db, watchRepo, (repoPath) => reviewWatcher?.unwatch(repoPath))
     registerPrHandlers(db)
     registerReviewHandlers(db)
     registerExportHandlers(db)

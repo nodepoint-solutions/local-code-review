@@ -2,7 +2,8 @@ import { ipcMain, dialog } from 'electron'
 import path from 'path'
 import type Database from 'better-sqlite3'
 import { insertRepo, listRepos, touchRepo, removeRepo, clearRemovedRepo } from '../db/repos'
-import { syncDiscoveredRepos } from '../services/repo-service'
+import { syncDiscoveredRepos, registerAgentRepo } from '../services/repo-service'
+import { drainPendingRepos } from '../../shared/agent-bridge'
 import { getSetting, setSetting } from '../db/settings'
 import { isGitRepo } from '../git/branches'
 import { scanForRepos, scanForReviewRepos } from '../git/scanner'
@@ -17,6 +18,11 @@ export function registerRepoHandlers(
 ): void {
   ipcMain.handle('repos:list', async () => {
     try {
+      // Repos an agent opened a PR in, whether or not the event reached us
+      for (const repoPath of drainPendingRepos()) {
+        if (registerAgentRepo(db, repoPath)) onRepoAdded?.(repoPath)
+      }
+
       const baseDir = getSetting(db, 'scan_base_dir')
       if (baseDir) {
         const discovered = await scanForReviewRepos(baseDir)

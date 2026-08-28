@@ -57,6 +57,7 @@ export function installMockApi(overrides: Record<string, unknown> = {}) {
     pushBranch: vi.fn().mockResolvedValue({}),
     // Events
     onMcpStatusChanged: vi.fn().mockReturnValue(unsubscribe),
+    onReposChanged: vi.fn().mockReturnValue(unsubscribe),
     onPrUpdated: vi.fn().mockReturnValue(unsubscribe),
     onReviewUpdated: vi.fn().mockReturnValue(unsubscribe),
     onUpdateProgress: vi.fn().mockReturnValue(unsubscribe),
