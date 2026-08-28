@@ -8,8 +8,8 @@ import type { IntegrationStatus } from '../shared/types'
 
 const SKILL_CONTENT = `---
 name: local-code-review
-description: Fix all open review comments for a Local Code Review PR assignment. Groups related comments, implements fixes with commits between groups, and marks issues resolved via the local-code-review MCP tools. Use when assigned to fix code review issues in Local Code Review.
-compatibility: Requires git and the local-code-review MCP server to be running.
+description: Resolve the open review comments on a Local Code Review pull request so the work becomes ready to merge or push. Use when assigned a fix session from Local Code Review (repo_path, pr_id, review_id), when the user asks to address review feedback on a local PR, or when a review round has left comments waiting on this branch. Not for review comments left on GitHub or GitLab.
+compatibility: Requires git and the local-code-review MCP server configured in the client.
 ---
 
 You are implementing fixes for a code review assignment via Local Code Review.
@@ -79,8 +79,8 @@ This signals to the reviewer that your fix session has ended.
 
 const CREATE_PR_SKILL_CONTENT = `---
 name: local-code-review-create-pr
-description: Open a pull request in Local Code Review for a local branch. Derives the title and description from the branch's commits and creates the PR via the local-code-review create_pr MCP tool. Use when asked to open or create a PR for local review.
-compatibility: Requires git and the local-code-review MCP server to be running.
+description: Open a pull request in Local Code Review so the developer can review a finished unit of work before it is pushed to a remote host such as GitHub or GitLab. Use when a feature, fix, or other work unit on a branch is complete, when the user asks to open or create a PR, or before completed work would be pushed or merged. Not for opening PRs on a remote host — GitHub and GitLab PRs are out of scope.
+compatibility: Requires git and the local-code-review MCP server configured in the client.
 ---
 
 You are opening a pull request in Local Code Review.
@@ -89,28 +89,93 @@ You are opening a pull request in Local Code Review.
 
 1. Identify the branches
    - Compare branch: the current branch unless one is named
-   - Base branch: main (or master), unless one is named
+   - Base branch: the repo's default branch (main, master, …) unless one is named
 
-2. Understand the change
+2. Check the base branch is in sync with origin
+   A PR diffed against a stale base does not match what a remote host
+   (GitHub, GitLab) would show for the same branches.
+   \`\`\`bash
+   git fetch origin
+   git rev-list --left-right --count <base>...origin/<base>
+   \`\`\`
+   The counts are commits only on <base> (ahead) and only on origin/<base>
+   (behind). Then:
+   - No origin remote, or origin has no <base>: skip this check
+   - 0 0 — in sync: continue
+   - Behind only: fast-forward <base> (\`git pull --ff-only\` when it is
+     checked out, \`git fetch origin <base>:<base>\` otherwise). With a
+     developer present, ask first; in an autonomous session, fast-forward
+     and record it in your report. Continue once it succeeds
+   - Ahead or diverged: stop and ask the developer to reconcile <base> with
+     origin/<base> first
+
+3. Understand the change
    \`\`\`bash
    git log --oneline <base>..<compare>
    git diff --stat <base>...<compare>
    \`\`\`
 
-3. Derive title and description
-   - Title: one imperative sentence summarising the change
-   - Description: what changed and why, from the commits — plain language, no filler
+4. Derive title and description
+   - Title: one imperative sentence summarising the change, in Simple
+     Technical English
+   - If the work belongs to a ticket, prefix the title with its identifier:
+     "<ticket>: <rest of title>". The ticket may be known from the current
+     session, or encoded in the compare branch name — e.g. "feature/123-my-branch"
+     or "PROJ-123-my-branch" gives ticket 123 or PROJ-123. Use the identifier
+     exactly as found; never invent one when no ticket is evident.
+   - Description: follow "Description format" below
+   - Every statement in the title and description must trace to the commits,
+     the diff, the ticket, or this session — never invented
+   - In an autonomous session, have a second agent review the drafted title
+     and description against "Description format" before creating the PR
 
-4. Create the PR
+5. Create the PR
    Call \`create_pr(repo_path, title, description, base_branch, compare_branch)\`.
    You become the PR's assignee: after each review is submitted you will be
    asked to fix the comments.
 
-5. Report the created PR id and title.
+6. Report the created PR id and title.
+
+## Description format
+
+The repo's own convention wins: if the repo has a PR template
+(e.g. .github/PULL_REQUEST_TEMPLATE.md) or an established style in past PRs,
+follow that. Otherwise:
+
+Structure
+- Open with a 1–2 line summary of what the change is and why it exists. No heading.
+- Then at most three sections, in this order, each only when it has content:
+  - \`# Architecture\` — prose on how the new parts fit together. Only for
+    non-trivial structure.
+  - \`# Key changes\` — bullet list of the concrete changes a reviewer should
+    focus on, with the reasoning a diff cannot show.
+  - \`# Out of scope\` — related work that is contained within the wider ticket
+    or planned work within this coding session, but deliberately left out of this PR.
+    Don't invent out of scope work, only do this if it was in the ticket originally
+    or discussed with the developer and intentionally deferred.
+- Those are the only headings. Use them exactly, in that order, and add none
+  of your own — no Testing, Verification, Deployment, Risks, Notes or Summary
+  sections. Anything worth saying belongs inside one of them, or is left out.
+
+Content
+- Describe the diff between the compare branch HEAD and the base branch HEAD.
+  Intra-branch churn — fixup commits, reverted experiments — is irrelevant.
+- The diff already shows what changed line by line; the description earns its
+  place by giving intent: why this change, why this shape.
+- Say what the change is; never define it by negation.
+- Explain non-obvious decisions and how their risks are mitigated.
+- Skip what the repo already establishes: a convention the codebase follows
+  everywhere needs no description.
+
+Language
+- Simple Technical English: short sentences, active voice, one idea per
+  sentence, concrete nouns.
+- No self-congratulation, LLM filler, overly mechanical terms, etc.
 
 ## Rules
 
-- Local branches only — never push, never touch remotes
+- Local branches only — never push, and never write to a remote. The
+  read-only fetch in step 2 is the only remote operation
 - If create_pr reports the repository is not set up, tell the user to add it in the Local Code Review app and stop
 `
 
