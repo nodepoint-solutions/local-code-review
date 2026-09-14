@@ -16,6 +16,17 @@ const AGENT_ARGV: Record<FixTool, string[]> = {
   copilot: ['copilot', '-p'],
 }
 
+// Shells that read `"$@"` as "the rest of my argv", which is what the Ghostty
+// wrapper script relies on. A shell outside this set gets the macOS default,
+// so its own syntax is never handed a script written for these.
+const POSIX_SHELLS = new Set(['zsh', 'bash', 'sh', 'dash', 'ksh'])
+const DEFAULT_SHELL = '/bin/zsh'
+
+export function resolveShell(shell: string | null | undefined): string {
+  if (!shell) return DEFAULT_SHELL
+  return POSIX_SHELLS.has(shell.split('/').pop() ?? '') ? shell : DEFAULT_SHELL
+}
+
 export function buildFixPrompt(repoPath: string, prId: string, reviewId: string): string {
   return `/local-code-review repo_path="${repoPath}" pr_id="${prId}" review_id="${reviewId}"`
 }
@@ -30,14 +41,23 @@ export function buildLaunchCommand(
   tool: FixTool,
   terminal: TerminalApp,
   repoPath: string,
-  prompt: string
+  prompt: string,
+  shell: string = resolveShell(os.userInfo().shell)
 ): { command: string; args: string[] } {
   const agentCall = AGENT_ARGV[tool].join(' ')
   if (terminal === 'Ghostty') {
-    // Ghostty has no scripting interface for existing sessions — a new
-    // window with -e running the agent directly is the supported invocation.
-    // copilot -p exits when the run completes, so that window waits for a
-    // keypress before closing and the user can read the output.
+    // Ghostty has no scripting interface for existing sessions, so this opens
+    // a new window. It runs its -e command through `login`, which execs that
+    // command with the PATH a GUI app inherits from launchd — /usr/bin:/bin
+    // and friends. Agent CLIs live on the PATH a shell rc file builds, so the
+    // agent is handed to an interactive login shell and resolved there. `-i`
+    // carries its own weight: a login shell reads .zprofile and .zlogin, while
+    // PATH is commonly extended in .zshrc, which only an interactive shell
+    // reads. `lcr-fix` becomes the wrapper shell's $0 — a name that shows up
+    // in `ps`, rather than an argument to the agent — and the agent and prompt
+    // follow as separate argv items, which `"$@"` passes through without word
+    // splitting. The wrapper shell exits when the agent does, so Ghostty sees
+    // the same child-exit event it would see from a direct command.
     return {
       command: 'open',
       args: [
@@ -47,6 +67,10 @@ export function buildLaunchCommand(
         `--working-directory=${repoPath}`,
         ...(tool === 'copilot' ? ['--wait-after-command=true'] : []),
         '-e',
+        shell,
+        '-ilc',
+        '"$@"',
+        'lcr-fix',
         ...AGENT_ARGV[tool],
         prompt,
       ],

@@ -97,7 +97,7 @@ Command construction extracted to a pure function (new `src/main/fix-launcher.ts
 
 - **Terminal.app** — osascript, as today.
 - **iTerm2** — osascript: `create window with default profile command …`.
-- **Ghostty** — `open -na Ghostty --args --working-directory=<repo> -e claude <prompt>`. `open --args` passes argv verbatim with no shell, so the prompt travels as one argument. Always a new window — Ghostty has no scripting interface for existing sessions, which is why Copy prompt sits beside Start in the dialog. **Verify the `-e` multi-word invocation manually before building further on it.**
+- **Ghostty** — `open -na Ghostty --args --working-directory=<repo> -e <shell> -ilc '"$@"' lcr-fix claude <prompt>`. `open --args` passes argv verbatim with no shell, so the prompt travels as one argument. Ghostty runs its `-e` command through `login`, which execs it with the PATH a GUI app inherits from launchd, so the agent is resolved by an interactive login shell — the one form that reads the rc file where PATH is extended. Always a new window — Ghostty has no scripting interface for existing sessions, which is why Copy prompt sits beside Start in the dialog.
 - **VS Code assignee** — unchanged: prompt to clipboard, `open -a "Visual Studio Code"`.
 
 ## `complete_assignment` MCP tool
