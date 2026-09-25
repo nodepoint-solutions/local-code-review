@@ -11,6 +11,10 @@ import Setup from './screens/Setup'
 import Demo from './screens/Demo'
 import './App.css'
 
+// Hourly keeps a long-running window current while staying far below the
+// GitHub API limit of 60 unauthenticated requests per hour
+export const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000
+
 interface UpdateInfo {
   version: string
   url: string
@@ -182,21 +186,37 @@ export default function App(): JSX.Element {
       .catch(() => {})
   }, [])
 
+  // A dismissed version stays hidden for the rest of the session, so that the
+  // hourly check only interrupts again when a newer release appears
+  const dismissedVersion = useRef<string | null>(null)
+
   useEffect(() => {
-    window.api
-      .checkUpdate()
-      .then((info) => {
-        if (info) setUpdate(info)
-      })
-      .catch(() => {})
+    function check(): void {
+      window.api
+        .checkUpdate()
+        .then((info) => {
+          if (info && info.version !== dismissedVersion.current) {
+            setUpdate((current) => (current?.version === info.version ? current : info))
+          }
+        })
+        .catch(() => {})
+    }
+    check()
+    const timer = setInterval(check, UPDATE_CHECK_INTERVAL_MS)
+    return () => clearInterval(timer)
   }, [])
+
+  function dismissUpdate(): void {
+    dismissedVersion.current = update?.version ?? null
+    setUpdate(null)
+  }
 
   if (setupComplete === null) return <></>
 
   return (
     <HashRouter>
       <ThemeApplier />
-      {update && <UpdateBanner info={update} onDismiss={() => setUpdate(null)} />}
+      {update && <UpdateBanner key={update.version} info={update} onDismiss={dismissUpdate} />}
       <Routes>
         <Route path="/setup" element={<Setup onComplete={() => setSetupComplete(true)} />} />
         {!setupComplete ? (
