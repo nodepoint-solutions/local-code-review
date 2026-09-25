@@ -28,12 +28,16 @@ export type WorkflowPhase =
 
 export class PRWorkflow {
   readonly phase: WorkflowPhase
+  // Kept apart from the phase, because a closed PR reports 'closed' while
+  // its review round is still open.
+  private readonly hasActiveReview: boolean
 
   // allReviews is optional — pass it when available so the workflow can detect
   // fix_complete when the active review is null (complete reviews filtered out
   // of the active slot by prs:get but still present in the history).
   constructor(pr: PRFile, review: ReviewFile | null, allReviews: ReviewFile[] = []) {
     this.phase = PRWorkflow.derive(pr, review, allReviews)
+    this.hasActiveReview = review !== null && review.status !== 'complete'
   }
 
   private static derive(
@@ -94,10 +98,11 @@ export class PRWorkflow {
   /**
    * The base branch can change only while no review is active. Each review
    * pins its own base SHA and anchors comments to that diff, so a new base
-   * waits until the round is complete.
+   * waits until the round is complete. This holds for a closed PR too, so a
+   * close cannot open a way around the gate.
    */
   allowsBaseChange(): boolean {
-    return this.phase !== 'reviewing' && this.phase !== 'reviewed' && this.phase !== 'in_fix'
+    return !this.hasActiveReview
   }
 
   /** Diff is read-only — no inline comment selection. */

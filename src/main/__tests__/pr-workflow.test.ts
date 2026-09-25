@@ -154,6 +154,11 @@ describe('PRWorkflow.allowsBaseChange', () => {
     expect(new PRWorkflow(makePr(), review).allowsBaseChange()).toBe(false)
   })
 
+  it('refuses a base change on a closed PR that still has a submitted review', () => {
+    const pr = makePr({ status: 'closed' })
+    expect(new PRWorkflow(pr, makeReview('submitted')).allowsBaseChange()).toBe(false)
+  })
+
   it('names the phase in the denial reason', () => {
     expect(PRWorkflow.baseChangeDeniedReason('in_fix')).toContain('in_fix')
   })

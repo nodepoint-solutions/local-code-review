@@ -34,6 +34,14 @@ function branchExists(repoPath: string, branch: string): boolean {
   }
 }
 
+// One open PR per compare branch, so an agent that runs create_pr again edits
+// its PR rather than splitting the review across two.
+function otherOpenPR(repoPath: string, compareBranch: string, exceptId?: string) {
+  return store
+    .listPRs(repoPath)
+    .find((pr) => pr.status === 'open' && pr.compare_branch === compareBranch && pr.id !== exceptId)
+}
+
 function ok(data: unknown) {
   // `isError` is present (as undefined) so callers can read it off either
   // branch of callTool's result without a type guard.
@@ -359,11 +367,7 @@ export async function callTool(
         for (const branch of [args.base_branch, args.compare_branch]) {
           if (!branchExists(args.repo_path, branch)) return err(`Branch not found: ${branch}`)
         }
-        // One open PR per compare branch, so an agent that runs create_pr
-        // again edits its PR rather than splitting the review across two.
-        const existing = store
-          .listPRs(args.repo_path)
-          .find((pr) => pr.status === 'open' && pr.compare_branch === args.compare_branch)
+        const existing = otherOpenPR(args.repo_path, args.compare_branch)
         if (existing) {
           return err(
             `An open PR already exists for ${args.compare_branch}: pr_id ${existing.id}. Call update_pr to change its title, description or base branch.`
@@ -440,6 +444,12 @@ export async function callTool(
         // would not last.
         if (pr.merged_at) {
           return err(`PR ${pr.id} is merged. A merged PR cannot be reopened.`)
+        }
+        const other = otherOpenPR(args.repo_path, pr.compare_branch, pr.id)
+        if (pr.status === 'closed' && other) {
+          return err(
+            `An open PR already exists for ${pr.compare_branch}: pr_id ${other.id}. Close it first, or call update_pr on it.`
+          )
         }
         if (pr.status === 'closed') {
           store.updatePRStatus(args.repo_path, args.pr_id, 'open')

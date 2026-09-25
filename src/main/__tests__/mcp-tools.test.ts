@@ -527,6 +527,20 @@ describe('update_pr', () => {
     expect(store.getPR(repoPath, prId).base_branch).toBe('main')
   })
 
+  it('refuses a base branch change after a close mid-fix', async () => {
+    const review = store.createReview(repoPath, prId, {
+      base_sha: 'a'.repeat(40),
+      compare_sha: 'b'.repeat(40),
+    })
+    store.submitReview(repoPath, prId, review.id)
+    store.startFix(repoPath, prId, review.id)
+    await callTool('close_pr', { repo_path: repoPath, pr_id: prId }, socket, 'Claude Code')
+
+    const result = await update({ base_branch: 'develop' })
+    expect(result.isError).toBe(true)
+    expect(store.getPR(repoPath, prId).base_branch).toBe('main')
+  })
+
   it('writes nothing when one field of several is invalid', async () => {
     const before = store.getPR(repoPath, prId)
     const result = await update({ title: 'Good title', base_branch: 'no-such-branch' })
@@ -603,6 +617,18 @@ describe('close_pr and reopen_pr', () => {
     expect(store.getReview(repoPath, prId, review.id)).toEqual(before)
     const data = resultJson(await call('get_pr'))
     expect(data.workflow_phase).toBe('in_fix')
+  })
+
+  it('refuses to reopen a PR when another open PR has the same compare branch', async () => {
+    await call('close_pr')
+    const other = await createPr(repoPath, socket, 'feature/x')
+    vi.mocked(socket.emit).mockClear()
+
+    const result = await call('reopen_pr')
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain(other)
+    expect(store.getPR(repoPath, prId).status).toBe('closed')
+    expect(socket.emit).not.toHaveBeenCalled()
   })
 
   it('refuses to reopen a merged PR', async () => {
