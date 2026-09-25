@@ -22,6 +22,10 @@ Provided when this skill is invoked:
 - \`pr_id\` — the PR identifier
 - \`review_id\` — the specific review to address
 
+If you have no \`pr_id\`, find the PR for the current branch with
+\`list_prs(repo_path, status: "open", compare_branch)\`. Each PR shows its
+\`workflow_phase\` and \`open_comments\`.
+
 ## Workflow
 
 ### Step 1 — Load open issues
@@ -76,6 +80,7 @@ This signals to the reviewer that your fix session has ended.
 - Never batch all fixes into one commit; each logical group gets its own commit
 - If you are unsure how to fix a comment, implement the most conservative interpretation and note the uncertainty in resolution_comment
 - Do not reopen closed comments or modify comments from previous reviews
+- Do not close the PR as part of a fix session. If you close one by mistake, call \`reopen_pr(repo_path, pr_id)\` to undo it
 `
 
 const CREATE_PR_SKILL_CONTENT = `---
@@ -130,12 +135,17 @@ You are opening a pull request in Local Code Review.
    - In an autonomous session, have a second agent review the drafted title
      and description against "Description format" before creating the PR
 
-5. Create the PR
-   Call \`create_pr(repo_path, title, description, base_branch, compare_branch)\`.
-   You become the PR's assignee: after each review is submitted you will be
-   asked to fix the comments.
+5. Create or update the PR
+   Call \`list_prs(repo_path, status: "open", compare_branch)\` first.
+   - A PR is listed: call \`update_pr(repo_path, pr_id, title, description)\`
+     so it describes the branch as it is now. Report its id; do not create
+     a second PR.
+   - No PR is listed: call
+     \`create_pr(repo_path, title, description, base_branch, compare_branch)\`.
+     You become the PR's assignee: after each review is submitted you will
+     be asked to fix the comments.
 
-6. Report the created PR id and title.
+6. Report the PR id and title, and whether it was created or updated.
 
 ## Description format
 

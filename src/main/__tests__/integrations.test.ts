@@ -151,6 +151,18 @@ describe('refreshInstalledIntegrations', () => {
     expect(fs.readFileSync(createPrSkill, 'utf8')).toContain('create_pr adds it to the app')
   })
 
+  it('tells agents to find a PR by branch, edit it, and undo a close', () => {
+    fs.mkdirSync(path.dirname(claudeSkill), { recursive: true })
+    fs.writeFileSync(claudeSkill, 'old skill text', 'utf8')
+
+    refreshInstalledIntegrations()
+
+    const createPrText = fs.readFileSync(createPrSkill, 'utf8')
+    expect(createPrText).toContain('list_prs(repo_path, status: "open", compare_branch)')
+    expect(createPrText).toContain('update_pr')
+    expect(fs.readFileSync(claudeSkill, 'utf8')).toContain('reopen_pr')
+  })
+
   it('installs no skills for an ecosystem the user never connected', () => {
     refreshInstalledIntegrations()
 

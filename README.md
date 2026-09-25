@@ -131,15 +131,19 @@ Once a review is submitted, you assign it to an agent. The agent resolves commen
 
 Local Code Review runs an MCP server that AI agents connect to directly. Once connected, the agent can:
 
-| Tool                  | Description                                               |
-| --------------------- | --------------------------------------------------------- |
-| `list_prs`            | List all PRs in a repository                              |
-| `get_pr`              | Get PR metadata and review summary                        |
-| `get_review`          | Get full review content with all comments                 |
-| `get_open_issues`     | Get only unresolved comments (defaults to latest review)  |
-| `mark_resolved`       | Mark a comment resolved with an explanation               |
-| `mark_wont_fix`       | Mark a comment as won't fix with a reason                 |
-| `complete_assignment` | Signal that all issues are addressed; unassigns the agent |
+| Tool                  | Description                                                        |
+| --------------------- | ------------------------------------------------------------------ |
+| `list_prs`            | List PRs with phase and open comments; filter by status and branch |
+| `get_pr`              | Get PR metadata, phase and review summary                          |
+| `create_pr`           | Open a PR for two local branches (one open PR per branch)          |
+| `update_pr`           | Change a PR's title, description or base branch                    |
+| `close_pr`            | Close a PR (reversible)                                            |
+| `reopen_pr`           | Reopen a closed PR that is not merged                              |
+| `get_review`          | Get full review content with all comments                          |
+| `get_open_issues`     | Get only unresolved comments (defaults to latest review)           |
+| `mark_resolved`       | Mark a comment resolved with an explanation                        |
+| `mark_wont_fix`       | Mark a comment as won't fix with a reason                          |
+| `complete_assignment` | Signal that all issues are addressed                               |
 
 The agent is expected to fix, commit, and mark issues — in that order, one logical group at a time. The skill installed alongside the MCP server enforces this workflow automatically.
 
