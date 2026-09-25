@@ -56,11 +56,11 @@ export class McpManager {
       ELECTRON_RUN_AS_NODE: '1',
       LOCAL_REVIEW_SOCKET: this.socketPath,
       LOCAL_REVIEW_IDENTITY: 'mcp',
+      LOCAL_REVIEW_DAEMON: '1',
     }
 
-    // stdio[0] is 'ignore' so process.stdin is null in the child — the MCP
-    // server detects this and skips the StdioServerTransport, running as a
-    // socket-only daemon.
+    // stdio[0] is 'ignore', so the child has no MCP client. LOCAL_REVIEW_DAEMON
+    // tells it to stay alive on its socket connection to the app instead.
     this.child = spawn(process.execPath, [this.mcpBinaryPath()], {
       env,
       stdio: ['ignore', 'ignore', 'pipe'],

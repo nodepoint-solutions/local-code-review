@@ -12,11 +12,13 @@ export type {
 export class SocketClient {
   private client: net.Socket | null = null
 
-  connect(socketPath: string): void {
+  connect(socketPath: string, { keepAlive = false }: { keepAlive?: boolean } = {}): void {
     this.client = net.createConnection(socketPath)
-    // The connection is a side channel: it must never be the reason this
-    // process stays alive once its MCP client has gone.
-    this.client.unref()
+    // For a server an agent started, the connection is a side channel: the
+    // stdio client decides its lifetime, so it exits once that client has
+    // gone. The daemon the app spawns has no stdio client, so the connection
+    // holds it open for as long as the app listens.
+    if (!keepAlive) this.client.unref()
     this.client.on('error', () => {
       // Silently ignore — Electron may not be listening (e.g. unit test context)
     })

@@ -16,7 +16,7 @@ const RESOLVED_BY = process.env['LOCAL_REVIEW_IDENTITY'] ?? 'mcp'
 // The socket location follows a fixed rule, so a server an agent started for
 // itself reaches a running app without being configured with its address.
 const socketClient = new SocketClient()
-socketClient.connect(socketPath())
+socketClient.connect(socketPath(), { keepAlive: process.env['LOCAL_REVIEW_DAEMON'] === '1' })
 
 const server = new Server(
   { name: 'local-code-review', version: '1.0.0' },
@@ -70,9 +70,8 @@ Rules:
 })
 
 // Connect the stdio transport so MCP clients (Claude Code, VS Code) can
-// call tools. When spawned as a background daemon by the Electron app,
-// stdin is not a real stream and the transport will throw — swallow that
-// and keep running for the socket connection only.
+// call tools. The daemon the app spawns reads an empty stdin, so its
+// transport ends at once and the socket connection keeps it running.
 try {
   const transport = new StdioServerTransport()
   server.connect(transport).catch(() => {})
