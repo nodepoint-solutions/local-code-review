@@ -6,6 +6,7 @@ import path from 'path'
 import { execFileSync } from 'child_process'
 import { callTool, buildTools } from '../../mcp-server/tools'
 import { drainPendingRepos } from '../../shared/agent-bridge'
+import { ReviewStore } from '../../shared/review-store'
 import type { SocketClient } from '../../mcp-server/socket-client'
 
 // create_pr records every repository it touches for the app to pick up, so
@@ -33,10 +34,31 @@ function makeGitRepo(): string {
     { cwd: dir }
   )
   execFileSync('git', ['branch', 'feature/x'], { cwd: dir })
+  execFileSync('git', ['branch', 'feature/y'], { cwd: dir })
+  execFileSync('git', ['branch', 'develop'], { cwd: dir })
   return dir
 }
 
 function resultJson(result: { content: { text: string }[] }): Record<string, unknown> {
+  return JSON.parse(result.content[0].text)
+}
+
+async function createPr(
+  repoPath: string,
+  socket: SocketClient,
+  compareBranch = 'feature/x'
+): Promise<string> {
+  const result = await callTool(
+    'create_pr',
+    { repo_path: repoPath, title: 'T', base_branch: 'main', compare_branch: compareBranch },
+    socket,
+    'Claude Code'
+  )
+  if (result.isError) throw new Error(result.content[0].text)
+  return resultJson(result).pr_id as string
+}
+
+function listJson(result: { content: { text: string }[] }): Array<Record<string, unknown>> {
   return JSON.parse(result.content[0].text)
 }
 
@@ -244,6 +266,108 @@ describe('complete_assignment', () => {
     // cannot re-stamp a file that now carries the key.
     expect(store.listReviews(repoPath, prId)[0].fix_started_at).toBeNull()
     expect(store.listReviews(repoPath, prId)[0].fix_started_at).toBeNull()
+    fs.rmSync(repoPath, { recursive: true, force: true })
+  })
+})
+
+describe('list_prs', () => {
+  let repoPath: string
+  let socket: SocketClient
+  let store: ReviewStore
+
+  beforeEach(() => {
+    repoPath = makeGitRepo()
+    socket = { emit: vi.fn() } as unknown as SocketClient
+    store = new ReviewStore()
+  })
+
+  afterEach(() => fs.rmSync(repoPath, { recursive: true, force: true }))
+
+  it('advertises the status and compare_branch filters', () => {
+    const tool = buildTools().find((t) => t.name === 'list_prs')!
+    expect(Object.keys(tool.inputSchema.properties)).toEqual(
+      expect.arrayContaining(['status', 'compare_branch'])
+    )
+    expect(tool.inputSchema.required).toEqual(['repo_path'])
+  })
+
+  it('returns an empty list for a repository with no PRs, with filters given', async () => {
+    const result = await callTool(
+      'list_prs',
+      { repo_path: repoPath, status: 'open', compare_branch: 'feature/x' },
+      socket,
+      'Claude Code'
+    )
+    expect(result.isError).toBeUndefined()
+    expect(listJson(result)).toEqual([])
+  })
+
+  it('gives each PR its workflow phase and open comment count', async () => {
+    const prId = await createPr(repoPath, socket)
+    const review = store.createReview(repoPath, prId, {
+      base_sha: 'a'.repeat(40),
+      compare_sha: 'b'.repeat(40),
+    })
+    store.addComment(repoPath, prId, review.id, {
+      file: 'a.ts',
+      start_line: 1,
+      end_line: 1,
+      side: 'right',
+      body: 'Fix this',
+      context: [],
+    })
+    store.submitReview(repoPath, prId, review.id)
+
+    const [pr] = listJson(await callTool('list_prs', { repo_path: repoPath }, socket, 'Claude Code'))
+    expect(pr.id).toBe(prId)
+    expect(pr.workflow_phase).toBe('reviewed')
+    expect(pr.open_comments).toBe(1)
+  })
+
+  it('filters by status and by compare branch together', async () => {
+    const openX = await createPr(repoPath, socket, 'feature/x')
+    const closedY = await createPr(repoPath, socket, 'feature/y')
+    store.updatePRStatus(repoPath, closedY, 'closed')
+
+    const byStatus = listJson(
+      await callTool('list_prs', { repo_path: repoPath, status: 'closed' }, socket, 'Claude Code')
+    )
+    expect(byStatus.map((p) => p.id)).toEqual([closedY])
+
+    const byBranch = listJson(
+      await callTool(
+        'list_prs',
+        { repo_path: repoPath, compare_branch: 'feature/x' },
+        socket,
+        'Claude Code'
+      )
+    )
+    expect(byBranch.map((p) => p.id)).toEqual([openX])
+
+    const both = listJson(
+      await callTool(
+        'list_prs',
+        { repo_path: repoPath, status: 'open', compare_branch: 'feature/y' },
+        socket,
+        'Claude Code'
+      )
+    )
+    expect(both).toEqual([])
+  })
+})
+
+describe('get_pr', () => {
+  it('includes the workflow phase and open comment count', async () => {
+    const repoPath = makeGitRepo()
+    const socket = { emit: vi.fn() } as unknown as SocketClient
+    const prId = await createPr(repoPath, socket)
+
+    const data = resultJson(
+      await callTool('get_pr', { repo_path: repoPath, pr_id: prId }, socket, 'Claude Code')
+    )
+    expect(data.workflow_phase).toBe('awaiting_review')
+    expect(data.open_comments).toBe(0)
+    expect((data.pr as { id: string }).id).toBe(prId)
     fs.rmSync(repoPath, { recursive: true, force: true })
   })
 })

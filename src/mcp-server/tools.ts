@@ -2,6 +2,8 @@
 import { execFileSync } from 'child_process'
 import { ReviewStore, InvalidReviewFileError } from '../shared/review-store'
 import { recordPendingRepo } from '../shared/agent-bridge'
+import { listPrsWithState, prWithState } from '../shared/pr-state'
+import type { PRListItem } from '../shared/types'
 import type { SocketClient } from './socket-client'
 
 const store = new ReviewStore()
@@ -32,6 +34,13 @@ function err(message: string) {
   return { content: [{ type: 'text' as const, text: `Error: ${message}` }], isError: true }
 }
 
+// snake_case keys rather than the app's camelCase, so the state reads like
+// the PR file fields around it.
+function stateView(item: PRListItem) {
+  const { workflowPhase, openComments, ...pr } = item
+  return { ...pr, workflow_phase: workflowPhase, open_comments: openComments }
+}
+
 // Claude Code / Claude Desktop identities own PRs as 'claude'; every other
 // client (Copilot CLI, VS Code, Cursor, Windsurf) maps to 'copilot'.
 function identityToAssignee(identity: string): 'claude' | 'copilot' {
@@ -42,18 +51,29 @@ export function buildTools() {
   return [
     {
       name: 'list_prs',
-      description: "List all pull requests in a repository's .reviews/ directory.",
+      description:
+        "List pull requests in a repository's .reviews/ directory, with each PR's workflow phase and open comment count. Filter by status and compare_branch to find the open PR for a branch.",
       inputSchema: {
         type: 'object' as const,
         properties: {
           repo_path: { type: 'string', description: 'Absolute path to the repository' },
+          status: {
+            type: 'string',
+            enum: ['open', 'closed'],
+            description: 'Optional. Only PRs with this status.',
+          },
+          compare_branch: {
+            type: 'string',
+            description: 'Optional. Only PRs for this compare branch.',
+          },
         },
         required: ['repo_path'],
       },
     },
     {
       name: 'get_pr',
-      description: "Get a pull request's metadata and review summary.",
+      description:
+        "Get a pull request's metadata, workflow phase, open comment count and review summary.",
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -173,15 +193,21 @@ export async function callTool(
   try {
     switch (name) {
       case 'list_prs': {
-        const prs = store.listPRs(args.repo_path)
-        return ok(prs)
+        const prs = listPrsWithState(store, args.repo_path)
+          .filter((pr) => !args.status || pr.status === args.status)
+          .filter((pr) => !args.compare_branch || pr.compare_branch === args.compare_branch)
+        return ok(prs.map(stateView))
       }
 
       case 'get_pr': {
-        const pr = store.getPR(args.repo_path, args.pr_id)
+        const { workflow_phase, open_comments, ...pr } = stateView(
+          prWithState(store, args.repo_path, args.pr_id)
+        )
         const reviews = store.listReviews(args.repo_path, args.pr_id)
         return ok({
           pr,
+          workflow_phase,
+          open_comments,
           review_count: reviews.length,
           reviews: reviews.map((r) => ({
             id: r.id,
