@@ -306,6 +306,8 @@ export default function PR(): JSX.Element {
       if (updatedPrId !== prId || !repo) return
       const updated = await window.api.getPr(repo.path, prId)
       if (isPrDetail(updated)) setPrDetail(updated)
+      // An agent can change the base branch, which changes the commit range
+      setCommits(null)
     })
   }, [prId, repo?.path])
 
@@ -371,7 +373,9 @@ export default function PR(): JSX.Element {
         setCommitsLoading(false)
       })
     }
-  }, [prId, repo?.path])
+    // commits is a dependency so that clearing it (refresh, agent change)
+    // loads the list again
+  }, [prId, repo?.path, commits])
 
   function handleSelectCommit(commit: Commit): void {
     if (selectedCommit?.hash === commit.hash) {
