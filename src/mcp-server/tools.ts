@@ -201,6 +201,32 @@ export function buildTools() {
       },
     },
     {
+      name: 'close_pr',
+      description:
+        'Close a pull request in any phase. Its reviews and comments are kept, and reopen_pr undoes the close.',
+      inputSchema: {
+        type: 'object' as const,
+        properties: {
+          repo_path: { type: 'string', description: 'Absolute path to the repository' },
+          pr_id: { type: 'string', description: 'UUID of the PR' },
+        },
+        required: ['repo_path', 'pr_id'],
+      },
+    },
+    {
+      name: 'reopen_pr',
+      description:
+        'Reopen a closed pull request, for example to undo close_pr. A merged PR cannot be reopened.',
+      inputSchema: {
+        type: 'object' as const,
+        properties: {
+          repo_path: { type: 'string', description: 'Absolute path to the repository' },
+          pr_id: { type: 'string', description: 'UUID of the PR' },
+        },
+        required: ['repo_path', 'pr_id'],
+      },
+    },
+    {
       name: 'complete_assignment',
       description:
         'Call this when you have finished addressing all open review issues. Signals to the reviewer that your fix session has ended.',
@@ -393,6 +419,37 @@ export async function callTool(
         const updated = store.updatePR(args.repo_path, args.pr_id, changes)
         socketClient.emit({ event: 'pr:updated', repoPath: args.repo_path, prId: args.pr_id })
         return ok(updated)
+      }
+
+      case 'close_pr': {
+        const pr = store.getPR(args.repo_path, args.pr_id)
+        if (pr.status === 'open') {
+          store.updatePRStatus(args.repo_path, args.pr_id, 'closed')
+          socketClient.emit({ event: 'pr:updated', repoPath: args.repo_path, prId: args.pr_id })
+        }
+        return ok({
+          success: true,
+          pr: store.getPR(args.repo_path, args.pr_id),
+          message: 'PR closed. Call reopen_pr to undo.',
+        })
+      }
+
+      case 'reopen_pr': {
+        const pr = store.getPR(args.repo_path, args.pr_id)
+        // The app closes a merged PR again on its next refresh, so a reopen
+        // would not last.
+        if (pr.merged_at) {
+          return err(`PR ${pr.id} is merged. A merged PR cannot be reopened.`)
+        }
+        if (pr.status === 'closed') {
+          store.updatePRStatus(args.repo_path, args.pr_id, 'open')
+          socketClient.emit({ event: 'pr:updated', repoPath: args.repo_path, prId: args.pr_id })
+        }
+        return ok({
+          success: true,
+          pr: store.getPR(args.repo_path, args.pr_id),
+          message: 'PR open.',
+        })
       }
 
       case 'complete_assignment': {

@@ -544,3 +544,77 @@ describe('update_pr', () => {
     expect(socket.emit).not.toHaveBeenCalled()
   })
 })
+
+describe('close_pr and reopen_pr', () => {
+  let repoPath: string
+  let socket: SocketClient
+  let store: ReviewStore
+  let prId: string
+
+  beforeEach(async () => {
+    repoPath = makeGitRepo()
+    socket = { emit: vi.fn() } as unknown as SocketClient
+    store = new ReviewStore()
+    prId = await createPr(repoPath, socket)
+    vi.mocked(socket.emit).mockClear()
+  })
+
+  afterEach(() => fs.rmSync(repoPath, { recursive: true, force: true }))
+
+  const call = (name: string, id = prId) =>
+    callTool(name, { repo_path: repoPath, pr_id: id }, socket, 'Claude Code')
+
+  it('advertises both tools with repo_path and pr_id required', () => {
+    for (const name of ['close_pr', 'reopen_pr']) {
+      const tool = buildTools().find((t) => t.name === name)!
+      expect(tool.inputSchema.required).toEqual(['repo_path', 'pr_id'])
+    }
+  })
+
+  it('closes a PR, tells the agent how to undo it, and notifies the app', async () => {
+    const result = await call('close_pr')
+    expect(result.isError).toBeUndefined()
+    expect(result.content[0].text).toContain('reopen_pr')
+    expect(store.getPR(repoPath, prId).status).toBe('closed')
+    expect(socket.emit).toHaveBeenCalledWith({ event: 'pr:updated', repoPath, prId })
+  })
+
+  it('reopens a closed PR', async () => {
+    await call('close_pr')
+    const result = await call('reopen_pr')
+    expect(result.isError).toBeUndefined()
+    expect(store.getPR(repoPath, prId).status).toBe('open')
+  })
+
+  it('keeps the review and fix state across a close and reopen mid-fix', async () => {
+    const review = store.createReview(repoPath, prId, {
+      base_sha: 'a'.repeat(40),
+      compare_sha: 'b'.repeat(40),
+    })
+    store.submitReview(repoPath, prId, review.id)
+    store.startFix(repoPath, prId, review.id)
+    const before = store.getReview(repoPath, prId, review.id)
+
+    await call('close_pr')
+    await call('reopen_pr')
+
+    expect(store.getReview(repoPath, prId, review.id)).toEqual(before)
+    const data = resultJson(await call('get_pr'))
+    expect(data.workflow_phase).toBe('in_fix')
+  })
+
+  it('refuses to reopen a merged PR', async () => {
+    store.mergePR(repoPath, prId)
+    const result = await call('reopen_pr')
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('merged')
+    expect(store.getPR(repoPath, prId).status).toBe('closed')
+    expect(socket.emit).not.toHaveBeenCalled()
+  })
+
+  it('returns an error for an unknown pr_id', async () => {
+    const result = await call('close_pr', '00000000-0000-4000-8000-000000000000')
+    expect(result.isError).toBe(true)
+    expect(socket.emit).not.toHaveBeenCalled()
+  })
+})
