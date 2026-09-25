@@ -3,34 +3,15 @@
 // PR read-model assembly, extracted from the IPC layer so the behaviour is
 // testable against a real git fixture and an on-disk review store. The IPC
 // handlers stay thin: guard, delegate, map errors.
-import { PRWorkflow } from '../../shared/pr-workflow'
 import { resolveSha, fetchOrigin, isMergedIntoRemote } from '../git/branches'
 import { getDiff } from '../git/diff-parser'
 import { listCommits, buildReviewCommitCounts } from '../git/commits'
 import { collectStaleRanges } from '../git/stale'
 import type { ReviewStore } from '../../shared/review-store'
-import type { Commit, PrDetail, PRListItem } from '../../shared/types'
+import type { Commit, PrDetail } from '../../shared/types'
 
 const fetchCache = new Map<string, number>()
 const FETCH_TTL_MS = 30_000
-
-/** PRs with the review state the list surfaces: workflow phase and open-comment count. */
-export function listPrsWithState(store: ReviewStore, repoPath: string): PRListItem[] {
-  // Same active-review selection as getPrDetail, so the list chip and the PR
-  // screen always describe the same phase
-  return store.listPRs(repoPath).map((pr) => {
-    const reviews = store.listReviews(repoPath, pr.id)
-    const active =
-      reviews.find((r) => r.status === 'in_progress') ??
-      reviews.find((r) => r.status === 'submitted') ??
-      null
-    const workflow = new PRWorkflow(pr, active, reviews)
-    const openComments = active
-      ? active.comments.filter((c) => !c.is_stale && c.status === 'open').length
-      : 0
-    return { ...pr, workflowPhase: workflow.phase, openComments }
-  })
-}
 
 /**
  * Commits on the PR's branch range. Branch refs rather than review SHAs, so

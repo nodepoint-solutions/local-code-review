@@ -4,7 +4,6 @@ import { ReviewStore } from '../../shared/review-store'
 import {
   getPrDetail,
   refreshPrDetail,
-  listPrsWithState,
   listPrCommits,
 } from '../services/pr-service'
 import { makeGitRepo, advanceFeatureBranch, shaOf, type GitFixture } from './helpers/git-fixture'
@@ -67,46 +66,6 @@ describe('pr-service', () => {
       const commits = await listPrCommits(store, repoPath, prId)
       expect(commits).toHaveLength(3)
       expect(commits[0].subject).toBe('chore: move the branch forward')
-    })
-  })
-
-  describe('listPrsWithState', () => {
-    it('reports awaiting_review with no comments for a fresh PR', () => {
-      const [item] = listPrsWithState(store, repoPath)
-      expect(item.workflowPhase).toBe('awaiting_review')
-      expect(item.openComments).toBe(0)
-    })
-
-    it('reports reviewing while a review is being written', () => {
-      const reviewId = createPinnedReview()
-      addComment(reviewId, 2)
-      const [item] = listPrsWithState(store, repoPath)
-      expect(item.workflowPhase).toBe('reviewing')
-      expect(item.openComments).toBe(1)
-    })
-
-    it('reports reviewed with the open-comment count after submission', () => {
-      const reviewId = createPinnedReview()
-      addComment(reviewId, 2)
-      addComment(reviewId, 3)
-      store.submitReview(repoPath, prId, reviewId)
-      const [item] = listPrsWithState(store, repoPath)
-      expect(item.workflowPhase).toBe('reviewed')
-      expect(item.openComments).toBe(2)
-    })
-
-    it('excludes resolved comments from the open count', () => {
-      const reviewId = createPinnedReview()
-      const commentId = addComment(reviewId, 2)
-      addComment(reviewId, 3)
-      store.submitReview(repoPath, prId, reviewId)
-      store.resolveComment(repoPath, prId, reviewId, commentId, 'resolved', {
-        comment: 'done',
-        resolved_by: 'reviewer',
-        resolved_at: new Date().toISOString(),
-      })
-      const [item] = listPrsWithState(store, repoPath)
-      expect(item.openComments).toBe(1)
     })
   })
 

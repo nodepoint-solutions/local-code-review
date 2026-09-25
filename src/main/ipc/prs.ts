@@ -18,9 +18,9 @@ import { getCommitDiff } from '../git/commits'
 import {
   getPrDetail,
   refreshPrDetail,
-  listPrsWithState,
   listPrCommits,
 } from '../services/pr-service'
+import { listPrsWithState } from '../../shared/pr-state'
 import type { CreatePrPayload, PrDetail } from '../../shared/types'
 import { assertKnownRepo } from './_guard'
 

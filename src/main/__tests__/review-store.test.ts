@@ -65,6 +65,18 @@ describe('ReviewStore', () => {
       expect(updated.updated_at).not.toBe(pr.updated_at)
     })
 
+    it('updatePR changes the base branch', () => {
+      const pr = store.createPR(repoPath, {
+        title: 'T',
+        description: null,
+        base_branch: 'main',
+        compare_branch: 'f',
+      })
+      const updated = store.updatePR(repoPath, pr.id, { base_branch: 'develop' })
+      expect(updated.base_branch).toBe('develop')
+      expect(store.getPR(repoPath, pr.id).base_branch).toBe('develop')
+    })
+
     it('listPRs returns empty array when .reviews/ is absent', () => {
       expect(store.listPRs(repoPath)).toHaveLength(0)
     })

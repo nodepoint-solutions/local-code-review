@@ -91,6 +91,15 @@ export class PRWorkflow {
     return this.phase === 'fix_complete'
   }
 
+  /**
+   * The base branch can change only while no review is active. Each review
+   * pins its own base SHA and anchors comments to that diff, so a new base
+   * waits until the round is complete.
+   */
+  allowsBaseChange(): boolean {
+    return this.phase !== 'reviewing' && this.phase !== 'reviewed' && this.phase !== 'in_fix'
+  }
+
   /** Diff is read-only — no inline comment selection. */
   isReadOnly(): boolean {
     return !this.allowsComments()
@@ -126,5 +135,9 @@ export class PRWorkflow {
       return 'This PR is closed.'
     }
     return 'Assignment is not permitted in the current state.'
+  }
+
+  static baseChangeDeniedReason(phase: WorkflowPhase): string {
+    return `The base branch cannot change while a review is active (phase: ${phase}). Comments are anchored to the current diff. Change it after the review round is complete.`
   }
 }

@@ -88,7 +88,7 @@ export class ReviewStore {
   updatePR(
     repoPath: string,
     prId: string,
-    changes: { title?: string; description?: string | null }
+    changes: { title?: string; description?: string | null; base_branch?: string }
   ): PRFile {
     const pr = readPR(repoPath, prId)
     const updated: PRFile = { ...pr, ...changes, updated_at: new Date().toISOString() }

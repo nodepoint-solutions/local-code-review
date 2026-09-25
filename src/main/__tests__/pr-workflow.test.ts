@@ -126,3 +126,35 @@ describe('PRWorkflow.allowsAssignee', () => {
     ).toBe(false)
   })
 })
+
+describe('PRWorkflow.allowsBaseChange', () => {
+  it('allows a base change when no review is active', () => {
+    expect(new PRWorkflow(makePr(), null).allowsBaseChange()).toBe(true)
+  })
+
+  it('allows a base change after a review round is complete', () => {
+    const complete = makeReview('complete')
+    expect(new PRWorkflow(makePr(), null, [complete]).allowsBaseChange()).toBe(true)
+  })
+
+  it('allows a base change on a closed PR', () => {
+    expect(new PRWorkflow(makePr({ status: 'closed' }), null).allowsBaseChange()).toBe(true)
+  })
+
+  it('refuses a base change while a review is being written', () => {
+    expect(new PRWorkflow(makePr(), makeReview('in_progress')).allowsBaseChange()).toBe(false)
+  })
+
+  it('refuses a base change after submission', () => {
+    expect(new PRWorkflow(makePr(), makeReview('submitted')).allowsBaseChange()).toBe(false)
+  })
+
+  it('refuses a base change during a fix', () => {
+    const review = makeReview('submitted', { fix_started_at: new Date().toISOString() })
+    expect(new PRWorkflow(makePr(), review).allowsBaseChange()).toBe(false)
+  })
+
+  it('names the phase in the denial reason', () => {
+    expect(PRWorkflow.baseChangeDeniedReason('in_fix')).toContain('in_fix')
+  })
+})
