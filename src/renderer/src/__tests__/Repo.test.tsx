@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Repo from '../screens/Repo'
 import { useStore } from '../store'
@@ -81,5 +81,49 @@ describe('Repo PR list state', () => {
     })
     renderRepo()
     expect(await screen.findByText('Agent fixing')).toBeInTheDocument()
+  })
+})
+
+describe('Repo PR list refresh', () => {
+  beforeEach(() => {
+    useStore.setState({ repos: [repo], selectedRepo: null })
+  })
+
+  it('shows an agent change to a PR in this repository', async () => {
+    let notify: (data: { repoPath: string; prId: string }) => void = () => {}
+    installMockApi({
+      listPrs: vi
+        .fn()
+        .mockResolvedValueOnce([makePrItem()])
+        .mockResolvedValue([makePrItem({ title: 'Renamed by the agent' })]),
+      onPrUpdated: vi.fn((callback) => {
+        notify = callback
+        return () => {}
+      }),
+    })
+    renderRepo()
+    expect(await screen.findByText('Add auth middleware')).toBeInTheDocument()
+
+    await act(async () => notify({ repoPath: repo.path, prId: 'pr1' }))
+
+    expect(await screen.findByText('Renamed by the agent')).toBeInTheDocument()
+  })
+
+  it('ignores a change to a PR in another repository', async () => {
+    let notify: (data: { repoPath: string; prId: string }) => void = () => {}
+    const listPrs = vi.fn().mockResolvedValue([makePrItem()])
+    installMockApi({
+      listPrs,
+      onPrUpdated: vi.fn((callback) => {
+        notify = callback
+        return () => {}
+      }),
+    })
+    renderRepo()
+    expect(await screen.findByText('Add auth middleware')).toBeInTheDocument()
+
+    await act(async () => notify({ repoPath: '/work/other-repo', prId: 'pr9' }))
+
+    expect(listPrs).toHaveBeenCalledTimes(1)
   })
 })

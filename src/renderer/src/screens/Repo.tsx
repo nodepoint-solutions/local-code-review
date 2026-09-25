@@ -95,6 +95,17 @@ export default function Repo(): JSX.Element {
     }
   }, [repo?.id])
 
+  // Agents change PRs through MCP, so the list reloads on their events
+  // rather than only on mount.
+  const repoPath = repo?.path
+  useEffect(() => {
+    if (!repoPath) return
+    return window.api.onPrUpdated(async (event) => {
+      if (event.repoPath !== repoPath) return
+      setPrs(await window.api.listPrs(repoPath))
+    })
+  }, [repoPath])
+
   async function handleClose(pr: PRFile): Promise<void> {
     if (!repo) return
     await window.api.closePr(repo.path, pr.id)
