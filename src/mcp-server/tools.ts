@@ -2,7 +2,8 @@
 import { execFileSync } from 'child_process'
 import { ReviewStore, InvalidReviewFileError } from '../shared/review-store'
 import { recordPendingRepo } from '../shared/agent-bridge'
-import { listPrsWithState, prWithState } from '../shared/pr-state'
+import { listPrsWithState, prWithState, prWorkflow } from '../shared/pr-state'
+import { PRWorkflow } from '../shared/pr-workflow'
 import type { PRListItem } from '../shared/types'
 import type { SocketClient } from './socket-client'
 
@@ -181,6 +182,25 @@ export function buildTools() {
       },
     },
     {
+      name: 'update_pr',
+      description:
+        "Change a pull request's title, description or base branch. Give at least one. An empty description clears it. The base branch cannot change while a review is active.",
+      inputSchema: {
+        type: 'object' as const,
+        properties: {
+          repo_path: { type: 'string', description: 'Absolute path to the repository' },
+          pr_id: { type: 'string', description: 'UUID of the PR' },
+          title: { type: 'string', description: 'Optional. Imperative summary of the change' },
+          description: {
+            type: 'string',
+            description: 'Optional. What changed and why. An empty string clears it.',
+          },
+          base_branch: { type: 'string', description: 'Optional. Branch to merge into' },
+        },
+        required: ['repo_path', 'pr_id'],
+      },
+    },
+    {
       name: 'complete_assignment',
       description:
         'Call this when you have finished addressing all open review issues. Signals to the reviewer that your fix session has ended.',
@@ -339,6 +359,40 @@ export async function callTool(
         socketClient.emit({ event: 'repo:registered', repoPath: args.repo_path })
         socketClient.emit({ event: 'pr:updated', repoPath: args.repo_path, prId: pr.id })
         return ok({ success: true, pr_id: pr.id, assignee })
+      }
+
+      case 'update_pr': {
+        const { title, description, base_branch } = args
+        if (title === undefined && description === undefined && base_branch === undefined) {
+          return err('Give at least one of title, description or base_branch')
+        }
+        // Every field is checked before the write, so a refused call leaves
+        // the PR exactly as it was.
+        const pr = store.getPR(args.repo_path, args.pr_id)
+        const changes: { title?: string; description?: string | null; base_branch?: string } = {}
+        if (title !== undefined) {
+          if (!title.trim()) return err('title cannot be empty')
+          changes.title = title
+        }
+        if (description !== undefined) {
+          changes.description = description.trim() ? description : null
+        }
+        if (base_branch !== undefined) {
+          if (base_branch === pr.compare_branch) {
+            return err('base_branch and compare_branch must differ')
+          }
+          if (!branchExists(args.repo_path, base_branch)) {
+            return err(`Branch not found: ${base_branch}`)
+          }
+          const workflow = prWorkflow(store, args.repo_path, args.pr_id)
+          if (!workflow.allowsBaseChange()) {
+            return err(PRWorkflow.baseChangeDeniedReason(workflow.phase))
+          }
+          changes.base_branch = base_branch
+        }
+        const updated = store.updatePR(args.repo_path, args.pr_id, changes)
+        socketClient.emit({ event: 'pr:updated', repoPath: args.repo_path, prId: args.pr_id })
+        return ok(updated)
       }
 
       case 'complete_assignment': {

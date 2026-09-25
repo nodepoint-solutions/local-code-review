@@ -416,3 +416,131 @@ describe('get_pr', () => {
     fs.rmSync(repoPath, { recursive: true, force: true })
   })
 })
+
+describe('update_pr', () => {
+  let repoPath: string
+  let socket: SocketClient
+  let store: ReviewStore
+  let prId: string
+
+  beforeEach(async () => {
+    repoPath = makeGitRepo()
+    socket = { emit: vi.fn() } as unknown as SocketClient
+    store = new ReviewStore()
+    prId = await createPr(repoPath, socket)
+    vi.mocked(socket.emit).mockClear()
+  })
+
+  afterEach(() => fs.rmSync(repoPath, { recursive: true, force: true }))
+
+  function update(changes: Record<string, string>) {
+    return callTool(
+      'update_pr',
+      { repo_path: repoPath, pr_id: prId, ...changes },
+      socket,
+      'Claude Code'
+    )
+  }
+
+  it('is advertised with only repo_path and pr_id required', () => {
+    const tool = buildTools().find((t) => t.name === 'update_pr')!
+    expect(tool.inputSchema.required).toEqual(['repo_path', 'pr_id'])
+    expect(Object.keys(tool.inputSchema.properties)).toEqual(
+      expect.arrayContaining(['title', 'description', 'base_branch'])
+    )
+  })
+
+  it('changes the title and description and notifies the app', async () => {
+    const result = await update({ title: 'New title', description: 'New body' })
+    expect(result.isError).toBeUndefined()
+    const pr = store.getPR(repoPath, prId)
+    expect(pr.title).toBe('New title')
+    expect(pr.description).toBe('New body')
+    expect(socket.emit).toHaveBeenCalledWith({ event: 'pr:updated', repoPath, prId })
+  })
+
+  it('clears the description when given an empty string', async () => {
+    await update({ description: 'Something' })
+    await update({ description: '' })
+    expect(store.getPR(repoPath, prId).description).toBeNull()
+  })
+
+  it('refuses an empty title', async () => {
+    const result = await update({ title: '   ' })
+    expect(result.isError).toBe(true)
+    expect(store.getPR(repoPath, prId).title).toBe('T')
+    expect(socket.emit).not.toHaveBeenCalled()
+  })
+
+  it('refuses a call with no changes', async () => {
+    const result = await update({})
+    expect(result.isError).toBe(true)
+    expect(socket.emit).not.toHaveBeenCalled()
+  })
+
+  it('changes the base branch when no review is active', async () => {
+    const result = await update({ base_branch: 'develop' })
+    expect(result.isError).toBeUndefined()
+    expect(store.getPR(repoPath, prId).base_branch).toBe('develop')
+  })
+
+  it('changes the base branch after a review round is complete', async () => {
+    const review = store.createReview(repoPath, prId, {
+      base_sha: 'a'.repeat(40),
+      compare_sha: 'b'.repeat(40),
+    })
+    store.submitReview(repoPath, prId, review.id)
+    store.completeReview(repoPath, prId, review.id)
+    const result = await update({ base_branch: 'develop' })
+    expect(result.isError).toBeUndefined()
+  })
+
+  it('refuses an unknown base branch', async () => {
+    const result = await update({ base_branch: 'no-such-branch' })
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('Branch not found: no-such-branch')
+  })
+
+  it('refuses a base branch equal to the compare branch', async () => {
+    const result = await update({ base_branch: 'feature/x' })
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('must differ')
+  })
+
+  it.each([
+    ['reviewing', false, false],
+    ['reviewed', true, false],
+    ['in_fix', true, true],
+  ])('refuses a base branch change in phase %s', async (phase, submit, startFix) => {
+    const review = store.createReview(repoPath, prId, {
+      base_sha: 'a'.repeat(40),
+      compare_sha: 'b'.repeat(40),
+    })
+    if (submit) store.submitReview(repoPath, prId, review.id)
+    if (startFix) store.startFix(repoPath, prId, review.id)
+
+    const result = await update({ base_branch: 'develop' })
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain(phase)
+    expect(store.getPR(repoPath, prId).base_branch).toBe('main')
+  })
+
+  it('writes nothing when one field of several is invalid', async () => {
+    const before = store.getPR(repoPath, prId)
+    const result = await update({ title: 'Good title', base_branch: 'no-such-branch' })
+    expect(result.isError).toBe(true)
+    expect(store.getPR(repoPath, prId)).toEqual(before)
+    expect(socket.emit).not.toHaveBeenCalled()
+  })
+
+  it('returns an error for an unknown pr_id', async () => {
+    const result = await callTool(
+      'update_pr',
+      { repo_path: repoPath, pr_id: '00000000-0000-4000-8000-000000000000', title: 'X' },
+      socket,
+      'Claude Code'
+    )
+    expect(result.isError).toBe(true)
+    expect(socket.emit).not.toHaveBeenCalled()
+  })
+})
