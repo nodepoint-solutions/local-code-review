@@ -29,6 +29,10 @@ export function reviewsDir(repoPath: string, prId: string): string {
   return path.join(prDir(repoPath, prId), 'reviews')
 }
 
+export function prFileExists(repoPath: string, prId: string): boolean {
+  return fs.existsSync(path.join(prDir(repoPath, prId), 'index.json'))
+}
+
 export function readPR(repoPath: string, prId: string): PRFile {
   const filePath = path.join(prDir(repoPath, prId), 'index.json')
   try {

@@ -2,6 +2,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import {
   readPR,
+  prFileExists,
   writePR,
   readReview,
   writeReview,
@@ -75,6 +76,11 @@ export class ReviewStore {
     }
     writePR(repoPath, pr)
     return pr
+  }
+
+  /** A missing PR is told apart from a damaged one, so callers can report which. */
+  hasPR(repoPath: string, prId: string): boolean {
+    return prFileExists(repoPath, prId)
   }
 
   getPR(repoPath: string, prId: string): PRFile {

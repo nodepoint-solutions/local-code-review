@@ -34,6 +34,19 @@ function branchExists(repoPath: string, branch: string): boolean {
   }
 }
 
+// True when every commit on `branch` is already on `base`
+function isContainedIn(repoPath: string, branch: string, base: string): boolean {
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', branch, base], {
+      cwd: repoPath,
+      stdio: 'pipe',
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
 // One open PR per compare branch, so an agent that runs create_pr again edits
 // its PR rather than splitting the review across two.
 function otherOpenPR(repoPath: string, compareBranch: string, exceptId?: string) {
@@ -257,6 +270,9 @@ export async function callTool(
   resolvedBy: string
 ) {
   try {
+    if (args.pr_id !== undefined && !store.hasPR(args.repo_path, args.pr_id)) {
+      return err(`PR not found: ${args.pr_id}`)
+    }
     switch (name) {
       case 'list_prs': {
         const prs = listPrsWithState(store, args.repo_path)
@@ -411,8 +427,25 @@ export async function callTool(
           if (base_branch === pr.compare_branch) {
             return err('base_branch and compare_branch must differ')
           }
+          if (pr.merged_at) {
+            return err(`PR ${pr.id} is merged. The base branch of a merged PR cannot change.`)
+          }
           if (!branchExists(args.repo_path, base_branch)) {
             return err(`Branch not found: ${base_branch}`)
+          }
+          // The app marks a PR merged once origin's base contains the compare
+          // branch, and a merged PR cannot be reopened. Checking both the local
+          // and the origin base stops a base change that would end the PR.
+          const remoteBase = `origin/${base_branch}`
+          const containingBase = [base_branch, remoteBase].find(
+            (ref) =>
+              branchExists(args.repo_path, ref) &&
+              isContainedIn(args.repo_path, pr.compare_branch, ref)
+          )
+          if (containingBase) {
+            return err(
+              `${containingBase} already contains ${pr.compare_branch}, so the PR would have no changes and the app would mark it merged.`
+            )
           }
           const workflow = prWorkflow(store, args.repo_path, args.pr_id)
           if (!workflow.allowsBaseChange()) {
@@ -434,7 +467,9 @@ export async function callTool(
         return ok({
           success: true,
           pr: store.getPR(args.repo_path, args.pr_id),
-          message: 'PR closed. Call reopen_pr to undo.',
+          message: pr.merged_at
+            ? 'PR is merged. A merged PR cannot be reopened.'
+            : 'PR closed. Call reopen_pr to undo.',
         })
       }
 

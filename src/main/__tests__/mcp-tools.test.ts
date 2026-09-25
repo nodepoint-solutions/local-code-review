@@ -33,9 +33,27 @@ function makeGitRepo(): string {
     ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '--allow-empty', '-m', 'init'],
     { cwd: dir }
   )
-  execFileSync('git', ['branch', 'feature/x'], { cwd: dir })
-  execFileSync('git', ['branch', 'feature/y'], { cwd: dir })
   execFileSync('git', ['branch', 'develop'], { cwd: dir })
+  // Each feature branch is one commit ahead of main, like real work
+  for (const branch of ['feature/x', 'feature/y']) {
+    const sha = execFileSync(
+      'git',
+      [
+        '-c',
+        'user.email=t@t',
+        '-c',
+        'user.name=t',
+        'commit-tree',
+        'HEAD^{tree}',
+        '-p',
+        'HEAD',
+        '-m',
+        branch,
+      ],
+      { cwd: dir, encoding: 'utf8' }
+    ).trim()
+    execFileSync('git', ['branch', branch, sha], { cwd: dir })
+  }
   return dir
 }
 
@@ -541,6 +559,22 @@ describe('update_pr', () => {
     expect(store.getPR(repoPath, prId).base_branch).toBe('main')
   })
 
+  it('refuses a base branch change on a merged PR', async () => {
+    store.mergePR(repoPath, prId)
+    const result = await update({ base_branch: 'develop' })
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('merged')
+    expect(store.getPR(repoPath, prId).base_branch).toBe('main')
+  })
+
+  it('refuses a base branch that already contains the compare branch', async () => {
+    execFileSync('git', ['branch', 'release', 'feature/x'], { cwd: repoPath })
+    const result = await update({ base_branch: 'release' })
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('already contains')
+    expect(store.getPR(repoPath, prId).base_branch).toBe('main')
+  })
+
   it('writes nothing when one field of several is invalid', async () => {
     const before = store.getPR(repoPath, prId)
     const result = await update({ title: 'Good title', base_branch: 'no-such-branch' })
@@ -557,6 +591,7 @@ describe('update_pr', () => {
       'Claude Code'
     )
     expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('PR not found: 00000000-0000-4000-8000-000000000000')
     expect(socket.emit).not.toHaveBeenCalled()
   })
 })
@@ -595,11 +630,39 @@ describe('close_pr and reopen_pr', () => {
     expect(socket.emit).toHaveBeenCalledWith({ event: 'pr:updated', repoPath, prId })
   })
 
-  it('reopens a closed PR', async () => {
+  it('reopens a closed PR and notifies the app', async () => {
     await call('close_pr')
+    vi.mocked(socket.emit).mockClear()
     const result = await call('reopen_pr')
     expect(result.isError).toBeUndefined()
     expect(store.getPR(repoPath, prId).status).toBe('open')
+    expect(socket.emit).toHaveBeenCalledWith({ event: 'pr:updated', repoPath, prId })
+  })
+
+  it('closes an already closed PR as a success with no change', async () => {
+    await call('close_pr')
+    const before = store.getPR(repoPath, prId)
+    vi.mocked(socket.emit).mockClear()
+    const result = await call('close_pr')
+    expect(result.isError).toBeUndefined()
+    expect(store.getPR(repoPath, prId)).toEqual(before)
+    expect(socket.emit).not.toHaveBeenCalled()
+  })
+
+  it('reopens an already open PR as a success with no change', async () => {
+    const before = store.getPR(repoPath, prId)
+    const result = await call('reopen_pr')
+    expect(result.isError).toBeUndefined()
+    expect(store.getPR(repoPath, prId)).toEqual(before)
+    expect(socket.emit).not.toHaveBeenCalled()
+  })
+
+  it('tells the agent that a merged PR cannot be reopened when it closes one', async () => {
+    store.mergePR(repoPath, prId)
+    const result = await call('close_pr')
+    expect(result.isError).toBeUndefined()
+    expect(result.content[0].text).not.toContain('reopen_pr to undo')
+    expect(result.content[0].text).toContain('merged')
   })
 
   it('keeps the review and fix state across a close and reopen mid-fix', async () => {
@@ -643,6 +706,7 @@ describe('close_pr and reopen_pr', () => {
   it('returns an error for an unknown pr_id', async () => {
     const result = await call('close_pr', '00000000-0000-4000-8000-000000000000')
     expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('PR not found')
     expect(socket.emit).not.toHaveBeenCalled()
   })
 })
