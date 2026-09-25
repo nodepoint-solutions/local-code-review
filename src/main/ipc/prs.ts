@@ -15,11 +15,7 @@ import {
 } from '../git/branches'
 import { getDiff } from '../git/diff-parser'
 import { getCommitDiff } from '../git/commits'
-import {
-  getPrDetail,
-  refreshPrDetail,
-  listPrCommits,
-} from '../services/pr-service'
+import { getPrDetail, refreshPrDetail, listPrCommits } from '../services/pr-service'
 import { listPrsWithState } from '../../shared/pr-state'
 import type { CreatePrPayload, PrDetail } from '../../shared/types'
 import { assertKnownRepo } from './_guard'

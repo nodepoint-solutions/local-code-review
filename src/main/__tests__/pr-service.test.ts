@@ -1,11 +1,7 @@
 // src/main/__tests__/pr-service.test.ts
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { ReviewStore } from '../../shared/review-store'
-import {
-  getPrDetail,
-  refreshPrDetail,
-  listPrCommits,
-} from '../services/pr-service'
+import { getPrDetail, refreshPrDetail, listPrCommits } from '../services/pr-service'
 import { makeGitRepo, advanceFeatureBranch, shaOf, type GitFixture } from './helpers/git-fixture'
 
 const NEVER_A_DIFF_LINE = 999

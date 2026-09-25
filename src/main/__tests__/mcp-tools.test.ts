@@ -363,7 +363,9 @@ describe('list_prs', () => {
     })
     store.submitReview(repoPath, prId, review.id)
 
-    const [pr] = listJson(await callTool('list_prs', { repo_path: repoPath }, socket, 'Claude Code'))
+    const [pr] = listJson(
+      await callTool('list_prs', { repo_path: repoPath }, socket, 'Claude Code')
+    )
     expect(pr.id).toBe(prId)
     expect(pr.workflow_phase).toBe('reviewed')
     expect(pr.open_comments).toBe(1)
