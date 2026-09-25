@@ -21,6 +21,18 @@ function isGitWorkTree(repoPath: string): boolean {
   }
 }
 
+function branchExists(repoPath: string, branch: string): boolean {
+  try {
+    execFileSync('git', ['rev-parse', '--verify', `${branch}^{commit}`], {
+      cwd: repoPath,
+      stdio: 'pipe',
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
 function ok(data: unknown) {
   // `isError` is present (as undefined) so callers can read it off either
   // branch of callTool's result without a type guard.
@@ -152,7 +164,7 @@ export function buildTools() {
     {
       name: 'create_pr',
       description:
-        'Create a pull request in Local Code Review for two local branches. The repository is added to the app on the first PR, so it needs no setup. You become the PR assignee: after each review round is submitted you will be asked to fix the comments.',
+        'Create a pull request in Local Code Review for two local branches. The repository is added to the app on the first PR, so it needs no setup. You become the PR assignee: after each review round is submitted you will be asked to fix the comments. Refused when an open PR already exists for compare_branch; the error gives its pr_id.',
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -295,15 +307,21 @@ export async function callTool(
         if (!isGitWorkTree(args.repo_path)) {
           return err(`Not a git repository: ${args.repo_path}`)
         }
+        if (args.base_branch === args.compare_branch) {
+          return err('base_branch and compare_branch must differ')
+        }
         for (const branch of [args.base_branch, args.compare_branch]) {
-          try {
-            execFileSync('git', ['rev-parse', '--verify', `${branch}^{commit}`], {
-              cwd: args.repo_path,
-              stdio: 'pipe',
-            })
-          } catch {
-            return err(`Branch not found: ${branch}`)
-          }
+          if (!branchExists(args.repo_path, branch)) return err(`Branch not found: ${branch}`)
+        }
+        // One open PR per compare branch, so an agent that runs create_pr
+        // again edits its PR rather than splitting the review across two.
+        const existing = store
+          .listPRs(args.repo_path)
+          .find((pr) => pr.status === 'open' && pr.compare_branch === args.compare_branch)
+        if (existing) {
+          return err(
+            `An open PR already exists for ${args.compare_branch}: pr_id ${existing.id}. Call update_pr to change its title, description or base branch.`
+          )
         }
         const assignee = identityToAssignee(resolvedBy)
         // Writing the PR creates the repository's .reviews directory, which

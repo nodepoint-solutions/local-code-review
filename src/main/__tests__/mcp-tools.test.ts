@@ -171,6 +171,51 @@ describe('create_pr', () => {
     expect(pr.assigned_at).not.toBeNull()
   })
 
+  it('refuses a second open PR for the same compare branch and names the existing one', async () => {
+    const existing = await createPr(repoPath, socket, 'feature/x')
+    vi.mocked(socket.emit).mockClear()
+
+    const result = await callTool(
+      'create_pr',
+      { repo_path: repoPath, title: 'Again', base_branch: 'main', compare_branch: 'feature/x' },
+      socket,
+      'Claude Code'
+    )
+
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain(existing)
+    expect(result.content[0].text).toContain('update_pr')
+    expect(new ReviewStore().listPRs(repoPath)).toHaveLength(1)
+    expect(socket.emit).not.toHaveBeenCalled()
+  })
+
+  it('creates a new PR when the earlier PR for the branch is closed', async () => {
+    const closed = await createPr(repoPath, socket, 'feature/x')
+    new ReviewStore().updatePRStatus(repoPath, closed, 'closed')
+
+    const result = await callTool(
+      'create_pr',
+      { repo_path: repoPath, title: 'Again', base_branch: 'main', compare_branch: 'feature/x' },
+      socket,
+      'Claude Code'
+    )
+
+    expect(result.isError).toBeUndefined()
+    expect(resultJson(result).pr_id).not.toBe(closed)
+  })
+
+  it('refuses a base branch equal to the compare branch', async () => {
+    const result = await callTool(
+      'create_pr',
+      { repo_path: repoPath, title: 'T', base_branch: 'feature/x', compare_branch: 'feature/x' },
+      socket,
+      'Claude Code'
+    )
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('must differ')
+    expect(fs.existsSync(path.join(repoPath, '.reviews'))).toBe(false)
+  })
+
   it('maps non-Claude identities to the copilot assignee', async () => {
     fs.mkdirSync(path.join(repoPath, '.reviews'))
     const result = await callTool(
