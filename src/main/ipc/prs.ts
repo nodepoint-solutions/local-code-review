@@ -3,7 +3,6 @@ import { ipcMain } from 'electron'
 import type Database from 'better-sqlite3'
 import { ReviewStore } from '../../shared/review-store'
 import { PRWorkflow } from '../../shared/pr-workflow'
-import { deleteRepo } from '../db/repos'
 import {
   listBranches,
   resolveSha,
@@ -17,7 +16,6 @@ import { getDiff } from '../git/diff-parser'
 import { getCommitDiff } from '../git/commits'
 import { getPrDetail, refreshPrDetail, listPrCommits } from '../services/pr-service'
 import { listPrsWithState } from '../../shared/pr-state'
-import { listActivePrs } from '../services/active-prs'
 import type { CreatePrPayload, PrDetail } from '../../shared/types'
 import { assertKnownRepo } from './_guard'
 
@@ -28,14 +26,6 @@ export function registerPrHandlers(db: Database.Database): void {
     try {
       assertKnownRepo(db, repoPath)
       return listPrsWithState(store, repoPath)
-    } catch {
-      return []
-    }
-  })
-
-  ipcMain.handle('prs:list-active', () => {
-    try {
-      return listActivePrs(db, store)
     } catch {
       return []
     }
@@ -140,10 +130,6 @@ export function registerPrHandlers(db: Database.Database): void {
     try {
       assertKnownRepo(db, repoPath)
       store.deletePR(repoPath, prId)
-      const openRemaining = store.listPRs(repoPath).filter((pr) => pr.status === 'open')
-      if (openRemaining.length === 0) {
-        deleteRepo(db, repoPath)
-      }
       return {}
     } catch (err) {
       return { error: (err as Error).message }

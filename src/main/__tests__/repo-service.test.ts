@@ -5,7 +5,7 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 import { applySchema } from '../db/schema'
-import { findRepoByPath, insertRepo, removeRepo } from '../db/repos'
+import { findRepoByPath, insertRepo } from '../db/repos'
 import { syncDiscoveredRepos, registerAgentRepo } from '../services/repo-service'
 
 describe('syncDiscoveredRepos', () => {
@@ -24,16 +24,6 @@ describe('syncDiscoveredRepos', () => {
     expect(registered).toEqual(['/tmp/repo-a', '/tmp/repo-b'])
     expect(findRepoByPath(db, '/tmp/repo-a')).not.toBeNull()
     expect(findRepoByPath(db, '/tmp/repo-b')).not.toBeNull()
-  })
-
-  it('skips repos the user removed, so discovery does not resurrect them', () => {
-    insertRepo(db, '/tmp/repo-a', 'repo-a')
-    removeRepo(db, '/tmp/repo-a')
-
-    const registered = syncDiscoveredRepos(db, [{ path: '/tmp/repo-a', name: 'repo-a' }])
-
-    expect(registered).toEqual([])
-    expect(findRepoByPath(db, '/tmp/repo-a')).toBeNull()
   })
 
   it('is idempotent for repos that are already registered', () => {
@@ -63,16 +53,6 @@ describe('registerAgentRepo', () => {
     expect(repo).not.toBeNull()
     expect(repo!.name).toBe(path.basename(repoPath))
     expect(findRepoByPath(db, repoPath)).not.toBeNull()
-  })
-
-  it('brings back a repository the user removed, because the agent chose it deliberately', () => {
-    insertRepo(db, repoPath, 'x')
-    removeRepo(db, repoPath)
-
-    expect(registerAgentRepo(db, repoPath)).not.toBeNull()
-    expect(findRepoByPath(db, repoPath)).not.toBeNull()
-    // The tombstone is lifted, so scan discovery keeps it too
-    expect(syncDiscoveredRepos(db, [{ path: repoPath, name: 'x' }])).toEqual([repoPath])
   })
 
   it('is idempotent across repeated PRs in the same repository', () => {

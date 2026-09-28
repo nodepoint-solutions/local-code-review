@@ -1,4 +1,4 @@
-// src/main/__tests__/reviewed-repos.test.ts
+// src/main/__tests__/repo-activity.test.ts
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
 import fs from 'fs'
@@ -7,9 +7,9 @@ import path from 'path'
 import { applySchema } from '../db/schema'
 import { insertRepo } from '../db/repos'
 import { ReviewStore } from '../../shared/review-store'
-import { listReviewedRepos } from '../services/reviewed-repos'
+import { listRepoActivity } from '../services/repo-activity'
 
-describe('listReviewedRepos', () => {
+describe('listRepoActivity', () => {
   let db: Database.Database
   let store: ReviewStore
   let dirs: string[]
@@ -45,28 +45,31 @@ describe('listReviewedRepos', () => {
     return store.updatePRStatus(repoPath, id, 'closed').updated_at
   }
 
-  it('returns repositories whose PRs are all closed, with the latest PR update', () => {
+  it('returns a repository whose PRs are all closed, with the latest PR update', () => {
     const repo = makeRepo('alpha')
     closedPr(repo.path, 'first')
     const latest = closedPr(repo.path, 'second')
 
-    expect(listReviewedRepos(db, store)).toEqual([
-      expect.objectContaining({ id: repo.id, name: 'alpha', last_pr_at: latest }),
+    expect(listRepoActivity(db, store)).toEqual([
+      expect.objectContaining({ id: repo.id, name: 'alpha', open_pr_count: 0, last_pr_at: latest }),
     ])
   })
 
-  it('leaves out repositories with an open PR', () => {
+  it('counts the open PRs of a repository', () => {
     const repo = makeRepo('alpha')
     closedPr(repo.path, 'done')
-    openPr(repo.path, 'ongoing')
+    openPr(repo.path, 'first')
+    openPr(repo.path, 'second')
 
-    expect(listReviewedRepos(db, store)).toEqual([])
+    expect(listRepoActivity(db, store)).toEqual([
+      expect.objectContaining({ id: repo.id, open_pr_count: 2 }),
+    ])
   })
 
   it('leaves out repositories without PRs', () => {
     makeRepo('alpha')
 
-    expect(listReviewedRepos(db, store)).toEqual([])
+    expect(listRepoActivity(db, store)).toEqual([])
   })
 
   it('lists the repository with the most recent PR activity first', () => {
@@ -80,6 +83,6 @@ describe('listReviewedRepos', () => {
     store.updatePRStatus(newer.path, id, 'open')
     store.updatePRStatus(newer.path, id, 'closed')
 
-    expect(listReviewedRepos(db, store).map((r) => r.name)).toEqual(['newer', 'older'])
+    expect(listRepoActivity(db, store).map((r) => r.name)).toEqual(['newer', 'older'])
   })
 })

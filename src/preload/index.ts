@@ -2,9 +2,8 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type {
   PRListItem,
-  ActivePrItem,
   Repository,
-  ReviewedRepo,
+  RepoActivity,
   DiscoveredRepo,
   PRFile,
   ReviewFile,
@@ -22,9 +21,7 @@ const api = {
   openRepo: (): Promise<{ repo?: Repository; error?: string }> => ipcRenderer.invoke('repos:open'),
   addRepoByPath: (repoPath: string): Promise<{ repo?: Repository; error?: string }> =>
     ipcRenderer.invoke('repos:add-by-path', repoPath),
-  listReviewedRepos: (): Promise<ReviewedRepo[]> => ipcRenderer.invoke('repos:list-reviewed'),
-  removeRepo: (repoPath: string): Promise<{ error?: string }> =>
-    ipcRenderer.invoke('repos:remove', repoPath),
+  listRepoActivity: (): Promise<RepoActivity[]> => ipcRenderer.invoke('repos:list-activity'),
   getSetting: (key: string): Promise<string | null> => ipcRenderer.invoke('repos:get-setting', key),
   setSetting: (key: string, value: string): Promise<void> =>
     ipcRenderer.invoke('repos:set-setting', key, value),
@@ -42,7 +39,6 @@ const api = {
 
   // PRs (repoPath replaces repoId)
   listPrs: (repoPath: string): Promise<PRListItem[]> => ipcRenderer.invoke('prs:list', repoPath),
-  listActivePrs: (): Promise<ActivePrItem[]> => ipcRenderer.invoke('prs:list-active'),
   createPr: (payload: CreatePrPayload): Promise<PRFile | { error: string }> =>
     ipcRenderer.invoke('prs:create', payload),
   getPr: (repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> =>

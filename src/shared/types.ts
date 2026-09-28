@@ -24,8 +24,9 @@ export interface Repository {
   last_visited_at: string | null
 }
 
-/** Home "Recent" row: a repository whose PRs are all closed. */
-export interface ReviewedRepo extends Repository {
+/** Home "Active repositories" or "Recent" row: a repository with PR history. */
+export interface RepoActivity extends Repository {
+  open_pr_count: number
   last_pr_at: string
 }
 
@@ -96,13 +97,6 @@ export interface PrDetail {
 export type PRListItem = PRFile & {
   workflowPhase: WorkflowPhase
   openComments: number
-}
-
-/** Home list row: an open PR plus the repository it belongs to. */
-export type ActivePrItem = PRListItem & {
-  repoId: string
-  repoName: string
-  repoPath: string
 }
 
 // ── Commits ───────────────────────────────────────────────────────────────────

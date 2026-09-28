@@ -1,9 +1,9 @@
 import { ipcMain, dialog } from 'electron'
 import path from 'path'
 import type Database from 'better-sqlite3'
-import { insertRepo, listRepos, touchRepo, removeRepo, clearRemovedRepo } from '../db/repos'
+import { insertRepo, listRepos, touchRepo } from '../db/repos'
 import { syncDiscoveredRepos, registerAgentRepo } from '../services/repo-service'
-import { listReviewedRepos } from '../services/reviewed-repos'
+import { listRepoActivity } from '../services/repo-activity'
 import { drainPendingRepos } from '../../shared/agent-bridge'
 import { getSetting, setSetting } from '../db/settings'
 import { isGitRepo } from '../git/branches'
@@ -15,8 +15,7 @@ const store = new ReviewStore()
 
 export function registerRepoHandlers(
   db: Database.Database,
-  onRepoAdded?: (repoPath: string) => void,
-  onRepoRemoved?: (repoPath: string) => void
+  onRepoAdded?: (repoPath: string) => void
 ): void {
   ipcMain.handle('repos:list', async () => {
     try {
@@ -51,7 +50,6 @@ export function registerRepoHandlers(
       if (!valid) return { error: 'not-a-git-repo' }
 
       const name = path.basename(repoPath)
-      clearRemovedRepo(db, repoPath)
       const repo = insertRepo(db, repoPath, name)
       touchRepo(db, repo.id)
       onRepoAdded?.(repoPath)
@@ -67,7 +65,6 @@ export function registerRepoHandlers(
       if (!valid) return { error: 'not-a-git-repo' }
 
       const name = path.basename(repoPath)
-      clearRemovedRepo(db, repoPath)
       const repo = insertRepo(db, repoPath, name)
       touchRepo(db, repo.id)
       onRepoAdded?.(repoPath)
@@ -77,19 +74,9 @@ export function registerRepoHandlers(
     }
   })
 
-  ipcMain.handle('repos:remove', (_event, repoPath: string) => {
+  ipcMain.handle('repos:list-activity', () => {
     try {
-      removeRepo(db, repoPath)
-      onRepoRemoved?.(repoPath)
-      return {}
-    } catch (err) {
-      return { error: (err as Error).message }
-    }
-  })
-
-  ipcMain.handle('repos:list-reviewed', () => {
-    try {
-      return listReviewedRepos(db, store)
+      return listRepoActivity(db, store)
     } catch {
       return []
     }

@@ -290,7 +290,7 @@ app.whenReady().then(() => {
 
     // Watch every repo, including ones added later in the session, so review
     // changes written by agents surface in the UI without a restart
-    registerRepoHandlers(db, watchRepo, (repoPath) => reviewWatcher?.unwatch(repoPath))
+    registerRepoHandlers(db, watchRepo)
     registerPrHandlers(db)
     registerReviewHandlers(db)
     registerExportHandlers(db)

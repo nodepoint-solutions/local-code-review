@@ -236,33 +236,14 @@
   text-overflow: ellipsis;
 }
 
-.prMeta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.prRepo {
-  font-weight: 500;
-  color: var(--text);
-}
-
-.branch {
-  font-family: var(--font-mono);
+.repoBadge {
   font-size: 11px;
-  color: var(--accent-text);
-  background: var(--accent-subtle);
+  font-weight: 500;
   padding: 1px 6px;
-  border-radius: var(--radius-sm);
-}
-
-.arrow {
-  color: var(--text-subtle);
+  border-radius: 10px;
+  background: var(--accent-subtle);
+  color: var(--accent-text);
+  flex-shrink: 0;
 }
 
 .empty {
@@ -308,48 +289,4 @@
   text-align: center;
   font-size: 14px;
   color: var(--text-muted);
-}
-
-/* Row = main click target + remove action; the row itself is no longer a button */
-.repoItemMain {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-  background: none;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  text-align: left;
-  color: var(--text);
-}
-.repoItemMain > svg:last-child {
-  margin-left: auto;
-  color: var(--text-subtle);
-  flex-shrink: 0;
-}
-.repoItem:hover .repoItemMain .repoName {
-  color: var(--accent-hover);
-}
-.repoRemoveBtn {
-  background: none;
-  border: none;
-  border-radius: 6px;
-  color: var(--text-subtle);
-  cursor: pointer;
-  padding: 6px;
-  display: flex;
-  align-items: center;
-  opacity: 0;
-  transition: opacity var(--transition);
-  flex-shrink: 0;
-}
-.repoItem:hover .repoRemoveBtn,
-.repoRemoveBtn:focus-visible {
-  opacity: 1;
-}
-.repoRemoveBtn:hover {
-  color: var(--removed-text, #e05c5c);
-  background: var(--bg-surface-2);
 }

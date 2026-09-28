@@ -14,9 +14,6 @@ export function applySchema(db: Database.Database): void {
       key   TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS removed_repositories (
-      path        TEXT PRIMARY KEY,
-      removed_at  TEXT NOT NULL
-    );
+    DROP TABLE IF EXISTS removed_repositories;
   `)
 }

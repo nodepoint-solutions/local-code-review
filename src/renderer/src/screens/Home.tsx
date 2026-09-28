@@ -2,9 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import NavBar from '../components/NavBar'
-import PhaseChip from '../components/PhaseChip'
-import { formatRelativeTime } from '../utils/formatTime'
-import type { ActivePrItem, DiscoveredRepo, Repository, ReviewedRepo } from '../../../shared/types'
+import type { DiscoveredRepo, RepoActivity, Repository } from '../../../shared/types'
 import styles from './Home.module.css'
 
 function FolderIcon(): JSX.Element {
@@ -44,26 +42,6 @@ function RepoIcon(): JSX.Element {
   )
 }
 
-function PRIcon(): JSX.Element {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="18" cy="18" r="3" />
-      <circle cx="6" cy="6" r="3" />
-      <path d="M13 6h3a2 2 0 0 1 2 2v7" />
-      <line x1="6" y1="9" x2="6" y2="21" />
-    </svg>
-  )
-}
-
 function PlusIcon(): JSX.Element {
   return (
     <svg
@@ -99,24 +77,6 @@ function ChevronRightIcon(): JSX.Element {
   )
 }
 
-function XIcon(): JSX.Element {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  )
-}
-
 function SearchIcon(): JSX.Element {
   return (
     <svg
@@ -141,51 +101,36 @@ function matches(item: { name: string; path: string }, query: string): boolean {
   return item.name.toLowerCase().includes(q) || item.path.toLowerCase().includes(q)
 }
 
-function prMatches(pr: ActivePrItem, query: string): boolean {
-  if (!query) return true
-  const q = query.toLowerCase()
-  return pr.title.toLowerCase().includes(q) || pr.repoName.toLowerCase().includes(q)
-}
-
 interface RepoRowProps {
   name: string
   path: string
   discovered?: boolean
+  badge?: string
   onOpen: () => void
-  onRemove?: () => void
 }
 
-function RepoRow({ name, path, discovered, onOpen, onRemove }: RepoRowProps): JSX.Element {
+function RepoRow({ name, path, discovered, badge, onOpen }: RepoRowProps): JSX.Element {
   return (
-    <div className={`${styles.repoItem} ${discovered ? styles.repoItemDiscovered : ''}`}>
-      <button className={styles.repoItemMain} onClick={onOpen}>
-        <div className={`${styles.repoIcon} ${discovered ? styles.repoIconDiscovered : ''}`}>
-          <RepoIcon />
-        </div>
-        <div className={styles.repoInfo}>
-          <span className={styles.repoName}>{name}</span>
-          <span className={styles.repoPath}>{path}</span>
-        </div>
-        <ChevronRightIcon />
-      </button>
-      {onRemove && (
-        <button
-          className={styles.repoRemoveBtn}
-          title="Remove from list"
-          aria-label={`Remove ${name} from list`}
-          onClick={onRemove}
-        >
-          <XIcon />
-        </button>
-      )}
-    </div>
+    <button
+      className={`${styles.repoItem} ${discovered ? styles.repoItemDiscovered : ''}`}
+      onClick={onOpen}
+    >
+      <div className={`${styles.repoIcon} ${discovered ? styles.repoIconDiscovered : ''}`}>
+        <RepoIcon />
+      </div>
+      <div className={styles.repoInfo}>
+        <span className={styles.repoName}>{name}</span>
+        <span className={styles.repoPath}>{path}</span>
+      </div>
+      {badge && <span className={styles.repoBadge}>{badge}</span>}
+      <ChevronRightIcon />
+    </button>
   )
 }
 
 export default function Home(): JSX.Element {
   const navigate = useNavigate()
   const {
-    repos,
     setRepos,
     setSelectedRepo,
     scanResults,
@@ -194,27 +139,28 @@ export default function Home(): JSX.Element {
     setScanInProgress,
   } = useStore()
 
-  const [activePrs, setActivePrs] = useState<ActivePrItem[]>([])
-  const [reviewedRepos, setReviewedRepos] = useState<ReviewedRepo[]>([])
+  // Repositories and their PR activity update as one snapshot, so that a
+  // repository never renders under Discovered before its activity arrives
+  const [{ repos, repoActivity }, setSnapshot] = useState<{
+    repos: Repository[]
+    repoActivity: RepoActivity[]
+  }>({ repos: [], repoActivity: [] })
   const [searchQuery, setSearchQuery] = useState('')
   const [onboardingComplete, setOnboardingComplete] = useState(true)
   const [baseDirSet, setBaseDirSet] = useState(false)
 
-  async function reloadPrLists(): Promise<void> {
-    const [active, reviewed] = await Promise.all([
-      window.api.listActivePrs(),
-      window.api.listReviewedRepos(),
-    ])
-    setActivePrs(active)
-    setReviewedRepos(reviewed)
+  async function reloadActivity(): Promise<void> {
+    const activity = await window.api.listRepoActivity()
+    setSnapshot((current) => ({ ...current, repoActivity: activity }))
   }
 
   // repos:list registers scanned and agent-adopted repositories first, so the
-  // PR lists load after it and include theirs
+  // activity loads after it and includes theirs
   async function reload(): Promise<Repository[]> {
     const updated = await window.api.listRepos()
+    const activity = await window.api.listRepoActivity()
+    setSnapshot({ repos: updated, repoActivity: activity })
     setRepos(updated)
-    await reloadPrLists()
     return updated
   }
 
@@ -241,7 +187,7 @@ export default function Home(): JSX.Element {
     const offReposChanged = window.api.onReposChanged(reload)
     // Agents open, close and review PRs through MCP, so the list reloads on
     // their events rather than only on mount
-    const offPrUpdated = window.api.onPrUpdated(reloadPrLists)
+    const offPrUpdated = window.api.onPrUpdated(reloadActivity)
     return () => {
       offReposChanged()
       offPrUpdated()
@@ -249,16 +195,13 @@ export default function Home(): JSX.Element {
   }, [])
 
   const knownPaths = new Set(repos.map((r) => r.path))
-  const reviewedIds = new Set([
-    ...activePrs.map((pr) => pr.repoId),
-    ...reviewedRepos.map((r) => r.id),
-  ])
+  const reviewedIds = new Set(repoActivity.map((r) => r.id))
   const q = searchQuery
 
-  // Each repository sits on one list: with an open PR it shows through its
-  // PRs, with only closed PRs under Recent, and without PRs under Discovered
-  const visibleActivePrs = activePrs.filter((pr) => prMatches(pr, q))
-  const recentRepos = reviewedRepos.filter((r) => matches(r, q))
+  // Each repository sits on one list: with an open PR under Active, with only
+  // closed PRs under Recent, and without PRs under Discovered
+  const activeRepos = repoActivity.filter((r) => r.open_pr_count > 0 && matches(r, q))
+  const recentRepos = repoActivity.filter((r) => r.open_pr_count === 0 && matches(r, q))
   const discoveredRepos: Array<{ name: string; path: string; repo?: Repository }> = [
     ...repos.filter((r) => !reviewedIds.has(r.id)).map((r) => ({ ...r, repo: r })),
     ...scanResults.filter((r) => !knownPaths.has(r.path)),
@@ -269,7 +212,7 @@ export default function Home(): JSX.Element {
   const showOnboarding = !onboardingComplete && repos.length === 0 && !baseDirSet
   const showScanHint = !baseDirSet && repos.length > 0
   const hasAnyContent =
-    visibleActivePrs.length > 0 || recentRepos.length > 0 || discoveredRepos.length > 0
+    activeRepos.length > 0 || recentRepos.length > 0 || discoveredRepos.length > 0
 
   async function handleOpenRepo(): Promise<void> {
     const result = await window.api.openRepo()
@@ -319,19 +262,6 @@ export default function Home(): JSX.Element {
     navigate(`/repo/${repo.id}`)
   }
 
-  async function handleRemoveRepo(repo: Repository): Promise<void> {
-    const confirmed = window.confirm(
-      `Remove "${repo.name}" from Local Code Review?\n\nReview data in ${repo.path}/.reviews stays on disk, and you can add the repository again at any time.`
-    )
-    if (!confirmed) return
-    const result = await window.api.removeRepo(repo.path)
-    if (result.error) {
-      alert(`Could not remove repository: ${result.error}`)
-      return
-    }
-    await reload()
-  }
-
   return (
     <div className={styles.page}>
       <NavBar />
@@ -379,7 +309,7 @@ export default function Home(): JSX.Element {
             </span>
             <input
               type="text"
-              placeholder="Search pull requests and repositories..."
+              placeholder="Search repositories..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -406,36 +336,22 @@ export default function Home(): JSX.Element {
           <div className={styles.noResults}>Nothing matches &ldquo;{searchQuery}&rdquo;</div>
         )}
 
-        {visibleActivePrs.length > 0 && (
+        {activeRepos.length > 0 && (
           <section className={styles.section} aria-labelledby="home-active">
             <div className={styles.sectionHeadingRow}>
               <h2 id="home-active" className={styles.sectionHeading}>
-                Active pull requests
+                Active repositories
               </h2>
             </div>
             <div className={styles.repoList}>
-              {visibleActivePrs.map((pr) => (
-                <button
-                  key={`${pr.repoId}/${pr.id}`}
-                  className={styles.repoItem}
-                  onClick={() => navigate(`/repo/${pr.repoId}/pr/${pr.id}`)}
-                >
-                  <div className={styles.repoIcon}>
-                    <PRIcon />
-                  </div>
-                  <div className={styles.repoInfo}>
-                    <span className={styles.repoName}>{pr.title}</span>
-                    <span className={styles.prMeta}>
-                      <span className={styles.prRepo}>{pr.repoName}</span>
-                      <code className={styles.branch}>{pr.compare_branch}</code>
-                      <span className={styles.arrow}>→</span>
-                      <code className={styles.branch}>{pr.base_branch}</code>
-                      <span>· opened {formatRelativeTime(pr.created_at)}</span>
-                    </span>
-                  </div>
-                  <PhaseChip pr={pr} />
-                  <ChevronRightIcon />
-                </button>
+              {activeRepos.map((repo) => (
+                <RepoRow
+                  key={repo.id}
+                  name={repo.name}
+                  path={repo.path}
+                  badge={`${repo.open_pr_count} open PR${repo.open_pr_count !== 1 ? 's' : ''}`}
+                  onOpen={() => handleSelectRepo(repo)}
+                />
               ))}
             </div>
           </section>
@@ -455,7 +371,6 @@ export default function Home(): JSX.Element {
                   name={repo.name}
                   path={repo.path}
                   onOpen={() => handleSelectRepo(repo)}
-                  onRemove={() => handleRemoveRepo(repo)}
                 />
               ))}
             </div>
@@ -481,7 +396,6 @@ export default function Home(): JSX.Element {
                     onOpen={() =>
                       repo ? handleSelectRepo(repo) : handleDiscoveredRepo({ name, path })
                     }
-                    onRemove={repo && (() => handleRemoveRepo(repo))}
                   />
                 ))}
               </div>

@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import Home from '../screens/Home'
 import { useStore } from '../store'
 import { installMockApi } from './helpers/mock-api'
-import type { ActivePrItem, Repository } from '../../../shared/types'
+import type { RepoActivity, Repository } from '../../../shared/types'
 
 const repo: Repository = {
   id: 'r1',
@@ -15,24 +15,8 @@ const repo: Repository = {
   last_visited_at: '2026-04-08T10:00:00Z',
 }
 
-const activePr: ActivePrItem = {
-  version: 1,
-  id: 'pr1',
-  title: 'Add export button',
-  description: null,
-  base_branch: 'main',
-  compare_branch: 'feature/export',
-  status: 'open',
-  assignee: null,
-  assigned_at: null,
-  merged_at: null,
-  created_at: '2026-04-08T09:00:00Z',
-  updated_at: '2026-04-08T09:00:00Z',
-  workflowPhase: 'reviewing',
-  openComments: 3,
-  repoId: 'r1',
-  repoName: 'sample-repo',
-  repoPath: '/work/sample-repo',
+function activity(openPrCount: number): RepoActivity {
+  return { ...repo, open_pr_count: openPrCount, last_pr_at: '2026-04-08T09:00:00Z' }
 }
 
 function onboarded() {
@@ -49,7 +33,6 @@ function renderHome() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/repo/:repoId" element={<p>Repo screen</p>} />
-        <Route path="/repo/:repoId/pr/:prId" element={<p>PR screen</p>} />
       </Routes>
     </MemoryRouter>
   )
@@ -59,33 +42,13 @@ function section(name: string): HTMLElement {
   return screen.getByRole('region', { name })
 }
 
-describe('Home repo removal', () => {
+describe('Home repository adoption', () => {
   beforeEach(() => {
     useStore.setState({ repos: [], scanResults: [], scanInProgress: false })
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
-  })
-
-  it('removes a repo after confirmation and refreshes the list', async () => {
-    const api = installMockApi({
-      listRepos: vi.fn().mockResolvedValueOnce([repo]).mockResolvedValue([]),
-      getSetting: vi
-        .fn()
-        .mockImplementation((key: string) =>
-          Promise.resolve(key === 'onboarding_complete' ? 'true' : null)
-        ),
-    })
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-
-    renderHome()
-    expect(await screen.findByText('sample-repo')).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Remove sample-repo from list' }))
-
-    expect(api.removeRepo).toHaveBeenCalledWith('/work/sample-repo')
-    await waitFor(() => expect(screen.queryByText('sample-repo')).not.toBeInTheDocument())
   })
 
   it('shows a repository the app adopts while the screen is open', async () => {
@@ -110,29 +73,9 @@ describe('Home repo removal', () => {
 
     expect(await screen.findByText('sample-repo')).toBeInTheDocument()
   })
-
-  it('removes nothing when the confirmation is declined', async () => {
-    const api = installMockApi({
-      listRepos: vi.fn().mockResolvedValue([repo]),
-      getSetting: vi
-        .fn()
-        .mockImplementation((key: string) =>
-          Promise.resolve(key === 'onboarding_complete' ? 'true' : null)
-        ),
-    })
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
-
-    renderHome()
-    expect(await screen.findByText('sample-repo')).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Remove sample-repo from list' }))
-
-    expect(api.removeRepo).not.toHaveBeenCalled()
-    expect(screen.getByText('sample-repo')).toBeInTheDocument()
-  })
 })
 
-describe('Home active pull requests', () => {
+describe('Home active repositories', () => {
   beforeEach(() => {
     useStore.setState({ repos: [], scanResults: [], scanInProgress: false })
   })
@@ -141,49 +84,53 @@ describe('Home active pull requests', () => {
     vi.restoreAllMocks()
   })
 
-  it('lists open PRs across repositories with their review state', async () => {
+  it('lists repositories with open PRs and their open-PR count', async () => {
     installMockApi({
       listRepos: vi.fn().mockResolvedValue([repo]),
-      listActivePrs: vi.fn().mockResolvedValue([activePr]),
+      listRepoActivity: vi.fn().mockResolvedValue([activity(2)]),
       getSetting: onboarded(),
     })
 
     renderHome()
 
     expect(
-      await screen.findByRole('heading', { name: 'Active pull requests', level: 2 })
+      await screen.findByRole('heading', { name: 'Active repositories', level: 2 })
     ).toBeInTheDocument()
-    const active = within(section('Active pull requests'))
-    expect(active.getByRole('button', { name: /Add export button/ })).toBeInTheDocument()
-    expect(active.getByText('sample-repo')).toBeInTheDocument()
-    expect(active.getByText('Review in progress')).toBeInTheDocument()
+    const active = within(section('Active repositories'))
+    expect(active.getByRole('button', { name: /^sample-repo/ })).toBeInTheDocument()
+    expect(active.getByText('2 open PRs')).toBeInTheDocument()
   })
 
-  it('opens the PR when its row is clicked', async () => {
+  it('opens the repository when its row is clicked', async () => {
     installMockApi({
-      listActivePrs: vi.fn().mockResolvedValue([activePr]),
+      listRepos: vi.fn().mockResolvedValue([repo]),
+      listRepoActivity: vi.fn().mockResolvedValue([activity(1)]),
       getSetting: onboarded(),
     })
 
     renderHome()
-    await userEvent.click(await screen.findByRole('button', { name: /Add export button/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /^sample-repo/ }))
 
-    expect(await screen.findByText('PR screen')).toBeInTheDocument()
+    expect(await screen.findByText('Repo screen')).toBeInTheDocument()
   })
 
-  it('hides the section when no PR is open', async () => {
+  it('hides the section when no repository has an open PR', async () => {
     installMockApi({ listRepos: vi.fn().mockResolvedValue([repo]), getSetting: onboarded() })
 
     renderHome()
     expect(await screen.findByRole('heading', { name: 'Discovered', level: 2 })).toBeInTheDocument()
 
-    expect(screen.queryByRole('heading', { name: 'Active pull requests' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Active repositories' })).not.toBeInTheDocument()
   })
 
   it('reloads when an agent changes a PR', async () => {
     let notify = (_data: { repoPath: string; prId: string }): void => {}
     installMockApi({
-      listActivePrs: vi.fn().mockResolvedValueOnce([]).mockResolvedValue([activePr]),
+      listRepos: vi.fn().mockResolvedValue([repo]),
+      listRepoActivity: vi
+        .fn()
+        .mockResolvedValueOnce([])
+        .mockResolvedValue([activity(1)]),
       getSetting: onboarded(),
       onPrUpdated: vi.fn().mockImplementation((callback: typeof notify) => {
         notify = callback
@@ -192,23 +139,26 @@ describe('Home active pull requests', () => {
     })
 
     renderHome()
+    await screen.findByRole('heading', { name: 'Discovered', level: 2 })
     await act(async () => notify({ repoPath: '/work/sample-repo', prId: 'pr1' }))
 
-    expect(await screen.findByRole('button', { name: /Add export button/ })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'Active repositories', level: 2 })
+    ).toBeInTheDocument()
   })
 
-  it('filters PRs by the search text', async () => {
+  it('filters repositories by the search text', async () => {
     installMockApi({
       listRepos: vi.fn().mockResolvedValue([repo]),
-      listActivePrs: vi.fn().mockResolvedValue([activePr]),
+      listRepoActivity: vi.fn().mockResolvedValue([activity(1)]),
       getSetting: onboarded(),
     })
 
     renderHome()
-    await screen.findByRole('button', { name: /Add export button/ })
+    await screen.findByRole('button', { name: /^sample-repo/ })
     await userEvent.type(screen.getByRole('textbox'), 'unrelated')
 
-    expect(screen.queryByRole('button', { name: /Add export button/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^sample-repo/ })).not.toBeInTheDocument()
   })
 })
 
@@ -242,9 +192,7 @@ describe('Home repository lists', () => {
   it('lists a repository whose PRs are all closed under Recent', async () => {
     installMockApi({
       listRepos: vi.fn().mockResolvedValue([repo]),
-      listReviewedRepos: vi
-        .fn()
-        .mockResolvedValue([{ ...repo, last_pr_at: '2026-04-08T09:00:00Z' }]),
+      listRepoActivity: vi.fn().mockResolvedValue([activity(0)]),
       getSetting: onboarded(),
     })
 
@@ -255,26 +203,6 @@ describe('Home repository lists', () => {
       within(section('Recent')).getByRole('button', { name: /^sample-repo/ })
     ).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Discovered' })).not.toBeInTheDocument()
-  })
-
-  it('removes a repository from Recent', async () => {
-    installMockApi({
-      listRepos: vi.fn().mockResolvedValueOnce([repo]).mockResolvedValue([]),
-      listReviewedRepos: vi
-        .fn()
-        .mockResolvedValueOnce([{ ...repo, last_pr_at: '2026-04-08T09:00:00Z' }])
-        .mockResolvedValue([]),
-      getSetting: onboarded(),
-    })
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-
-    renderHome()
-    await screen.findByRole('heading', { name: 'Recent', level: 2 })
-    await userEvent.click(screen.getByRole('button', { name: 'Remove sample-repo from list' }))
-
-    await waitFor(() =>
-      expect(screen.queryByRole('heading', { name: 'Recent' })).not.toBeInTheDocument()
-    )
   })
 
   it('lists known repositories without PRs and scanned repositories under Discovered, A to Z', async () => {
@@ -291,7 +219,7 @@ describe('Home repository lists', () => {
     await screen.findByRole('button', { name: /^zeta/ })
 
     const names = within(section('Discovered'))
-      .getAllByRole('button', { name: /^(?!Remove)/ })
+      .getAllByRole('button')
       .map((button) => button.textContent)
     expect(names).toEqual([
       expect.stringMatching(/^another-repo/),
@@ -300,15 +228,15 @@ describe('Home repository lists', () => {
     ])
   })
 
-  it('shows a repository with an open PR only through its PRs', async () => {
+  it('shows a repository with an open PR only under Active repositories', async () => {
     installMockApi({
       listRepos: vi.fn().mockResolvedValue([repo]),
-      listActivePrs: vi.fn().mockResolvedValue([activePr]),
+      listRepoActivity: vi.fn().mockResolvedValue([activity(1)]),
       getSetting: onboarded(),
     })
 
     renderHome()
-    await screen.findByRole('heading', { name: 'Active pull requests', level: 2 })
+    await screen.findByRole('heading', { name: 'Active repositories', level: 2 })
 
     expect(screen.queryByRole('heading', { name: 'Recent' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Discovered' })).not.toBeInTheDocument()
