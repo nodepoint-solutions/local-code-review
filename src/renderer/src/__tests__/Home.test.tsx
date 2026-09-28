@@ -48,6 +48,7 @@ function renderHome() {
     <MemoryRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/repo/:repoId" element={<p>Repo screen</p>} />
         <Route path="/repo/:repoId/pr/:prId" element={<p>PR screen</p>} />
       </Routes>
     </MemoryRouter>
@@ -174,7 +175,7 @@ describe('Home active pull requests', () => {
     installMockApi({ listRepos: vi.fn().mockResolvedValue([repo]), getSetting: onboarded() })
 
     renderHome()
-    expect(await screen.findByRole('heading', { name: 'Recent', level: 2 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Discovered', level: 2 })).toBeInTheDocument()
 
     expect(screen.queryByRole('heading', { name: 'Active pull requests' })).not.toBeInTheDocument()
   })
@@ -196,23 +197,6 @@ describe('Home active pull requests', () => {
     expect(await screen.findByRole('button', { name: /Add export button/ })).toBeInTheDocument()
   })
 
-  it('drops the PRs of a repository the user removes', async () => {
-    installMockApi({
-      listRepos: vi.fn().mockResolvedValueOnce([repo]).mockResolvedValue([]),
-      listActivePrs: vi.fn().mockResolvedValueOnce([activePr]).mockResolvedValue([]),
-      getSetting: onboarded(),
-    })
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-
-    renderHome()
-    await screen.findByRole('button', { name: /Add export button/ })
-    await userEvent.click(screen.getByRole('button', { name: 'Remove sample-repo from list' }))
-
-    await waitFor(() =>
-      expect(screen.queryByRole('button', { name: /Add export button/ })).not.toBeInTheDocument()
-    )
-  })
-
   it('filters PRs by the search text', async () => {
     installMockApi({
       listRepos: vi.fn().mockResolvedValue([repo]),
@@ -228,15 +212,39 @@ describe('Home active pull requests', () => {
   })
 })
 
-describe('Home recent repositories', () => {
+describe('Home repository lists', () => {
   beforeEach(() => {
     useStore.setState({ repos: [], scanResults: [], scanInProgress: false })
   })
 
-  it('lists a visited repository that has PRs', async () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  const otherRepo: Repository = {
+    id: 'r2',
+    path: '/work/another-repo',
+    name: 'another-repo',
+    created_at: '2026-04-08T09:00:00Z',
+    last_visited_at: null,
+  }
+
+  function scanning() {
+    return vi
+      .fn()
+      .mockImplementation((key: string) =>
+        Promise.resolve(
+          key === 'onboarding_complete' ? 'true' : key === 'scan_base_dir' ? '/work' : null
+        )
+      )
+  }
+
+  it('lists a repository whose PRs are all closed under Recent', async () => {
     installMockApi({
       listRepos: vi.fn().mockResolvedValue([repo]),
-      listActivePrs: vi.fn().mockResolvedValue([activePr]),
+      listReviewedRepos: vi
+        .fn()
+        .mockResolvedValue([{ ...repo, last_pr_at: '2026-04-08T09:00:00Z' }]),
       getSetting: onboarded(),
     })
 
@@ -246,5 +254,76 @@ describe('Home recent repositories', () => {
     expect(
       within(section('Recent')).getByRole('button', { name: /^sample-repo/ })
     ).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Discovered' })).not.toBeInTheDocument()
+  })
+
+  it('removes a repository from Recent', async () => {
+    installMockApi({
+      listRepos: vi.fn().mockResolvedValueOnce([repo]).mockResolvedValue([]),
+      listReviewedRepos: vi
+        .fn()
+        .mockResolvedValueOnce([{ ...repo, last_pr_at: '2026-04-08T09:00:00Z' }])
+        .mockResolvedValue([]),
+      getSetting: onboarded(),
+    })
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    renderHome()
+    await screen.findByRole('heading', { name: 'Recent', level: 2 })
+    await userEvent.click(screen.getByRole('button', { name: 'Remove sample-repo from list' }))
+
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: 'Recent' })).not.toBeInTheDocument()
+    )
+  })
+
+  it('lists known repositories without PRs and scanned repositories under Discovered, A to Z', async () => {
+    installMockApi({
+      listRepos: vi.fn().mockResolvedValue([repo, otherRepo]),
+      scanRepos: vi.fn().mockResolvedValue([
+        { path: '/work/zeta', name: 'zeta' },
+        { path: repo.path, name: repo.name },
+      ]),
+      getSetting: scanning(),
+    })
+
+    renderHome()
+    await screen.findByRole('button', { name: /^zeta/ })
+
+    const names = within(section('Discovered'))
+      .getAllByRole('button', { name: /^(?!Remove)/ })
+      .map((button) => button.textContent)
+    expect(names).toEqual([
+      expect.stringMatching(/^another-repo/),
+      expect.stringMatching(/^sample-repo/),
+      expect.stringMatching(/^zeta/),
+    ])
+  })
+
+  it('shows a repository with an open PR only through its PRs', async () => {
+    installMockApi({
+      listRepos: vi.fn().mockResolvedValue([repo]),
+      listActivePrs: vi.fn().mockResolvedValue([activePr]),
+      getSetting: onboarded(),
+    })
+
+    renderHome()
+    await screen.findByRole('heading', { name: 'Active pull requests', level: 2 })
+
+    expect(screen.queryByRole('heading', { name: 'Recent' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Discovered' })).not.toBeInTheDocument()
+  })
+
+  it('opens a known repository from Discovered without adding it again', async () => {
+    const api = installMockApi({
+      listRepos: vi.fn().mockResolvedValue([repo]),
+      getSetting: onboarded(),
+    })
+
+    renderHome()
+    await userEvent.click(await screen.findByRole('button', { name: /^sample-repo/ }))
+
+    expect(await screen.findByText('Repo screen')).toBeInTheDocument()
+    expect(api.addRepoByPath).not.toHaveBeenCalled()
   })
 })

@@ -4,7 +4,7 @@ import { useStore } from '../store'
 import NavBar from '../components/NavBar'
 import PhaseChip from '../components/PhaseChip'
 import { formatRelativeTime } from '../utils/formatTime'
-import type { ActivePrItem, DiscoveredRepo, Repository } from '../../../shared/types'
+import type { ActivePrItem, DiscoveredRepo, Repository, ReviewedRepo } from '../../../shared/types'
 import styles from './Home.module.css'
 
 function FolderIcon(): JSX.Element {
@@ -147,6 +147,41 @@ function prMatches(pr: ActivePrItem, query: string): boolean {
   return pr.title.toLowerCase().includes(q) || pr.repoName.toLowerCase().includes(q)
 }
 
+interface RepoRowProps {
+  name: string
+  path: string
+  discovered?: boolean
+  onOpen: () => void
+  onRemove?: () => void
+}
+
+function RepoRow({ name, path, discovered, onOpen, onRemove }: RepoRowProps): JSX.Element {
+  return (
+    <div className={`${styles.repoItem} ${discovered ? styles.repoItemDiscovered : ''}`}>
+      <button className={styles.repoItemMain} onClick={onOpen}>
+        <div className={`${styles.repoIcon} ${discovered ? styles.repoIconDiscovered : ''}`}>
+          <RepoIcon />
+        </div>
+        <div className={styles.repoInfo}>
+          <span className={styles.repoName}>{name}</span>
+          <span className={styles.repoPath}>{path}</span>
+        </div>
+        <ChevronRightIcon />
+      </button>
+      {onRemove && (
+        <button
+          className={styles.repoRemoveBtn}
+          title="Remove from list"
+          aria-label={`Remove ${name} from list`}
+          onClick={onRemove}
+        >
+          <XIcon />
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function Home(): JSX.Element {
   const navigate = useNavigate()
   const {
@@ -160,16 +195,26 @@ export default function Home(): JSX.Element {
   } = useStore()
 
   const [activePrs, setActivePrs] = useState<ActivePrItem[]>([])
+  const [reviewedRepos, setReviewedRepos] = useState<ReviewedRepo[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [onboardingComplete, setOnboardingComplete] = useState(true)
   const [baseDirSet, setBaseDirSet] = useState(false)
 
+  async function reloadPrLists(): Promise<void> {
+    const [active, reviewed] = await Promise.all([
+      window.api.listActivePrs(),
+      window.api.listReviewedRepos(),
+    ])
+    setActivePrs(active)
+    setReviewedRepos(reviewed)
+  }
+
   // repos:list registers scanned and agent-adopted repositories first, so the
-  // PRs load after it and include theirs
+  // PR lists load after it and include theirs
   async function reload(): Promise<Repository[]> {
     const updated = await window.api.listRepos()
     setRepos(updated)
-    setActivePrs(await window.api.listActivePrs())
+    await reloadPrLists()
     return updated
   }
 
@@ -196,9 +241,7 @@ export default function Home(): JSX.Element {
     const offReposChanged = window.api.onReposChanged(reload)
     // Agents open, close and review PRs through MCP, so the list reloads on
     // their events rather than only on mount
-    const offPrUpdated = window.api.onPrUpdated(() => {
-      window.api.listActivePrs().then(setActivePrs)
-    })
+    const offPrUpdated = window.api.onPrUpdated(reloadPrLists)
     return () => {
       offReposChanged()
       offPrUpdated()
@@ -206,12 +249,21 @@ export default function Home(): JSX.Element {
   }, [])
 
   const knownPaths = new Set(repos.map((r) => r.path))
+  const reviewedIds = new Set([
+    ...activePrs.map((pr) => pr.repoId),
+    ...reviewedRepos.map((r) => r.id),
+  ])
   const q = searchQuery
 
+  // Each repository sits on one list: with an open PR it shows through its
+  // PRs, with only closed PRs under Recent, and without PRs under Discovered
   const visibleActivePrs = activePrs.filter((pr) => prMatches(pr, q))
-  const recentRepos = repos.filter((r) => r.last_visited_at && matches(r, q)).slice(0, 5)
-  const discoveredRepos = scanResults
-    .filter((r) => !knownPaths.has(r.path) && matches(r, q))
+  const recentRepos = reviewedRepos.filter((r) => matches(r, q))
+  const discoveredRepos: Array<{ name: string; path: string; repo?: Repository }> = [
+    ...repos.filter((r) => !reviewedIds.has(r.id)).map((r) => ({ ...r, repo: r })),
+    ...scanResults.filter((r) => !knownPaths.has(r.path)),
+  ]
+    .filter((r) => matches(r, q))
     .sort((a, b) => a.name.localeCompare(b.name))
 
   const showOnboarding = !onboardingComplete && repos.length === 0 && !baseDirSet
@@ -398,26 +450,13 @@ export default function Home(): JSX.Element {
             </div>
             <div className={styles.repoList}>
               {recentRepos.map((repo) => (
-                <div key={repo.id} className={styles.repoItem}>
-                  <button className={styles.repoItemMain} onClick={() => handleSelectRepo(repo)}>
-                    <div className={styles.repoIcon}>
-                      <RepoIcon />
-                    </div>
-                    <div className={styles.repoInfo}>
-                      <span className={styles.repoName}>{repo.name}</span>
-                      <span className={styles.repoPath}>{repo.path}</span>
-                    </div>
-                    <ChevronRightIcon />
-                  </button>
-                  <button
-                    className={styles.repoRemoveBtn}
-                    title="Remove from list"
-                    aria-label={`Remove ${repo.name} from list`}
-                    onClick={() => handleRemoveRepo(repo)}
-                  >
-                    <XIcon />
-                  </button>
-                </div>
+                <RepoRow
+                  key={repo.id}
+                  name={repo.name}
+                  path={repo.path}
+                  onOpen={() => handleSelectRepo(repo)}
+                  onRemove={() => handleRemoveRepo(repo)}
+                />
               ))}
             </div>
           </section>
@@ -433,21 +472,17 @@ export default function Home(): JSX.Element {
             </div>
             {discoveredRepos.length > 0 && (
               <div className={styles.repoList}>
-                {discoveredRepos.map((repo) => (
-                  <button
-                    key={repo.path}
-                    className={`${styles.repoItem} ${styles.repoItemDiscovered}`}
-                    onClick={() => handleDiscoveredRepo(repo)}
-                  >
-                    <div className={`${styles.repoIcon} ${styles.repoIconDiscovered}`}>
-                      <RepoIcon />
-                    </div>
-                    <div className={styles.repoInfo}>
-                      <span className={styles.repoName}>{repo.name}</span>
-                      <span className={styles.repoPath}>{repo.path}</span>
-                    </div>
-                    <ChevronRightIcon />
-                  </button>
+                {discoveredRepos.map(({ name, path, repo }) => (
+                  <RepoRow
+                    key={path}
+                    name={name}
+                    path={path}
+                    discovered
+                    onOpen={() =>
+                      repo ? handleSelectRepo(repo) : handleDiscoveredRepo({ name, path })
+                    }
+                    onRemove={repo && (() => handleRemoveRepo(repo))}
+                  />
                 ))}
               </div>
             )}

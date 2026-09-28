@@ -3,11 +3,15 @@ import path from 'path'
 import type Database from 'better-sqlite3'
 import { insertRepo, listRepos, touchRepo, removeRepo, clearRemovedRepo } from '../db/repos'
 import { syncDiscoveredRepos, registerAgentRepo } from '../services/repo-service'
+import { listReviewedRepos } from '../services/reviewed-repos'
 import { drainPendingRepos } from '../../shared/agent-bridge'
 import { getSetting, setSetting } from '../db/settings'
 import { isGitRepo } from '../git/branches'
 import { scanForRepos, scanForReviewRepos } from '../git/scanner'
 import { checkGlobalGitignore, installGlobalGitignore } from '../gitignore'
+import { ReviewStore } from '../../shared/review-store'
+
+const store = new ReviewStore()
 
 export function registerRepoHandlers(
   db: Database.Database,
@@ -83,11 +87,11 @@ export function registerRepoHandlers(
     }
   })
 
-  ipcMain.handle('repos:touch', (_event, repoId: string) => {
+  ipcMain.handle('repos:list-reviewed', () => {
     try {
-      touchRepo(db, repoId)
+      return listReviewedRepos(db, store)
     } catch {
-      // non-fatal
+      return []
     }
   })
 

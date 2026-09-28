@@ -24,6 +24,11 @@ export interface Repository {
   last_visited_at: string | null
 }
 
+/** Home "Recent" row: a repository whose PRs are all closed. */
+export interface ReviewedRepo extends Repository {
+  last_pr_at: string
+}
+
 export interface DiscoveredRepo {
   path: string
   name: string

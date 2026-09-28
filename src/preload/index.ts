@@ -4,6 +4,7 @@ import type {
   PRListItem,
   ActivePrItem,
   Repository,
+  ReviewedRepo,
   DiscoveredRepo,
   PRFile,
   ReviewFile,
@@ -21,7 +22,7 @@ const api = {
   openRepo: (): Promise<{ repo?: Repository; error?: string }> => ipcRenderer.invoke('repos:open'),
   addRepoByPath: (repoPath: string): Promise<{ repo?: Repository; error?: string }> =>
     ipcRenderer.invoke('repos:add-by-path', repoPath),
-  touchRepo: (repoId: string): Promise<void> => ipcRenderer.invoke('repos:touch', repoId),
+  listReviewedRepos: (): Promise<ReviewedRepo[]> => ipcRenderer.invoke('repos:list-reviewed'),
   removeRepo: (repoPath: string): Promise<{ error?: string }> =>
     ipcRenderer.invoke('repos:remove', repoPath),
   getSetting: (key: string): Promise<string | null> => ipcRenderer.invoke('repos:get-setting', key),

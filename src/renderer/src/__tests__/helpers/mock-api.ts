@@ -12,7 +12,7 @@ export function installMockApi(overrides: Record<string, unknown> = {}) {
     listRepos: vi.fn().mockResolvedValue([]),
     openRepo: vi.fn().mockResolvedValue({}),
     addRepoByPath: vi.fn().mockResolvedValue({}),
-    touchRepo: vi.fn().mockResolvedValue(undefined),
+    listReviewedRepos: vi.fn().mockResolvedValue([]),
     removeRepo: vi.fn().mockResolvedValue({}),
     getSetting: vi.fn().mockResolvedValue(null),
     setSetting: vi.fn().mockResolvedValue(undefined),
