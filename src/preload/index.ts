@@ -2,8 +2,8 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type {
   PRListItem,
+  ActivePrItem,
   Repository,
-  RepositoryWithMeta,
   DiscoveredRepo,
   PRFile,
   ReviewFile,
@@ -17,7 +17,7 @@ import type {
 
 const api = {
   // Repos
-  listRepos: (): Promise<RepositoryWithMeta[]> => ipcRenderer.invoke('repos:list'),
+  listRepos: (): Promise<Repository[]> => ipcRenderer.invoke('repos:list'),
   openRepo: (): Promise<{ repo?: Repository; error?: string }> => ipcRenderer.invoke('repos:open'),
   addRepoByPath: (repoPath: string): Promise<{ repo?: Repository; error?: string }> =>
     ipcRenderer.invoke('repos:add-by-path', repoPath),
@@ -41,6 +41,7 @@ const api = {
 
   // PRs (repoPath replaces repoId)
   listPrs: (repoPath: string): Promise<PRListItem[]> => ipcRenderer.invoke('prs:list', repoPath),
+  listActivePrs: (): Promise<ActivePrItem[]> => ipcRenderer.invoke('prs:list-active'),
   createPr: (payload: CreatePrPayload): Promise<PRFile | { error: string }> =>
     ipcRenderer.invoke('prs:create', payload),
   getPr: (repoPath: string, prId: string): Promise<PrDetail | { error: string } | null> =>

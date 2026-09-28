@@ -5,15 +5,14 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import PR from '../screens/PR'
 import { useStore } from '../store'
 import { installMockApi } from './helpers/mock-api'
-import type { Commit, PrDetail, RepositoryWithMeta } from '../../../shared/types'
+import type { Commit, PrDetail, Repository } from '../../../shared/types'
 
-const repo: RepositoryWithMeta = {
+const repo: Repository = {
   id: 'r1',
   path: '/work/sample-repo',
   name: 'sample-repo',
   created_at: '2026-04-08T09:00:00Z',
   last_visited_at: '2026-04-08T10:00:00Z',
-  pr_count: 1,
 }
 
 const detail: PrDetail = {

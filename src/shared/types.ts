@@ -24,10 +24,6 @@ export interface Repository {
   last_visited_at: string | null
 }
 
-export interface RepositoryWithMeta extends Repository {
-  pr_count: number
-}
-
 export interface DiscoveredRepo {
   path: string
   name: string
@@ -95,6 +91,13 @@ export interface PrDetail {
 export type PRListItem = PRFile & {
   workflowPhase: WorkflowPhase
   openComments: number
+}
+
+/** Home list row: an open PR plus the repository it belongs to. */
+export type ActivePrItem = PRListItem & {
+  repoId: string
+  repoName: string
+  repoPath: string
 }
 
 // ── Commits ───────────────────────────────────────────────────────────────────

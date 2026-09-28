@@ -236,14 +236,33 @@
   text-overflow: ellipsis;
 }
 
-.repoBadge {
-  font-size: 11px;
+.prMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.prRepo {
   font-weight: 500;
-  padding: 1px 6px;
-  border-radius: 10px;
-  background: var(--accent-subtle);
+  color: var(--text);
+}
+
+.branch {
+  font-family: var(--font-mono);
+  font-size: 11px;
   color: var(--accent-text);
-  flex-shrink: 0;
+  background: var(--accent-subtle);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.arrow {
+  color: var(--text-subtle);
 }
 
 .empty {

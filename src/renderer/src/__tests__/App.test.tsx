@@ -5,15 +5,14 @@ import App, { UPDATE_CHECK_INTERVAL_MS } from '../App'
 import { useStore } from '../store'
 import { installMockApi } from './helpers/mock-api'
 import { UPDATE_AUTH_DECLINED } from '../../../shared/types'
-import type { RepositoryWithMeta } from '../../../shared/types'
+import type { Repository } from '../../../shared/types'
 
-const repo: RepositoryWithMeta = {
+const repo: Repository = {
   id: 'r1',
   path: '/work/sample-repo',
   name: 'sample-repo',
   created_at: '2026-04-08T09:00:00Z',
   last_visited_at: '2026-04-08T10:00:00Z',
-  pr_count: 1,
 }
 
 describe('App deep links', () => {

@@ -17,6 +17,7 @@ import { getDiff } from '../git/diff-parser'
 import { getCommitDiff } from '../git/commits'
 import { getPrDetail, refreshPrDetail, listPrCommits } from '../services/pr-service'
 import { listPrsWithState } from '../../shared/pr-state'
+import { listActivePrs } from '../services/active-prs'
 import type { CreatePrPayload, PrDetail } from '../../shared/types'
 import { assertKnownRepo } from './_guard'
 
@@ -27,6 +28,14 @@ export function registerPrHandlers(db: Database.Database): void {
     try {
       assertKnownRepo(db, repoPath)
       return listPrsWithState(store, repoPath)
+    } catch {
+      return []
+    }
+  })
+
+  ipcMain.handle('prs:list-active', () => {
+    try {
+      return listActivePrs(db, store)
     } catch {
       return []
     }

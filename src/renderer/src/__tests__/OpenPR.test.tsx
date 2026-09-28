@@ -12,7 +12,6 @@ const repo = {
   name: 'sample-repo',
   created_at: '2026-04-08T09:00:00Z',
   last_visited_at: null,
-  pr_count: 0,
 }
 
 function renderOpenPr() {

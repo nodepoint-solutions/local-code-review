@@ -23,6 +23,7 @@ export function installMockApi(overrides: Record<string, unknown> = {}) {
     // Branches / PRs
     listBranches: vi.fn().mockResolvedValue([]),
     listPrs: vi.fn().mockResolvedValue([]),
+    listActivePrs: vi.fn().mockResolvedValue([]),
     createPr: vi.fn().mockResolvedValue({ error: 'not-mocked' }),
     getPr: vi.fn().mockResolvedValue(null),
     refreshPr: vi.fn().mockResolvedValue(null),

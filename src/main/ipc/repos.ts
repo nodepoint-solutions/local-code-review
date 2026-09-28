@@ -7,9 +7,7 @@ import { drainPendingRepos } from '../../shared/agent-bridge'
 import { getSetting, setSetting } from '../db/settings'
 import { isGitRepo } from '../git/branches'
 import { scanForRepos, scanForReviewRepos } from '../git/scanner'
-import { ReviewStore } from '../../shared/review-store'
 import { checkGlobalGitignore, installGlobalGitignore } from '../gitignore'
-const store = new ReviewStore()
 
 export function registerRepoHandlers(
   db: Database.Database,
@@ -30,11 +28,7 @@ export function registerRepoHandlers(
           onRepoAdded?.(repoPath)
         }
       }
-      const repos = listRepos(db)
-      return repos.map((repo) => ({
-        ...repo,
-        pr_count: store.listPRs(repo.path).length,
-      }))
+      return listRepos(db)
     } catch {
       return []
     }

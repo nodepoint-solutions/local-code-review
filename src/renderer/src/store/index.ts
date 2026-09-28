@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { RepositoryWithMeta, DiscoveredRepo, PrDetail } from '../../../shared/types'
+import type { Repository, DiscoveredRepo, PrDetail } from '../../../shared/types'
 
 type Theme = 'dark' | 'light'
 
@@ -7,11 +7,11 @@ interface AppState {
   theme: Theme
   setTheme: (theme: Theme) => void
 
-  repos: RepositoryWithMeta[]
-  setRepos: (repos: RepositoryWithMeta[]) => void
+  repos: Repository[]
+  setRepos: (repos: Repository[]) => void
 
-  selectedRepo: RepositoryWithMeta | null
-  setSelectedRepo: (repo: RepositoryWithMeta | null) => void
+  selectedRepo: Repository | null
+  setSelectedRepo: (repo: Repository | null) => void
 
   scanResults: DiscoveredRepo[]
   setScanResults: (results: DiscoveredRepo[]) => void
