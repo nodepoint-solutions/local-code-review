@@ -1,7 +1,7 @@
 import type { ReviewComment } from '../../../shared/types'
 import styles from './CommentThread.module.css'
 import { formatRelativeTime } from '../utils/formatTime'
-import ReactMarkdown from 'react-markdown'
+import Markdown from './Markdown'
 import { AgentAvatar } from './AgentAvatar'
 
 interface Props {
@@ -82,7 +82,7 @@ export default function CommentThread({
         </div>
       </div>
       <div className={styles.body}>
-        <ReactMarkdown>{comment.body}</ReactMarkdown>
+        <Markdown>{comment.body}</Markdown>
       </div>
       {onResolve && comment.status === 'open' && !comment.is_stale && (
         <div className={styles.resolveActions}>
@@ -106,7 +106,7 @@ export default function CommentThread({
             </span>
           </div>
           <div className={styles.resolutionComment}>
-            <ReactMarkdown>{comment.resolution.comment}</ReactMarkdown>
+            <Markdown>{comment.resolution.comment}</Markdown>
           </div>
         </div>
       )}

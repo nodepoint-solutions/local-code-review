@@ -1,0 +1,36 @@
+/* The GitHub stylesheet picks its colours from the system colour scheme. These
+   variables point it at the app theme, so that the markdown follows the theme
+   the user selected. The doubled selector outranks the stylesheet's own rules. */
+.root:global(.markdown-body) {
+  color-scheme: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  background-color: transparent;
+
+  --fgColor-default: var(--text);
+  --fgColor-muted: var(--text-muted);
+  --fgColor-accent: var(--accent-text);
+  --fgColor-danger: var(--removed-text);
+  --fgColor-success: var(--added-text);
+  --fgColor-attention: var(--stale-text);
+  --fgColor-done: var(--status-submitted-text);
+
+  --bgColor-default: transparent;
+  --bgColor-muted: var(--bg-surface-2);
+  --bgColor-neutral-muted: rgba(110, 118, 129, 0.2);
+  --bgColor-attention-muted: var(--warning-bg);
+
+  --borderColor-default: var(--border);
+  --borderColor-muted: var(--border);
+  --borderColor-neutral-muted: var(--border);
+  --borderColor-accent-emphasis: var(--accent);
+  --borderColor-success-emphasis: var(--added-text);
+  --borderColor-attention-emphasis: var(--stale-border);
+  --borderColor-danger-emphasis: var(--removed-text);
+  --borderColor-done-emphasis: var(--status-submitted-text);
+  --focus-outlineColor: var(--accent);
+}
+
+.root:global(.markdown-body) pre code:global(.hljs) {
+  background: transparent;
+}

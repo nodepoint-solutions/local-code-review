@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import PR from '../screens/PR'
@@ -83,5 +83,33 @@ describe('PR commits tab', () => {
     await act(async () => notify({ repoPath: repo.path, prId: 'pr1' }))
 
     expect(await screen.findByText('feat: against develop')).toBeInTheDocument()
+  })
+})
+
+describe('PR description', () => {
+  const description = [
+    '## Goals',
+    '',
+    '<!-- Delete this hint before you submit -->',
+    '',
+    '| Area | Change |',
+    '| --- | --- |',
+    '| Auth | Added middleware |',
+  ].join('\n')
+  const withDescription: PrDetail = { ...detail, pr: { ...detail.pr, description } }
+
+  beforeEach(() => {
+    useStore.setState({ repos: [repo], selectedRepo: repo })
+  })
+
+  it('renders tables and hides comments', async () => {
+    installMockApi({ getPr: vi.fn().mockResolvedValue(withDescription) })
+    renderPr()
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Goals' })).toBeInTheDocument()
+    const table = screen.getByRole('table')
+    expect(within(table).getByRole('columnheader', { name: 'Area' })).toBeInTheDocument()
+    expect(within(table).getByRole('cell', { name: 'Added middleware' })).toBeInTheDocument()
+    expect(screen.queryByText(/Delete this hint/)).not.toBeInTheDocument()
   })
 })

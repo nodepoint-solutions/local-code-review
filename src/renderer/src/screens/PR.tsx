@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import ReactMarkdown from 'react-markdown'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import NavBar from '../components/NavBar'
@@ -14,6 +13,7 @@ import CommentNav from '../components/CommentNav'
 import CommentOutline from '../components/CommentOutline'
 import { AgentIcon } from '../components/AgentAvatar'
 import SubmitFixDialog from '../components/SubmitFixDialog'
+import Markdown from '../components/Markdown'
 import { sortCommentsByPosition } from '../utils/sortComments'
 import type {
   AddCommentPayload,
@@ -776,7 +776,7 @@ export default function PR(): JSX.Element {
                 </div>
               ) : pr.description ? (
                 <div className={styles.descriptionBody}>
-                  <ReactMarkdown>{pr.description}</ReactMarkdown>
+                  <Markdown>{pr.description}</Markdown>
                 </div>
               ) : (
                 <div className={styles.descriptionEmpty}>No description provided.</div>
