@@ -14,6 +14,7 @@ import CommentOutline from '../components/CommentOutline'
 import { AgentIcon } from '../components/AgentAvatar'
 import SubmitFixDialog from '../components/SubmitFixDialog'
 import Markdown from '../components/Markdown'
+import DescriptionEditor from '../components/DescriptionEditor'
 import { sortCommentsByPosition } from '../utils/sortComments'
 import type {
   AddCommentPayload,
@@ -26,6 +27,8 @@ import type {
 import { PRWorkflow } from '../../../shared/pr-workflow'
 import { formatRelativeTime } from '../utils/formatTime'
 import styles from './PR.module.css'
+
+const MIN_EDITOR_HEIGHT = 160
 
 type Tab = 'overview' | 'commits' | 'files' | 'previous-reviews'
 
@@ -174,6 +177,8 @@ export default function PR(): JSX.Element {
   const [titleDraft, setTitleDraft] = useState('')
   const [editingDescription, setEditingDescription] = useState(false)
   const [descriptionDraft, setDescriptionDraft] = useState('')
+  const [descriptionHeight, setDescriptionHeight] = useState(MIN_EDITOR_HEIGHT)
+  const descriptionRef = useRef<HTMLDivElement | null>(null)
   const fileRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [treeWidth, setTreeWidth] = useState(() => {
     const saved = localStorage.getItem('fileTreeWidth')
@@ -741,6 +746,10 @@ export default function PR(): JSX.Element {
                   <button
                     className={styles.editBtn}
                     onClick={() => {
+                      // The editor opens at the height of the rendered description.
+                      setDescriptionHeight(
+                        Math.max(descriptionRef.current?.offsetHeight ?? 0, MIN_EDITOR_HEIGHT)
+                      )
                       setDescriptionDraft(pr.description ?? '')
                       setEditingDescription(true)
                     }}
@@ -751,16 +760,12 @@ export default function PR(): JSX.Element {
               </div>
               {editingDescription ? (
                 <div className={styles.descriptionEditor}>
-                  <textarea
-                    className={styles.descriptionTextarea}
+                  <DescriptionEditor
                     value={descriptionDraft}
-                    autoFocus
-                    rows={6}
-                    onChange={(e) => setDescriptionDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') setEditingDescription(false)
-                    }}
-                    placeholder="Add a description…"
+                    minHeight={descriptionHeight}
+                    onChange={setDescriptionDraft}
+                    onSave={handleSaveDescription}
+                    onCancel={() => setEditingDescription(false)}
                   />
                   <div className={styles.editActions}>
                     <button className={styles.editSaveBtn} onClick={handleSaveDescription}>
@@ -775,7 +780,7 @@ export default function PR(): JSX.Element {
                   </div>
                 </div>
               ) : pr.description ? (
-                <div className={styles.descriptionBody}>
+                <div className={styles.descriptionBody} ref={descriptionRef}>
                   <Markdown>{pr.description}</Markdown>
                 </div>
               ) : (

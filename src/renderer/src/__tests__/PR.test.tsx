@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import PR from '../screens/PR'
 import { useStore } from '../store'
+import { EditorView } from '@codemirror/view'
 import { installMockApi } from './helpers/mock-api'
 import type { Commit, PrDetail, Repository } from '../../../shared/types'
 
@@ -111,5 +112,35 @@ describe('PR description', () => {
     expect(within(table).getByRole('columnheader', { name: 'Area' })).toBeInTheDocument()
     expect(within(table).getByRole('cell', { name: 'Added middleware' })).toBeInTheDocument()
     expect(screen.queryByText(/Delete this hint/)).not.toBeInTheDocument()
+  })
+
+  it('shows the markdown source, with its syntax, while editing', async () => {
+    installMockApi({ getPr: vi.fn().mockResolvedValue(withDescription) })
+    renderPr()
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+
+    const editor = screen.getByRole('textbox', { name: 'Description' })
+    expect(editor).toHaveTextContent('## Goals')
+    expect(editor).toHaveTextContent('<!-- Delete this hint before you submit -->')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  })
+
+  it('renders the edited description after save', async () => {
+    const updatePr = vi.fn(async (_repoPath: string, _prId: string, patch: object) => ({
+      ...withDescription.pr,
+      ...patch,
+    }))
+    installMockApi({ getPr: vi.fn().mockResolvedValue(withDescription), updatePr })
+    renderPr()
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+
+    const view = EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Description' }))
+    act(() => {
+      view?.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: '### Risks' } })
+    })
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(updatePr).toHaveBeenCalledWith(repo.path, 'pr1', { description: '### Risks' })
+    expect(await screen.findByRole('heading', { level: 3, name: 'Risks' })).toBeInTheDocument()
   })
 })
