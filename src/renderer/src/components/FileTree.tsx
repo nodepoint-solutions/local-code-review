@@ -5,6 +5,8 @@ import styles from './FileTree.module.css'
 
 interface Props {
   files: ParsedFile[]
+  filter: string
+  onFilterChange: (filter: string) => void
   onSelect: (filePath: string) => void
 }
 
@@ -159,12 +161,14 @@ function TreeNodeItem({
   )
 }
 
-export default function FileTree({ files, onSelect }: Props): JSX.Element {
+export default function FileTree({ files, filter, onFilterChange, onSelect }: Props): JSX.Element {
   const tree = buildTree(files)
   const [openFolders, setOpenFolders] = useState<Set<string>>(
     () => new Set(getAllFolderPaths(tree))
   )
   const [activeFile, setActiveFile] = useState<string | null>(null)
+  // A filter opens every folder, so that each match is visible
+  const visibleFolders = filter.trim() ? new Set(getAllFolderPaths(tree)) : openFolders
 
   function handleSelect(filePath: string): void {
     setActiveFile(filePath)
@@ -184,10 +188,24 @@ export default function FileTree({ files, onSelect }: Props): JSX.Element {
   }
 
   return (
-    <div className={styles.tree}>
+    <nav className={styles.tree} aria-label="Changed files">
       <div className={styles.heading}>
         <span>Files</span>
         <span className={styles.count}>{files.length}</span>
+      </div>
+      <div className={styles.filter}>
+        <input
+          className={styles.filterInput}
+          type="search"
+          value={filter}
+          onChange={(e) => onFilterChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') onFilterChange('')
+          }}
+          placeholder="Filter files…"
+          aria-label="Filter changed files"
+          spellCheck={false}
+        />
       </div>
       <div className={styles.list}>
         {tree.map((node) => (
@@ -196,12 +214,12 @@ export default function FileTree({ files, onSelect }: Props): JSX.Element {
             node={node}
             depth={0}
             activeFile={activeFile}
-            openFolders={openFolders}
+            openFolders={visibleFolders}
             onToggleFolder={handleToggleFolder}
             onSelectFile={handleSelect}
           />
         ))}
       </div>
-    </div>
+    </nav>
   )
 }

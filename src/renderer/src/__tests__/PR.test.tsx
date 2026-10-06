@@ -6,7 +6,7 @@ import PR from '../screens/PR'
 import { useStore } from '../store'
 import { EditorView } from '@codemirror/view'
 import { installMockApi } from './helpers/mock-api'
-import type { Commit, PrDetail, Repository } from '../../../shared/types'
+import type { Commit, ParsedFile, PrDetail, Repository } from '../../../shared/types'
 
 const repo: Repository = {
   id: 'r1',
@@ -142,5 +142,105 @@ describe('PR description', () => {
 
     expect(updatePr).toHaveBeenCalledWith(repo.path, 'pr1', { description: '### Risks' })
     expect(await screen.findByRole('heading', { level: 3, name: 'Risks' })).toBeInTheDocument()
+  })
+})
+
+describe('PR files changed filter', () => {
+  function makeFile(newPath: string): ParsedFile {
+    return {
+      oldPath: newPath,
+      newPath,
+      isNew: false,
+      isDeleted: false,
+      isRenamed: false,
+      lines: [
+        {
+          diffLineNumber: 1,
+          type: 'added',
+          content: 'greeting',
+          oldLineNumber: null,
+          newLineNumber: 1,
+        },
+      ],
+    }
+  }
+
+  const withFiles: PrDetail = {
+    ...detail,
+    diff: ['a/hello.txt', 'a/hi.txt', 'a/bye.txt', 'b/goodbye.txt'].map(makeFile),
+  }
+
+  function treeFiles(): string[] {
+    const tree = screen.getByRole('navigation', { name: 'Changed files' })
+    return within(tree)
+      .getAllByRole('button')
+      .map((button) => button.getAttribute('title'))
+      .filter((title): title is string => title !== null)
+  }
+
+  function diffFiles(): string[] {
+    return screen
+      .queryAllByRole('region')
+      .map((region) => region.getAttribute('aria-label'))
+      .filter((label): label is string => label !== null)
+  }
+
+  async function openFilesTab(): Promise<HTMLElement> {
+    installMockApi({ getPr: vi.fn().mockResolvedValue(withFiles) })
+    renderPr()
+    await userEvent.click(await screen.findByRole('button', { name: /Files changed/ }))
+    return screen.getByRole('searchbox', { name: 'Filter changed files' })
+  }
+
+  beforeEach(() => {
+    useStore.setState({ repos: [repo], selectedRepo: repo })
+  })
+
+  it('shows every file before the user types', async () => {
+    await openFilesTab()
+
+    expect(treeFiles()).toEqual(['a/hello.txt', 'a/hi.txt', 'a/bye.txt', 'b/goodbye.txt'])
+    expect(diffFiles()).toEqual(['a/hello.txt', 'a/hi.txt', 'a/bye.txt', 'b/goodbye.txt'])
+  })
+
+  it('narrows the tree and the diffs on each keystroke', async () => {
+    const filter = await openFilesTab()
+
+    await userEvent.type(filter, 'a/')
+    expect(treeFiles()).toEqual(['a/hello.txt', 'a/hi.txt', 'a/bye.txt'])
+    expect(diffFiles()).toEqual(['a/hello.txt', 'a/hi.txt', 'a/bye.txt'])
+
+    await userEvent.type(filter, 'h')
+    expect(treeFiles()).toEqual(['a/hello.txt', 'a/hi.txt'])
+    expect(diffFiles()).toEqual(['a/hello.txt', 'a/hi.txt'])
+  })
+
+  it('keeps matches visible inside a folder the user collapsed', async () => {
+    const filter = await openFilesTab()
+    await userEvent.click(screen.getByRole('button', { name: 'b' }))
+    expect(treeFiles()).toEqual(['a/hello.txt', 'a/hi.txt', 'a/bye.txt'])
+
+    await userEvent.type(filter, 'b/')
+
+    expect(treeFiles()).toEqual(['b/goodbye.txt'])
+  })
+
+  it('tells the user when no file matches', async () => {
+    const filter = await openFilesTab()
+
+    await userEvent.type(filter, 'nothing-here')
+
+    expect(diffFiles()).toEqual([])
+    expect(screen.getByText('No files match “nothing-here”.')).toBeInTheDocument()
+  })
+
+  it('shows every file again when the user presses Escape', async () => {
+    const filter = await openFilesTab()
+    await userEvent.type(filter, 'b/')
+
+    await userEvent.keyboard('{Escape}')
+
+    expect(filter).toHaveValue('')
+    expect(diffFiles()).toEqual(['a/hello.txt', 'a/hi.txt', 'a/bye.txt', 'b/goodbye.txt'])
   })
 })

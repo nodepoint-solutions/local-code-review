@@ -15,6 +15,7 @@ import { AgentIcon } from '../components/AgentAvatar'
 import SubmitFixDialog from '../components/SubmitFixDialog'
 import Markdown from '../components/Markdown'
 import DescriptionEditor from '../components/DescriptionEditor'
+import { filterFilesByPath } from '../utils/filterFilesByPath'
 import { sortCommentsByPosition } from '../utils/sortComments'
 import type {
   AddCommentPayload,
@@ -179,7 +180,7 @@ export default function PR(): JSX.Element {
   const [descriptionDraft, setDescriptionDraft] = useState('')
   const [descriptionHeight, setDescriptionHeight] = useState(MIN_EDITOR_HEIGHT)
   const descriptionRef = useRef<HTMLDivElement | null>(null)
-  const fileRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const fileRefs = useRef<Record<string, HTMLElement | null>>({})
   const [treeWidth, setTreeWidth] = useState(() => {
     const saved = localStorage.getItem('fileTreeWidth')
     return saved ? parseInt(saved, 10) : 280
@@ -193,12 +194,18 @@ export default function PR(): JSX.Element {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchMatchIndex, setSearchMatchIndex] = useState(0)
+  const [fileFilter, setFileFilter] = useState('')
+
+  const visibleFiles = useMemo(
+    () => filterFilesByPath(prDetail?.diff ?? [], fileFilter),
+    [prDetail, fileFilter]
+  )
 
   const searchMatches = useMemo(() => {
-    if (!searchQuery || !prDetail) return []
+    if (!searchQuery) return []
     const q = searchQuery.toLowerCase()
     const matches: Array<{ filePath: string; diffLineNumber: number }> = []
-    for (const file of prDetail.diff) {
+    for (const file of visibleFiles) {
       for (const line of file.lines) {
         if (line.type !== 'hunk-header' && line.content.toLowerCase().includes(q)) {
           matches.push({ filePath: file.newPath, diffLineNumber: line.diffLineNumber })
@@ -206,7 +213,7 @@ export default function PR(): JSX.Element {
       }
     }
     return matches
-  }, [searchQuery, prDetail])
+  }, [searchQuery, visibleFiles])
 
   // Per-file Sets so each DiffView only highlights its own lines
   const matchedLineNumbersByFile = useMemo(() => {
@@ -226,7 +233,11 @@ export default function PR(): JSX.Element {
 
   useEffect(() => {
     setSearchMatchIndex(0)
-  }, [searchQuery])
+  }, [searchQuery, fileFilter])
+
+  useEffect(() => {
+    setFocusedCommentIndex(-1)
+  }, [fileFilter])
 
   useEffect(() => {
     if (!activeMatch) return
@@ -585,7 +596,9 @@ export default function PR(): JSX.Element {
   const { pr, diff, review, isStale } = prDetail
   const comments: ReviewComment[] = review?.comments ?? []
   const activeComments = comments.filter((c) => !c.is_stale)
-  const navComments = sortCommentsByPosition(comments.filter((c) => !c.is_stale))
+  // Navigation covers the visible files, so that each step lands on a rendered comment
+  const visiblePaths = new Set(visibleFiles.map((f) => f.newPath))
+  const navComments = sortCommentsByPosition(activeComments.filter((c) => visiblePaths.has(c.file)))
   const workflow = new PRWorkflow(pr, review ?? null, prDetail.reviews)
 
   function handleCommentNav(index: number): void {
@@ -1162,7 +1175,12 @@ export default function PR(): JSX.Element {
       {tab === 'files' && (
         <div className={`${styles.filesBody} ${reviewPanelOpen ? styles.bodyShifted : ''}`}>
           <div ref={treePanelRef} className={styles.treePanel} style={{ width: treeWidth }}>
-            <FileTree files={diff} onSelect={scrollToFile} />
+            <FileTree
+              files={visibleFiles}
+              filter={fileFilter}
+              onFilterChange={setFileFilter}
+              onSelect={scrollToFile}
+            />
           </div>
           <div className={styles.resizeHandle} onMouseDown={handleResizeStart} />
           <div ref={diffPaneRef} className={styles.diffPane}>
@@ -1186,13 +1204,17 @@ export default function PR(): JSX.Element {
               />
             )}
             <div className={styles.diffScrollContent}>
-              {diff.map((file) => (
-                <div
+              {diff.length > 0 && visibleFiles.length === 0 && (
+                <div className={styles.emptyState}>No files match “{fileFilter.trim()}”.</div>
+              )}
+              {visibleFiles.map((file) => (
+                <section
                   key={file.newPath}
                   ref={(el) => {
                     fileRefs.current[file.newPath] = el
                   }}
                   data-diff-file={file.newPath}
+                  aria-label={file.newPath}
                 >
                   <DiffView
                     file={file}
@@ -1217,7 +1239,7 @@ export default function PR(): JSX.Element {
                       activeMatch?.filePath === file.newPath ? activeMatch.diffLineNumber : null
                     }
                   />
-                </div>
+                </section>
               ))}
             </div>
           </div>
